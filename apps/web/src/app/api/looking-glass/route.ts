@@ -217,10 +217,32 @@ function buildCreativePrompt(userDescription: string): string {
     colorInstructions = 'colorful '
   }
 
-  // Construct the full prompt with STRICT preservation instructions
-  const prompt = `Add ${colorInstructions}fur dye to the dog's fur. ${userDescription}.
+  // Determine if this is a pattern request or all-over color
+  const hasPatterns = desc.includes('heart') || desc.includes('star') || desc.includes('paw')
 
-CRITICAL: Keep the dog's exact face shape, exact eyes, exact nose, exact expression, exact body pose, exact fur texture and length, and exact background COMPLETELY IDENTICAL. Do not change ANYTHING about the dog except adding color/patterns to the fur. The dog must look exactly like itself, just with added color.`
+  // Construct the full prompt with STRICT preservation instructions
+  let prompt: string
+
+  if (hasPatterns) {
+    // Pattern-based: emphasize the patterns, not all-over color
+    prompt = `Add ${colorInstructions}designs to the dog's fur as creative grooming art. The patterns should be visible against the dog's natural fur color - do NOT dye all the fur, only add the decorative pattern shapes. ${userDescription}.
+
+CRITICAL REQUIREMENTS:
+1. Keep the dog's face completely natural - no color on the face, eyes, nose, or muzzle
+2. Keep the dog's exact body pose, fur texture, and background IDENTICAL
+3. The patterns should look like professional pet-safe stenciled designs
+4. Leave most of the fur the natural color - only the pattern shapes should be colored
+5. The dog must be clearly recognizable as the same dog`
+  } else {
+    // All-over color request
+    prompt = `Add ${colorInstructions}fur dye to the dog's body fur. ${userDescription}.
+
+CRITICAL REQUIREMENTS:
+1. Keep the dog's face more natural - lighter color or no color on the face/muzzle area
+2. Keep the dog's exact body pose, fur texture, and background IDENTICAL
+3. The color should look like professional pet-safe fur dye
+4. The dog must be clearly recognizable as the same dog`
+  }
 
   return prompt
 }
