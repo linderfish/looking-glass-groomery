@@ -9,16 +9,17 @@ interface ImmersiveEntryProps {
   onEnter: () => void
 }
 
-// Pre-generated static background images (no API calls needed)
+// Pre-generated static background images - user's favorites (no API calls needed)
 const ENTRY_BACKGROUNDS = [
-  '/backgrounds/entry-1.png',
-  '/backgrounds/entry-2.png',
-  '/backgrounds/entry-3.png',
+  '/backgrounds/3mr_B6g8YqBNq1lSGdoy2.png',
+  '/backgrounds/fULA8zSRF1yodRXjfcVxX.png',
+  '/backgrounds/Jpa18jGCOqbqhB84DPQp4.png',
+  '/backgrounds/qeyZQVAGTyS7CQmvF1ddK.png',
 ]
 
 export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false])
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false, false])
   const [isHovering, setIsHovering] = useState(false)
   const [cookieEaten, setCookieEaten] = useState(false)
   const [shrinkPhase, setShrinkPhase] = useState(0)

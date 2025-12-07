@@ -1,154 +1,119 @@
 // apps/web/src/components/effects/AIBackground.tsx
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 interface AIBackgroundProps {
   scene?: 'entry' | 'garden' | 'teaParty' | 'cheshire' | 'lookingGlass' | 'shelter'
-  customPrompt?: string
-  priority?: boolean
   className?: string
 }
 
-interface BackgroundState {
-  url: string | null
-  loading: boolean
-  error: boolean
+// Pre-generated static backgrounds for each scene
+const SCENE_BACKGROUNDS: Record<string, string[]> = {
+  garden: [
+    '/backgrounds/garden-1.png',
+    '/backgrounds/garden-2.png',
+    '/backgrounds/garden-3.png',
+  ],
+  // All other scenes use garden backgrounds for now
+  teaParty: [
+    '/backgrounds/garden-1.png',
+    '/backgrounds/garden-2.png',
+    '/backgrounds/garden-3.png',
+  ],
+  cheshire: [
+    '/backgrounds/garden-1.png',
+    '/backgrounds/garden-2.png',
+    '/backgrounds/garden-3.png',
+  ],
+  lookingGlass: [
+    '/backgrounds/garden-1.png',
+    '/backgrounds/garden-2.png',
+    '/backgrounds/garden-3.png',
+  ],
+  shelter: [
+    '/backgrounds/garden-1.png',
+    '/backgrounds/garden-2.png',
+    '/backgrounds/garden-3.png',
+  ],
+  entry: [
+    '/backgrounds/3mr_B6g8YqBNq1lSGdoy2.png',
+    '/backgrounds/fULA8zSRF1yodRXjfcVxX.png',
+    '/backgrounds/Jpa18jGCOqbqhB84DPQp4.png',
+    '/backgrounds/qeyZQVAGTyS7CQmvF1ddK.png',
+  ],
 }
 
 export function AIBackground({
-  scene = 'entry',
-  customPrompt,
-  priority = false,
+  scene = 'garden',
   className = '',
 }: AIBackgroundProps) {
-  const [background, setBackground] = useState<BackgroundState>({
-    url: null,
-    loading: true,
-    error: false,
-  })
-  const [nextBackground, setNextBackground] = useState<string | null>(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([])
 
-  const fetchBackground = useCallback(async (forceRegenerate = false) => {
-    try {
-      setBackground(prev => ({ ...prev, loading: true }))
+  const backgrounds = SCENE_BACKGROUNDS[scene] || SCENE_BACKGROUNDS.garden
 
-      const response = await fetch('/api/generate-background', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scene,
-          customPrompt,
-          forceRegenerate,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.fallback || !data.imageUrl) {
-        // Use CSS fallback
-        setBackground({
-          url: null,
-          loading: false,
-          error: false,
-        })
-        return
-      }
-
-      // Preload the image before displaying
-      const img = new Image()
-      img.onload = () => {
-        setBackground({
-          url: data.imageUrl,
-          loading: false,
-          error: false,
-        })
-      }
-      img.onerror = () => {
-        setBackground({
-          url: null,
-          loading: false,
-          error: true,
-        })
-      }
-      img.src = data.imageUrl
-    } catch (err) {
-      console.error('Failed to fetch AI background:', err)
-      setBackground({
-        url: null,
-        loading: false,
-        error: true,
-      })
-    }
-  }, [scene, customPrompt])
-
+  // Initialize loaded state based on number of backgrounds
   useEffect(() => {
-    // Check for cached version first
-    fetch(`/api/generate-background?scene=${scene}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.imageUrl) {
-          setBackground({
-            url: data.imageUrl,
-            loading: false,
-            error: false,
-          })
-        } else if (priority) {
-          // Generate if not cached and priority
-          fetchBackground()
-        } else {
-          setBackground({
-            url: null,
-            loading: false,
-            error: false,
-          })
-        }
-      })
-      .catch(() => {
-        setBackground({
-          url: null,
-          loading: false,
-          error: false,
-        })
-      })
-  }, [scene, priority, fetchBackground])
+    setImagesLoaded(new Array(backgrounds.length).fill(false))
+  }, [backgrounds.length])
+
+  // Cycle through backgrounds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % backgrounds.length)
+    }, 12000) // Change every 12 seconds
+
+    return () => clearInterval(interval)
+  }, [backgrounds.length])
+
+  const handleImageLoad = (index: number) => {
+    setImagesLoaded(prev => {
+      const newLoaded = [...prev]
+      newLoaded[index] = true
+      return newLoaded
+    })
+  }
 
   return (
     <div className={`fixed inset-0 z-0 overflow-hidden ${className}`}>
-      {/* AI Generated Background */}
+      {/* Static Pre-generated Backgrounds - Crossfading */}
       <AnimatePresence mode="wait">
-        {background.url && (
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 2 }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={backgrounds[currentIndex]}
+            alt="Wonderland background"
+            fill
+            className="object-cover"
+            priority={currentIndex === 0}
+            onLoad={() => handleImageLoad(currentIndex)}
+          />
+          {/* Subtle animation overlay */}
           <motion.div
-            key={background.url}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-            className="absolute inset-0"
-          >
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${background.url})` }}
-            />
-            {/* Subtle animation overlay */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-t from-wonderland-bg/80 via-transparent to-wonderland-bg/40"
-              animate={{
-                opacity: [0.6, 0.8, 0.6],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-          </motion.div>
-        )}
+            className="absolute inset-0 bg-gradient-to-t from-wonderland-bg/80 via-transparent to-wonderland-bg/40"
+            animate={{
+              opacity: [0.6, 0.8, 0.6],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        </motion.div>
       </AnimatePresence>
 
-      {/* CSS Fallback when no AI image */}
-      {!background.url && !background.loading && (
+      {/* CSS Fallback while images load */}
+      {!imagesLoaded.some(loaded => loaded) && (
         <div className="absolute inset-0">
           {/* Base gradient */}
           <div className="absolute inset-0 bg-wonderland-bg" />
@@ -196,39 +161,8 @@ export function AIBackground({
             }}
           />
 
-          <motion.div
-            className="absolute top-1/2 right-1/4 w-[350px] h-[350px] rounded-full bg-cheshire-purple/10 blur-3xl"
-            animate={{
-              x: [0, -60, 30, 0],
-              y: [0, 80, -40, 0],
-              scale: [1, 1.1, 0.9, 1],
-            }}
-            transition={{
-              duration: 18,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 checkerboard opacity-5" />
-        </div>
-      )}
-
-      {/* Loading state with shimmer */}
-      {background.loading && (
-        <div className="absolute inset-0 bg-wonderland-bg">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-alice-purple/10 to-transparent"
-            animate={{
-              x: ['-100%', '100%'],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
         </div>
       )}
 
