@@ -5,34 +5,30 @@ function getFalApiKey(): string | undefined {
   return process.env.FAL_KEY || process.env.FAL_AI_KEY
 }
 
-// Edit prompts for Nano Banana Pro - very minimal, specific edits only
-const STYLE_EDIT_PROMPTS: Record<string, string> = {
-  teddy: 'Make the fur rounder and fluffier like a teddy bear grooming cut. Change nothing else.',
-  lion: 'Make the fur around the face and neck fuller like a lion mane, body fur shorter. Change nothing else.',
-  asian: 'Make the face fur rounder and cheeks fluffier in Asian grooming style. Change nothing else.',
-  creative: '', // Creative uses only custom notes and/or color selection
-  breed: 'Make the fur neat and precisely trimmed in show dog style. Change nothing else.',
-  custom: 'Make the fur look freshly groomed and neat. Change nothing else.',
+// =============================================================================
+// MODE 1: GROOMING STYLE - Only changes fur shape/length, preserves everything else
+// =============================================================================
+const GROOMING_STYLE_PROMPTS: Record<string, string> = {
+  teddy: 'Trim and style the fur into a teddy bear cut: round fluffy face, rounded ears, even plush fur all over body. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur color. Only change the fur length and shape. No other changes.',
+  lion: 'Trim and style the fur into a lion cut: full fluffy mane around face and neck, body fur trimmed short. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur color. Only change the fur length and shape. No other changes.',
+  asian: 'Trim and style the fur into Asian fusion style: perfectly round face shape, extra fluffy rounded cheeks, clean lines. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur color. Only change the fur length and shape. No other changes.',
+  breed: 'Trim and style the fur into show-quality breed standard: precise scissor lines, clean angles, professional grooming. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur color. Only change the fur length and shape. No other changes.',
+  puppy: 'Trim and style the fur into a puppy cut: even length all over, soft and natural. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur color. Only change the fur length and shape. No other changes.',
 }
 
-// Color additions - ONLY applied if user selects a color, and ONLY to specified area
-const COLOR_EDIT_ADDITIONS: Record<string, string> = {
-  pink: 'Add pink dye',
-  purple: 'Add purple dye',
-  blue: 'Add blue dye',
-  rainbow: 'Add rainbow colored dye',
-  teal: 'Add teal dye',
-  gold: 'Add golden blonde dye',
-}
+// =============================================================================
+// MODE 2: CREATIVE COLOR - Only adds color where specified, preserves everything else
+// =============================================================================
+// This mode uses the user's custom description directly
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
       imageUrl,     // Base64 data URL or regular URL
-      style = 'teddy',
-      color,
-      customNotes = '',
+      mode = 'grooming', // 'grooming' or 'creative'
+      style = 'teddy',   // For grooming mode
+      colorDescription = '', // For creative mode: user describes exactly what they want
     } = body
 
     const apiKey = getFalApiKey()
@@ -52,40 +48,32 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Build the edit prompt for Nano Banana Pro
     let editPrompt = ''
 
-    // For creative style, build prompt from color + custom notes only
-    if (style === 'creative') {
-      const parts: string[] = []
-
-      // Add color instruction if selected
-      if (color && COLOR_EDIT_ADDITIONS[color]) {
-        parts.push(COLOR_EDIT_ADDITIONS[color])
+    if (mode === 'creative') {
+      // =======================================================================
+      // CREATIVE COLOR MODE
+      // User describes exactly what color/pattern they want and where
+      // =======================================================================
+      if (!colorDescription.trim()) {
+        return NextResponse.json({
+          success: false,
+          error: 'Please describe what colors you want and where',
+        }, { status: 400 })
       }
 
-      // Add custom notes as the main instruction
-      if (customNotes.trim()) {
-        parts.push(customNotes.trim())
-      }
+      // Build a precise prompt that only does what the user asked
+      editPrompt = `${colorDescription.trim()}. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Only add the color described. No other changes.`
 
-      // If nothing specified, just do a basic groom
-      if (parts.length === 0) {
-        editPrompt = 'Make the fur look freshly groomed. Change nothing else.'
-      } else {
-        editPrompt = parts.join('. ') + '. Change nothing else.'
-      }
     } else {
-      // For other styles, use the preset prompt
-      editPrompt = STYLE_EDIT_PROMPTS[style] || STYLE_EDIT_PROMPTS.custom
-
-      // Only add custom notes if provided (no color additions for non-creative styles)
-      if (customNotes.trim()) {
-        // Replace the "Change nothing else" with the custom note, then re-add it
-        editPrompt = editPrompt.replace('. Change nothing else.', '') + '. ' + customNotes.trim() + '. Change nothing else.'
-      }
+      // =======================================================================
+      // GROOMING STYLE MODE
+      // Predefined cuts that only change fur shape, preserve everything else
+      // =======================================================================
+      editPrompt = GROOMING_STYLE_PROMPTS[style] || GROOMING_STYLE_PROMPTS.teddy
     }
 
+    console.log('Looking Glass mode:', mode)
     console.log('Looking Glass edit prompt:', editPrompt)
     console.log('Image URL type:', imageUrl.substring(0, 50) + '...')
 
@@ -125,9 +113,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       previewUrl: generatedUrl,
-      style,
-      color,
-      prompt: editPrompt.substring(0, 100) + '...',
+      mode,
+      style: mode === 'grooming' ? style : null,
+      prompt: editPrompt.substring(0, 150) + '...',
       description: data?.description || null,
     })
 
