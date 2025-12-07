@@ -1,10 +1,20 @@
 // apps/web/src/app/api/looking-glass/route.ts
 // All modes use FLUX Kontext Pro with careful prompting to preserve original pet
 // The key is VERY specific prompts that tell the AI exactly what to change and what to keep
+// Supports both BFL direct API and fal.ai
 import { NextRequest, NextResponse } from 'next/server'
 
-function getFalApiKey(): string | undefined {
-  return process.env.FAL_KEY || process.env.FAL_AI_KEY
+// Get API key - prefer BFL direct, fallback to fal.ai
+function getApiConfig(): { type: 'bfl' | 'fal'; key: string } | null {
+  const bflKey = process.env.BFL_API_KEY
+  if (bflKey) {
+    return { type: 'bfl', key: bflKey }
+  }
+  const falKey = process.env.FAL_KEY || process.env.FAL_AI_KEY
+  if (falKey) {
+    return { type: 'fal', key: falKey }
+  }
+  return null
 }
 
 // =============================================================================
@@ -32,13 +42,82 @@ const AI_DESIGNER_PROMPTS: Record<string, string> = {
 }
 
 // =============================================================================
-// Generate with FLUX Kontext Pro - uses very specific prompts to preserve pet
+// Generate with FLUX Kontext Pro via BFL direct API
 // =============================================================================
-async function generateWithKontext(imageUrl: string, prompt: string, apiKey: string): Promise<string> {
-  console.log('Generating with FLUX Kontext Pro...')
+async function generateWithBFL(imageUrl: string, prompt: string, apiKey: string): Promise<string> {
+  console.log('Generating with BFL FLUX Kontext Pro...')
   console.log('Prompt:', prompt.substring(0, 100) + '...')
 
-  // Use FLUX Kontext Pro for best quality and adherence to prompts
+  // Step 1: Submit the generation request
+  const submitResponse = await fetch('https://api.bfl.ai/v1/flux-kontext-pro', {
+    method: 'POST',
+    headers: {
+      'x-key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      input_image: imageUrl, // BFL accepts URL or base64
+      output_format: 'png',
+      safety_tolerance: 6, // 0-6, higher = more permissive
+    }),
+  })
+
+  if (!submitResponse.ok) {
+    const errorText = await submitResponse.text()
+    console.error('BFL submit error:', submitResponse.status, errorText)
+    throw new Error(`BFL submission failed: ${submitResponse.status}`)
+  }
+
+  const submitData = await submitResponse.json()
+  const taskId = submitData.id
+  console.log('BFL task submitted:', taskId)
+
+  // Step 2: Poll for result
+  let attempts = 0
+  const maxAttempts = 60 // 60 seconds max
+
+  while (attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+
+    const resultResponse = await fetch(`https://api.bfl.ai/v1/get_result?id=${taskId}`, {
+      headers: { 'x-key': apiKey },
+    })
+
+    if (!resultResponse.ok) {
+      console.error('BFL poll error:', resultResponse.status)
+      attempts++
+      continue
+    }
+
+    const resultData = await resultResponse.json()
+    console.log('BFL status:', resultData.status)
+
+    if (resultData.status === 'Ready') {
+      const imageUrl = resultData.result?.sample
+      if (imageUrl) {
+        return imageUrl
+      }
+      throw new Error('No image in BFL result')
+    }
+
+    if (resultData.status === 'Error' || resultData.status === 'Failed') {
+      throw new Error(`BFL generation failed: ${resultData.error || 'Unknown error'}`)
+    }
+
+    attempts++
+  }
+
+  throw new Error('BFL generation timed out')
+}
+
+// =============================================================================
+// Generate with FLUX Kontext Pro via fal.ai
+// =============================================================================
+async function generateWithFal(imageUrl: string, prompt: string, apiKey: string): Promise<string> {
+  console.log('Generating with fal.ai FLUX Kontext Pro...')
+  console.log('Prompt:', prompt.substring(0, 100) + '...')
+
   const response = await fetch('https://fal.run/fal-ai/flux-pro/kontext', {
     method: 'POST',
     headers: {
@@ -49,27 +128,36 @@ async function generateWithKontext(imageUrl: string, prompt: string, apiKey: str
       prompt,
       image_url: imageUrl,
       output_format: 'png',
-      safety_tolerance: '6', // String enum, more permissive for pet colors
+      safety_tolerance: '6',
     }),
   })
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('FLUX Kontext Pro error:', response.status, errorText)
-    throw new Error(`Generation failed: ${response.status}`)
+    console.error('fal.ai error:', response.status, errorText)
+    throw new Error(`fal.ai generation failed: ${response.status}`)
   }
 
   const data = await response.json()
-  console.log('FLUX response keys:', Object.keys(data))
-
   const generatedUrl = data?.images?.[0]?.url
 
   if (!generatedUrl) {
-    console.error('No image in response:', JSON.stringify(data).substring(0, 500))
+    console.error('No image in fal.ai response:', JSON.stringify(data).substring(0, 500))
     throw new Error('No image generated')
   }
 
   return generatedUrl
+}
+
+// =============================================================================
+// Generate with appropriate API based on config
+// =============================================================================
+async function generateWithKontext(imageUrl: string, prompt: string, config: { type: 'bfl' | 'fal'; key: string }): Promise<string> {
+  if (config.type === 'bfl') {
+    return generateWithBFL(imageUrl, prompt, config.key)
+  } else {
+    return generateWithFal(imageUrl, prompt, config.key)
+  }
 }
 
 // =============================================================================
@@ -152,15 +240,17 @@ export async function POST(request: NextRequest) {
       designStyle = 'whimsical',
     } = body
 
-    const apiKey = getFalApiKey()
+    const apiConfig = getApiConfig()
 
-    if (!apiKey) {
+    if (!apiConfig) {
       return NextResponse.json({
         success: false,
         error: 'API not configured',
-        message: 'Looking Glass preview is not available - fal.ai not configured',
+        message: 'Looking Glass preview is not available - no API key configured (BFL_API_KEY or FAL_KEY)',
       }, { status: 503 })
     }
+
+    console.log('Using API:', apiConfig.type)
 
     if (!imageUrl) {
       return NextResponse.json({
@@ -215,7 +305,7 @@ export async function POST(request: NextRequest) {
     console.log('Built prompt:', prompt.substring(0, 150) + '...')
 
     // Generate with FLUX Kontext Pro
-    const previewUrl = await generateWithKontext(imageUrl, prompt, apiKey)
+    const previewUrl = await generateWithKontext(imageUrl, prompt, apiConfig)
 
     return NextResponse.json({
       success: true,
