@@ -48,9 +48,8 @@ async function generateWithKontext(imageUrl: string, prompt: string, apiKey: str
     body: JSON.stringify({
       prompt,
       image_url: imageUrl,
-      aspect_ratio: 'match_input_image', // Preserve original dimensions
       output_format: 'png',
-      safety_tolerance: 6, // More permissive for pet colors
+      safety_tolerance: '6', // String enum, more permissive for pet colors
     }),
   })
 
