@@ -21,14 +21,26 @@ const GROOMING_STYLE_PROMPTS: Record<string, string> = {
 // =============================================================================
 // This mode uses the user's custom description directly
 
+// =============================================================================
+// MODE 3: AI DESIGNER - Let the AI design a unique creative style
+// =============================================================================
+const AI_DESIGNER_PROMPTS: Record<string, string> = {
+  whimsical: 'As a professional creative pet groomer, design a whimsical and playful creative color look for this dog. Choose soft pastel colors that complement the dog\'s natural coat. Add subtle, achievable color accents like tinted ear tips, a gradient tail, or gentle highlights. Consider realistic grooming limitations: dye bleeds between layers, ears have delicate skin, and patterns must follow natural fur growth. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Create something magical but realistically achievable.',
+  bold: 'As a professional creative pet groomer, design a bold and vibrant creative color look for this dog. Choose rich, saturated colors that pop against the dog\'s natural coat. Add striking but achievable color sections like vivid ear tips, a colorful mohawk stripe, or bright tail accents. Consider realistic grooming limitations: dye bleeds between layers, ears have delicate skin, and patterns must follow natural fur growth. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Create something eye-catching but realistically achievable.',
+  elegant: 'As a professional creative pet groomer, design an elegant and sophisticated creative color look for this dog. Choose refined colors like rose gold, champagne, silver, or subtle lavender that enhance the dog\'s natural beauty. Add tasteful, achievable accents like delicate ear tinting or subtle gradient effects. Consider realistic grooming limitations: dye bleeds between layers, ears have delicate skin, and patterns must follow natural fur growth. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Create something refined but realistically achievable.',
+  rainbow: 'As a professional creative pet groomer, design a rainbow-inspired creative color look for this dog. Use multiple colors strategically placed to create a cohesive rainbow effect. Focus on larger sections where multiple colors can transition smoothly like the back, sides, or tail. Consider realistic grooming limitations: dye bleeds between layers so transitions should be gradual, ears have delicate skin limiting saturation, and patterns must follow natural fur growth. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Create something colorful but realistically achievable.',
+  seasonal: 'As a professional creative pet groomer, design a seasonal-themed creative color look for this dog based on the current season. For winter: icy blues and silvers. For spring: soft pinks and greens. For summer: bright sunny yellows and oranges. For fall: warm reds and golds. Add achievable seasonal accents. Consider realistic grooming limitations: dye bleeds between layers, ears have delicate skin, and patterns must follow natural fur growth. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Create something festive but realistically achievable.',
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
       imageUrl,     // Base64 data URL or regular URL
-      mode = 'grooming', // 'grooming' or 'creative'
+      mode = 'grooming', // 'grooming', 'creative', or 'ai-designer'
       style = 'teddy',   // For grooming mode
       colorDescription = '', // For creative mode: user describes exactly what they want
+      designStyle = 'whimsical', // For ai-designer mode: whimsical, bold, elegant, rainbow, seasonal
     } = body
 
     const apiKey = getFalApiKey()
@@ -65,6 +77,13 @@ export async function POST(request: NextRequest) {
       // Build a precise prompt that only does what the user asked
       // Include realistic grooming constraints for dye application
       editPrompt = `${colorDescription.trim()}. Apply this as a realistic pet-safe dye job that a professional groomer could actually achieve. Consider realistic limitations: dye bleeds between layers so avoid ultra-thin patterns, ears and face have delicate skin limiting color saturation, short fur areas show color differently than fluffy areas, and patterns must follow the natural fur growth direction. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Only add the color described in a realistically achievable way. No other changes.`
+
+    } else if (mode === 'ai-designer') {
+      // =======================================================================
+      // AI DESIGNER MODE
+      // Let the AI design a creative look based on a style preference
+      // =======================================================================
+      editPrompt = AI_DESIGNER_PROMPTS[designStyle] || AI_DESIGNER_PROMPTS.whimsical
 
     } else {
       // =======================================================================
@@ -115,7 +134,7 @@ export async function POST(request: NextRequest) {
       success: true,
       previewUrl: generatedUrl,
       mode,
-      style: mode === 'grooming' ? style : null,
+      style: mode === 'grooming' ? style : mode === 'ai-designer' ? designStyle : null,
       prompt: editPrompt.substring(0, 150) + '...',
       description: data?.description || null,
     })

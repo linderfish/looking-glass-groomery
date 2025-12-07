@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 
 type Step = 'upload' | 'mode' | 'style' | 'generating' | 'preview'
-type Mode = 'grooming' | 'creative'
+type Mode = 'grooming' | 'creative' | 'ai-designer'
 
 // Grooming style options - these only change fur shape/length
 const groomingStyles = [
@@ -17,11 +17,21 @@ const groomingStyles = [
   { id: 'puppy', name: 'Puppy Cut', icon: '🐕', description: 'Even length, soft and natural' },
 ]
 
+// AI Designer style options - AI creates a unique look based on vibe
+const aiDesignStyles = [
+  { id: 'whimsical', name: 'Whimsical', icon: '✨', description: 'Soft pastels, playful & magical' },
+  { id: 'bold', name: 'Bold & Vibrant', icon: '🔥', description: 'Rich saturated colors that pop' },
+  { id: 'elegant', name: 'Elegant', icon: '💎', description: 'Refined rose gold, champagne, silver' },
+  { id: 'rainbow', name: 'Rainbow', icon: '🌈', description: 'Multi-color gradient magic' },
+  { id: 'seasonal', name: 'Seasonal', icon: '🍂', description: 'Themed for the current season' },
+]
+
 export default function LookingGlassPage() {
   const [step, setStep] = useState<Step>('upload')
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('grooming')
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null)
+  const [designStyle, setDesignStyle] = useState<string | null>(null)
   const [colorDescription, setColorDescription] = useState('')
   const [generatedPreview, setGeneratedPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -48,6 +58,7 @@ export default function LookingGlassPage() {
     if (!uploadedImage) return
     if (mode === 'grooming' && !selectedStyle) return
     if (mode === 'creative' && !colorDescription.trim()) return
+    if (mode === 'ai-designer' && !designStyle) return
 
     setStep('generating')
     setIsGenerating(true)
@@ -63,6 +74,7 @@ export default function LookingGlassPage() {
           imageUrl: uploadedImage,
           mode,
           style: selectedStyle,
+          designStyle: designStyle,
           colorDescription: colorDescription,
         }),
       })
@@ -89,6 +101,7 @@ export default function LookingGlassPage() {
     setUploadedImage(null)
     setMode('grooming')
     setSelectedStyle(null)
+    setDesignStyle(null)
     setColorDescription('')
     setGeneratedPreview(null)
     setError(null)
@@ -209,7 +222,7 @@ export default function LookingGlassPage() {
                   What would you like to preview?
                 </h2>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-3 gap-6">
                   <button
                     onClick={() => handleModeSelect('grooming')}
                     className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left"
@@ -219,8 +232,7 @@ export default function LookingGlassPage() {
                       Grooming Style
                     </span>
                     <span className="text-wonderland-muted text-sm">
-                      Preview different haircuts like teddy bear, lion cut, or breed standard.
-                      Shows how your pet would look with a new style.
+                      Preview haircuts like teddy bear, lion cut, or breed standard.
                     </span>
                   </button>
 
@@ -233,8 +245,23 @@ export default function LookingGlassPage() {
                       Creative Color
                     </span>
                     <span className="text-wonderland-muted text-sm">
-                      Preview pet-safe colors and designs. Describe exactly where you want
-                      color added (ears, tail, patterns, etc).
+                      You describe the colors and where you want them applied.
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => handleModeSelect('ai-designer')}
+                    className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left relative overflow-hidden"
+                  >
+                    <div className="absolute top-2 right-2 bg-psyche-pink text-white text-xs px-2 py-1 rounded-full">
+                      NEW
+                    </div>
+                    <span className="text-5xl block mb-4">🤖</span>
+                    <span className="font-display text-xl text-wonderland-text block mb-2">
+                      AI Designer
+                    </span>
+                    <span className="text-wonderland-muted text-sm">
+                      Let AI design a unique creative look based on your vibe.
                     </span>
                   </button>
                 </div>
@@ -323,6 +350,46 @@ export default function LookingGlassPage() {
                 </div>
               )}
 
+              {/* AI DESIGNER MODE: Style Selection */}
+              {mode === 'ai-designer' && (
+                <div className="card-wonderland p-8">
+                  <h2 className="font-display text-2xl text-center mb-2 text-wonderland-text">
+                    Choose Your Vibe
+                  </h2>
+                  <p className="text-center text-wonderland-muted text-sm mb-6">
+                    Our AI groomer will design a unique creative look
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {aiDesignStyles.map(style => (
+                      <button
+                        key={style.id}
+                        onClick={() => setDesignStyle(style.id)}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          designStyle === style.id
+                            ? 'border-alice-gold bg-alice-gold/10'
+                            : 'border-alice-purple/20 hover:border-alice-purple/50'
+                        }`}
+                      >
+                        <span className="text-3xl block mb-2">{style.icon}</span>
+                        <span className="font-display text-wonderland-text block">
+                          {style.name}
+                        </span>
+                        <span className="text-xs text-wonderland-muted">
+                          {style.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 p-4 bg-psyche-pink/10 rounded-xl">
+                    <p className="text-sm text-wonderland-muted">
+                      <strong className="text-psyche-pink">Magic:</strong> The AI considers your pet&apos;s coat,
+                      realistic dye limitations, and creates something unique every time!
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Error message */}
               {error && (
                 <motion.div
@@ -350,7 +417,8 @@ export default function LookingGlassPage() {
                   disabled={
                     isGenerating ||
                     (mode === 'grooming' && !selectedStyle) ||
-                    (mode === 'creative' && !colorDescription.trim())
+                    (mode === 'creative' && !colorDescription.trim()) ||
+                    (mode === 'ai-designer' && !designStyle)
                   }
                   className="btn-wonderland text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -382,6 +450,8 @@ export default function LookingGlassPage() {
               <p className="text-wonderland-muted">
                 {mode === 'grooming'
                   ? 'Styling your pet with the perfect cut'
+                  : mode === 'ai-designer'
+                  ? 'Our AI groomer is designing something unique'
                   : 'Adding some magical color to your pet'}
               </p>
               <motion.div className="mt-8 h-2 bg-wonderland-bg rounded-full overflow-hidden max-w-xs mx-auto">
@@ -405,7 +475,7 @@ export default function LookingGlassPage() {
             >
               <div className="card-wonderland p-8">
                 <h2 className="font-display text-2xl text-center mb-6 text-wonderland-text">
-                  Your Pet&apos;s {mode === 'grooming' ? 'New Style' : 'Creative Color'} Preview
+                  Your Pet&apos;s {mode === 'grooming' ? 'New Style' : mode === 'ai-designer' ? 'AI-Designed' : 'Creative Color'} Preview
                 </h2>
 
                 <div className="grid md:grid-cols-2 gap-8">
@@ -450,7 +520,7 @@ export default function LookingGlassPage() {
                   onClick={() => setStep('style')}
                   className="px-6 py-3 rounded-full font-display border-2 border-white text-white hover:bg-white/10 transition-colors"
                 >
-                  Try Another {mode === 'grooming' ? 'Style' : 'Design'}
+                  Try Another {mode === 'grooming' ? 'Style' : mode === 'ai-designer' ? 'Vibe' : 'Design'}
                 </button>
                 <button
                   onClick={handleStartOver}
