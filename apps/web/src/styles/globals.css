@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --psyche-pink: #FF6B9D;
+  --psyche-purple: #C471ED;
+  --psyche-blue: #12C2E9;
+  --psyche-green: #A8E6CF;
+  --psyche-orange: #F38181;
+}
+
+@layer base {
+  body {
+    @apply bg-wonderland-bg text-wonderland-text antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    @apply bg-alice-purple text-white;
+  }
+
+  * {
+    @apply selection:bg-alice-purple selection:text-white;
+  }
+}
+
+@layer components {
+  .btn-wonderland {
+    @apply px-6 py-3 rounded-full font-display text-lg transition-all duration-300;
+    @apply bg-gradient-to-r from-alice-purple to-psyche-pink;
+    @apply hover:scale-105 hover:shadow-lg hover:shadow-alice-purple/50;
+    @apply active:scale-95;
+  }
+
+  .card-wonderland {
+    @apply bg-wonderland-card rounded-2xl border border-alice-purple/20;
+    @apply backdrop-blur-sm shadow-lg shadow-alice-purple/5;
+    @apply transition-all duration-300 hover:border-alice-purple/40;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-alice-gold via-alice-pink to-alice-purple;
+    @apply bg-clip-text text-transparent;
+  }
+
+  .text-psychedelic {
+    @apply bg-gradient-to-r from-psyche-pink via-psyche-purple to-psyche-blue;
+    @apply bg-clip-text text-transparent;
+    animation: colorShift 10s ease infinite;
+  }
+
+  .glow-effect {
+    @apply shadow-lg shadow-alice-blue/30;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .breathing-bg {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .floating {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .checkerboard {
+    background-image: repeating-conic-gradient(#1A1A2E 0% 25%, #0D0D1A 0% 50%);
+    background-size: 40px 40px;
+  }
+}
+
+/* Psychedelic scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-wonderland-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-alice-purple to-psyche-pink rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply from-psyche-pink to-alice-purple;
+}
+
+/* Custom cursor for wonderland */
+.cursor-wonderland {
+  cursor: url('/assets/alice/cursor.png'), auto;
+}
+
+/* Cheshire grin loading animation */
+@keyframes cheshireGrin {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.cheshire-loading {
+  animation: cheshireGrin 2s ease-in-out infinite;
+}
+
+/* Entry animation helpers */
+.shrink-enter {
+  animation: shrink 1.5s ease-in-out forwards;
+}
+
+.fall-enter {
+  animation: fall 2s ease-in forwards;
+}
