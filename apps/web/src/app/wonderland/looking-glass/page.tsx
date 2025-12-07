@@ -8,9 +8,23 @@ import Image from 'next/image'
 type Step = 'upload' | 'mode' | 'style' | 'generating' | 'preview'
 type Mode = 'grooming' | 'creative' | 'ai-designer'
 
+interface AnalysisResult {
+  passedQuality: boolean
+  autoRetried: number
+  suggestedFixes: string[]
+  issuesDetected: string[]
+  subjectiveIssues?: {
+    patternQuality: string
+    themeStrength: string
+    colorIntensity: string
+  }
+}
+
 interface PreviewResult {
   previewUrl: string
   disclaimer: string
+  promptUsed?: string
+  analysis?: AnalysisResult
 }
 
 // Grooming style options
@@ -44,6 +58,8 @@ export default function LookingGlassPage() {
   const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedFixes, setSelectedFixes] = useState<string[]>([])
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -96,7 +112,10 @@ export default function LookingGlassPage() {
       setPreviewResult({
         previewUrl: data.previewUrl,
         disclaimer: data.disclaimer,
+        promptUsed: data.promptUsed,
+        analysis: data.analysis,
       })
+      setSelectedFixes([]) // Reset selected fixes
       setStep('preview')
 
     } catch (err) {
@@ -108,6 +127,60 @@ export default function LookingGlassPage() {
     }
   }
 
+  const handleRegenerateWithFixes = async () => {
+    if (!uploadedImage || !previewResult?.promptUsed || selectedFixes.length === 0) return
+
+    setIsRegenerating(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/looking-glass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: uploadedImage,
+          mode,
+          style: selectedStyle,
+          designStyle: designStyle,
+          colorDescription: colorDescription,
+          // Send fixes for regeneration
+          userFixes: selectedFixes,
+          previousPrompt: previewResult.promptUsed,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || 'Regeneration failed')
+      }
+
+      setPreviewResult({
+        previewUrl: data.previewUrl,
+        disclaimer: data.disclaimer,
+        promptUsed: data.promptUsed,
+        analysis: data.analysis,
+      })
+      setSelectedFixes([]) // Reset selected fixes after regeneration
+
+    } catch (err) {
+      console.error('Regeneration error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to regenerate')
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
+  const toggleFix = (fix: string) => {
+    setSelectedFixes(prev =>
+      prev.includes(fix)
+        ? prev.filter(f => f !== fix)
+        : [...prev, fix]
+    )
+  }
+
   const handleStartOver = () => {
     setStep('upload')
     setUploadedImage(null)
@@ -117,6 +190,8 @@ export default function LookingGlassPage() {
     setColorDescription('')
     setPreviewResult(null)
     setError(null)
+    setSelectedFixes([])
+    setIsRegenerating(false)
   }
 
   const stepLabels = ['Upload', 'Mode', 'Details', 'Preview']
@@ -523,11 +598,127 @@ export default function LookingGlassPage() {
                 </div>
               </div>
 
+              {/* Analysis Info - Auto-retry notification */}
+              {previewResult.analysis && previewResult.analysis.autoRetried > 0 && (
+                <div className="mt-4 p-4 bg-alice-purple/20 rounded-xl border border-alice-purple/30">
+                  <p className="text-sm text-wonderland-text">
+                    <span className="text-alice-gold">✨ AI Auto-Improved:</span> Our AI detected some issues and automatically refined the result ({previewResult.analysis.autoRetried} adjustment{previewResult.analysis.autoRetried > 1 ? 's' : ''} made).
+                  </p>
+                </div>
+              )}
+
+              {/* Feedback Section - Suggested Fixes */}
+              {previewResult.analysis && previewResult.analysis.suggestedFixes.length > 0 && (
+                <div className="mt-6 p-6 bg-wonderland-card rounded-xl border border-alice-purple/30">
+                  <h3 className="font-display text-lg text-wonderland-text mb-3">
+                    🎨 Want to tweak it?
+                  </h3>
+                  <p className="text-sm text-wonderland-muted mb-4">
+                    Our AI noticed some things you might want to adjust. Select any fixes and regenerate:
+                  </p>
+
+                  <div className="space-y-3">
+                    {previewResult.analysis.suggestedFixes.map((fix, index) => (
+                      <label
+                        key={index}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                          selectedFixes.includes(fix)
+                            ? 'bg-alice-purple/30 border border-alice-purple'
+                            : 'bg-wonderland-bg/50 border border-transparent hover:border-alice-purple/30'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFixes.includes(fix)}
+                          onChange={() => toggleFix(fix)}
+                          className="w-5 h-5 rounded border-alice-purple/50 text-alice-purple focus:ring-alice-purple bg-wonderland-bg"
+                        />
+                        <span className="text-wonderland-text">{fix}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Quick fix buttons */}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => toggleFix('Keep face natural - remove any color from face')}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        selectedFixes.includes('Keep face natural - remove any color from face')
+                          ? 'bg-alice-purple text-white'
+                          : 'bg-wonderland-bg border border-alice-purple/30 text-wonderland-muted hover:border-alice-purple'
+                      }`}
+                    >
+                      🐕 Natural Face
+                    </button>
+                    <button
+                      onClick={() => toggleFix('Patterns look flat - make them more natural')}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        selectedFixes.includes('Patterns look flat - make them more natural')
+                          ? 'bg-alice-purple text-white'
+                          : 'bg-wonderland-bg border border-alice-purple/30 text-wonderland-muted hover:border-alice-purple'
+                      }`}
+                    >
+                      ✨ More Realistic
+                    </button>
+                    <button
+                      onClick={() => toggleFix('Theme is subtle - make it more visible')}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        selectedFixes.includes('Theme is subtle - make it more visible')
+                          ? 'bg-alice-purple text-white'
+                          : 'bg-wonderland-bg border border-alice-purple/30 text-wonderland-muted hover:border-alice-purple'
+                      }`}
+                    >
+                      🎄 Stronger Theme
+                    </button>
+                    <button
+                      onClick={() => toggleFix('Colors too intense - make them softer')}
+                      className={`px-3 py-1 text-xs rounded-full transition-all ${
+                        selectedFixes.includes('Colors too intense - make them softer')
+                          ? 'bg-alice-purple text-white'
+                          : 'bg-wonderland-bg border border-alice-purple/30 text-wonderland-muted hover:border-alice-purple'
+                      }`}
+                    >
+                      🎨 Softer Colors
+                    </button>
+                  </div>
+
+                  {selectedFixes.length > 0 && (
+                    <button
+                      onClick={handleRegenerateWithFixes}
+                      disabled={isRegenerating}
+                      className="mt-4 w-full btn-wonderland text-white disabled:opacity-50"
+                    >
+                      {isRegenerating ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          >
+                            🔄
+                          </motion.span>
+                          Regenerating...
+                        </span>
+                      ) : (
+                        `Regenerate with ${selectedFixes.length} fix${selectedFixes.length > 1 ? 'es' : ''}`
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Error during regeneration */}
+              {error && (
+                <div className="mt-4 p-4 bg-red-500/20 rounded-xl border border-red-500/50">
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => {
                     setPreviewResult(null)
+                    setSelectedFixes([])
                     setStep('style')
                   }}
                   className="px-6 py-3 rounded-full font-display border-2 border-white text-white hover:bg-white/10 transition-colors"
