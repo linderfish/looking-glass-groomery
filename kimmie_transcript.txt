@@ -1,0 +1,114 @@
+Speaker 1 | 00:01
+So it's just recording us because this is how I feed the info to-- - The machine. So they really don't have a-- a domain name or a website? -No, but-- okay, so you can make one that manages itself, so meaning, like, it basically is just-- you go to your website and there's a booking page and then it has all your Instagram shit and all this stuff, you know, so they can see the pictures and everything. And all your social stuff can, and since you do social media stuff, you can have it feed to your page and stuff. 
+So like, that's how you do it. And... But how so tell me how do you like that's what I think is interesting So if somebody goes to your Instagram, how do they get to you from there?
+Speaker 2 | 00:47
+You can message me directly on there. You could call me. You could jump in, book your own appointment online and never have to even talk to me at all.
+Speaker 1 | 00:56
+On Instagram? How do you do that?
+Speaker 2 | 00:59
+So... From Instagram, it'll open you up this link. 
+And then you hit contact us. What is.
+Speaker 1 | 01:08
+That link? Okay, what is that link? It's I.
+Speaker 2 | 01:17
+It just says contact.
+Speaker 1 | 01:18
+Us. Mogo.pet. Let me see the URL here. The website, the URL is booking.moego.pet. Is the domain. 
+So that's the one that processes what does mogo do like what so they go there and that just goes sends to that place where they can text you here so when it comes from there is it like does it notify you that it comes from there is it or Does it come with their info or anything like that?
+Speaker 2 | 01:44
+Yeah they can text me directly they can pick up the phone and call me or they can book an appointment entirely online and never have to talk to me until they get.
+Speaker 1 | 02:00
+Yeah, so.
+Speaker 2 | 02:00
+I'll get a drop-down notification. It shows up as Spot, that little dog icon, and it'll say, Eric Linder wants to book an appointment for his cat, Sasha. She requires a bath. 
+And then it'll say, Breed is this. Estimated weight is this. And it's all filled in. And it'll even tell me, did you sign my liability? Did you sign my safety waiver? Did you sign my fee waiver? 
+And then if you don't, it gives me... No.
+Speaker 1 | 02:26
+That's someone beating him on their own. I was like.
+Speaker 2 | 02:29
+Did you sign the waivers? And then if they don't sign the waivers, it gives me the ability to either start the appointment without the waiver signed. It says, hey, they're not, you're basically working on a waiver. And so I have to actually get rid of that waiver to even start the appointment.
+Speaker 1 | 02:44
+Do you have an onboarding process? Like first time you get a customer, what's the onboarding process like? 
+So I would imagine that you've got the people that come and you know they're coming. I mean, do you onboard them through the phone beforehand? I onboard.
+Speaker 2 | 03:00
+Them in person. So when they come, if they're a new client straight off the street, so when they come in, even though they've already, if they've booked online, already have all that and it just works. Streamlines the process, I just take the dog. But if they don't book online, they just call me or they text me, then I have to manually put that information in and it's literally like a profile. 
+So it'll come with dog's name, dog's age, breed, spayed or neutered, and then it'll have a behavioral category. And then the category.
+Speaker 1 | 03:29
+And then you have, I think you said something about like a Tablet, right? Where you have them do it signed by tablet or something?
+Speaker 2 | 03:38
+Yeah. So basically if they come in, it'll open up my fee. 
+So when I create their little profile, as I'm creating the profile, once I filled out the owner information, the dog.
+Speaker 1 | 03:45
+Information. What program do you use for the profile? MoGo. So you do it in MoGo? 
+Yeah. Do you use any other things? Okay, so continue with that. I'll ask you after.
+Speaker 2 | 03:54
+That. Yeah, so if I'm in person, I will have them, I will create the account myself on my tablet, and then I can just turn it around to them, and they can, with their fingers, sign my waivers and everything, and then I'm done. And that captures their information. If you pay for the Plus, it'll hold their information forever. If you don't pay for the Plus, it'll delete their information after 90 days. Of inactivity. I'm not currently paying for pleasure now. I was, but the price shot up to $180 a month. It used to be... 140 and then 110. And now it's like 180, so I'm not paying for it anymore.
+Speaker 1 | 04:28
+Okay, so Spot. Tell me how Spot worked. 
+So.
+Speaker 2 | 04:30
+Spot was an AI, and so what his job was, he connected my text messages, so he created a bridge, like a train track between everything. He caught my Facebook, he caught my Instagram. 
+And then so whenever I would put it in, it would read through my Google calendar. And then Spot connected to Google Calendar. And so he would say, okay, now I have his calendar. It would basically mirror that. - Mirror. - Big pitfall of that is that Big pitfall to that is that if you book something off, It doesn't know how to take a half day. 
+Like for some reason, whenever you do with Google, there is some sort of flaw where if you take even like an hour off, it's like blocked the whole day, no clients. So that was kind of a big pitfall right?
+Speaker 1 | 05:12
+To it. Do you remember who was in the spot was mogo too.
+Speaker 2 | 05:15
+Yes, Spot is the AI version of mogo, the premium platinum, whatever they want to call it. He comes with the most expensive tier.
+Speaker 1 | 05:23
+And I think that we determined that a big part of the draw for Mogo and Spot was that they did a lot of Google referral, right? So, like, when you... I think that the reason why it worked so well was because the... 
+You know, like when you look you up or when you look up breeding in your area or something, they were really good for search engine optimization, right?
+Speaker 2 | 05:53
+Yeah. I noticed that I couldn't find myself on Google until I had gotten MoGo and that felt like MoGo seemed to attached to my Facebook and be able to promote the Facebook. And it was higher up on Google. 
+Like I was on page three and I went to page one.
+Speaker 1 | 06:09
+Yeah, that's..
+Speaker 2 | 06:10
+Awesome. And so, but it comes with that $180 a month price tag.
+Speaker 1 | 06:18
+So it would, so yeah, I think that having the Google placement and stuff would be a big draw, but I'm going to ask the AI to figure out if it has a solution for that. I bet you anything that it does.
+Speaker 2 | 06:28
+To be clear though. I have never spent a penny on any sort of advertisement or anything or websites, domains, any of that. Everything has literally just been run off of Facebook and Instagram and word of mouth being in the community. 
+You know, making those connections.
+Speaker 1 | 06:48
+Okay. Is there anything that you think that - Spot would be just awesome if it did or anything you can think of that would be cool. 
+Like have you ever thought about something that you needed on your website? - Yes. - Yeah, go ahead.
+Speaker 2 | 07:03
+Take before and after pictures because here's the thing i am i really struggle like because i'm done with the client and i have to get to another client i'm usually like on the next thing by the time I'm done. I never remember to take after pictures and I can't tell how many clients will hit me up with, could you do the exact same thing as you did last time, but I haven't seen you in eight weeks. 
+So. I hope you have a picture of what last time was because I don't remember what I did.
+Speaker 1 | 07:31
+You have to talk closer to the mic, I think. Because it got really quiet.
+Speaker 2 | 07:35
+I want to be able for it to remind me to do a before and after picture. So whether it's at a check-in and then check out to complete the process.
+Speaker 1 | 07:46
+.. What about anything else that you can think of just, I wish I had an app that did this for me, or I wish I had an automation that did this for me. I wish that there was something that made this particular thing easier, that made this particular system talk to this other system. I wish that everything worked together and that would include my ex, you know that kind of.
+Speaker 2 | 08:08
+Thing. Yeah, okay, so one thing I like about Google but doesn't necessarily happen in Mogo is that when you're texting or responding and you're in the Mogo app it'll automatically book the appointment for you. However, if you are like in Google puts it in your calendar, Google puts it in your email and then there's just so many more reminders. 
+So if it could do that and say okay, Search in the text message and she said October 30th at 11 a.m. Something that like automatically I where I fail in with my AI is remembering to feed it to the other system. 
+I actually need help with that. I can't figure out what ads do better sometimes changing the wording. 
+Sometimes it'll be dry for a minute and I won't really like the ads won't pull anything in. So I have to start going to ChatGPT and rewording ads to figure out what people want and make it shorter, make it better.
+Speaker 1 | 09:19
+Don't talk about ChatGPT. I'm just kidding. We don't mention that. No, I'm just kidding... - What about, okay, so, Website, you don't have a domain name. 
+So like, you know, through the looking glass groomery. Nuevo. Have you ever paid attention to search engine optimization or anything like that? No?
+Speaker 2 | 09:48
+I have a really big public presence, so I go to other people's events and I make myself known there. So like the shelter, I'll go. 
+So then RCSD tags me and then it brings a lot of traction because I'm viewed on these posts.
+Speaker 1 | 10:03
+Okay, so here's the other thing that is I think a good thing to mention here is the 501c3 you want to start because... What she I mean tell you to talk about the plan but the gist of it is fostering animals from the county shelter in order to groom them, make them pink and purple and bright and pretty, and then send them back to the pound and with a big curb appeal, better curb appeal, right? Is there anything more to it than.
+Speaker 2 | 10:31
+That? I want to be able to focus on community outreach. I think the most important thing is keeping pets in their homes and helping the community really do that with resources and stuff like that. My other thing is that I like to adopt pets out of the shelter that are going to euthanized for things like needing a knee replacement, having a kidney stone, needing something, remove minor basic cosmetic things. 
+And then getting that done for them and then turning around and sending them back and adopting them out bright and shiny and ready to go to their new home.
+Speaker 1 | 11:03
+And then, of course, the social media marketing where she's like going to the pet shelter and, you know, doing all of this pro bono. And the goal is for that to be, you know. Complimentary, go viral, all kinds of stuff like that. I think the routine for the social media part is such a big part of that, because if you're not doing the social media, then you're doing a lot of that work for nothing other than just feeling good and doing it because you love doing it and stuff. But it's, you know, getting the most productive out of it. Okay, so the other thing, website. Through the looking glass, we would probably have to get a domain, but that's easy, and we can figure that out later. But... Alice in Wonderland themed. Right, you have lots of pictures of doggies? Yes, goats.
+Speaker 2 | 11:50
+Lots of pictures of dogs. Dogs and cats. And cats? And.
+Speaker 1 | 11:54
+Anything that you can think of? For the website that's needed. Search engine optimization.
+Speaker 2 | 12:03
+I would love to have like a boop for a dollar and like treat to the for a dollar.
+Speaker 1 | 12:08
+Shelter. Boop.
+Speaker 2 | 12:09
+I love it. Like in the treat for the shelter or something like that. Have it go to like. Giving like have it feel like a donation thing but track it on my page yeah Just something to kind of help with like Marketing, I.
+Speaker 1 | 12:19
+Okay. Anything else you can think of? 
+Guess. Yeah, any marketing help? Okay. Let's see. Let's see what happens.
