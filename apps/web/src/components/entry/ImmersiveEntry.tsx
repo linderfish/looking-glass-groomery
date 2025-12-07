@@ -1,7 +1,7 @@
 // apps/web/src/components/entry/ImmersiveEntry.tsx
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 
@@ -9,86 +9,39 @@ interface ImmersiveEntryProps {
   onEnter: () => void
 }
 
-interface AIImage {
-  url: string
-  loading: boolean
-}
-
-// Prompts for the cycling psychedelic backgrounds - focused on rabbit hole / magical doorway concept
-const ENTRY_PROMPTS = [
-  `A magical glowing rabbit hole entrance in a mystical forest, circular tunnel doorway framed by giant bioluminescent mushrooms and twisted tree roots, swirling purple and pink vortex visible through the opening, floating playing cards and pocket watches spiraling into the hole, ethereal mist and sparkles, Alice in Wonderland aesthetic, dreamy fantasy art, 4k digital painting, centered composition`,
-
-  `Enchanted doorway portal to wonderland, ornate arched entrance glowing with psychedelic colors, spiraling tunnel visible through the door leading to another dimension, giant colorful mushrooms and oversized roses on either side, Cheshire cat grin floating above, purple and teal aurora sky, magical sparkles and floating teacups, surreal fantasy digital art, cinematic lighting`,
-
-  `A dreamy looking glass mirror portal entrance, large ornate gilded mirror frame in a mystical garden, swirling iridescent vortex visible through the glass surface, bioluminescent flowers and mushrooms surrounding the frame, floating keys and playing cards, purple pink and gold color palette, Alice in Wonderland rabbit hole aesthetic, magical ethereal atmosphere, stunning fantasy art`,
+// Pre-generated static background images (no API calls needed)
+const ENTRY_BACKGROUNDS = [
+  '/backgrounds/entry-1.png',
+  '/backgrounds/entry-2.png',
+  '/backgrounds/entry-3.png',
 ]
 
 export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
-  const [images, setImages] = useState<AIImage[]>([
-    { url: '', loading: true },
-    { url: '', loading: true },
-    { url: '', loading: true },
-  ])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false])
   const [isHovering, setIsHovering] = useState(false)
   const [cookieEaten, setCookieEaten] = useState(false)
   const [shrinkPhase, setShrinkPhase] = useState(0)
 
-  // Generate AI images on mount
-  const generateImage = useCallback(async (promptIndex: number) => {
-    try {
-      console.log(`[ImmersiveEntry] Generating image ${promptIndex}...`)
-      const response = await fetch('/api/generate-background', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customPrompt: ENTRY_PROMPTS[promptIndex],
-        }),
-      })
-      const data = await response.json()
-      console.log(`[ImmersiveEntry] Response for image ${promptIndex}:`, data)
-
-      if (data.imageUrl) {
-        setImages(prev => {
-          const newImages = [...prev]
-          newImages[promptIndex] = { url: data.imageUrl, loading: false }
-          return newImages
-        })
-      } else if (data.fallback) {
-        console.log(`[ImmersiveEntry] Using fallback for image ${promptIndex}:`, data.message)
-        setImages(prev => {
-          const newImages = [...prev]
-          newImages[promptIndex] = { url: '', loading: false }
-          return newImages
-        })
-      }
-    } catch (err) {
-      console.error('[ImmersiveEntry] Failed to generate entry image:', err)
-      setImages(prev => {
-        const newImages = [...prev]
-        newImages[promptIndex] = { url: '', loading: false }
-        return newImages
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    // Generate all images in parallel
-    ENTRY_PROMPTS.forEach((_, index) => {
-      generateImage(index)
+  // Mark image as loaded
+  const handleImageLoad = (index: number) => {
+    setImagesLoaded(prev => {
+      const newLoaded = [...prev]
+      newLoaded[index] = true
+      return newLoaded
     })
-  }, [generateImage])
+  }
 
   // Cycle through images
   useEffect(() => {
     if (cookieEaten) return
 
     const interval = setInterval(() => {
-      setCurrentImageIndex(prev => (prev + 1) % images.length)
+      setCurrentImageIndex(prev => (prev + 1) % ENTRY_BACKGROUNDS.length)
     }, 8000) // Change every 8 seconds
 
     return () => clearInterval(interval)
-  }, [images.length, cookieEaten])
+  }, [cookieEaten])
 
   const handleCookieClick = () => {
     setCookieEaten(true)
@@ -103,15 +56,13 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
     setTimeout(() => onEnter(), 3500)
   }
 
-  const currentImage = images[currentImageIndex]
-
   return (
     <div className="fixed inset-0 overflow-hidden">
-      {/* AI Generated Backgrounds - Crossfading */}
+      {/* Static Pre-generated Backgrounds - Crossfading */}
       <div className="absolute inset-0">
-        {images.map((img, index) => (
+        {ENTRY_BACKGROUNDS.map((src, index) => (
           <AnimatePresence key={index}>
-            {img.url && index === currentImageIndex && (
+            {index === currentImageIndex && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -120,11 +71,12 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
                 className="absolute inset-0"
               >
                 <Image
-                  src={img.url}
+                  src={src}
                   alt="Wonderland"
                   fill
                   className="object-cover"
                   priority={index === 0}
+                  onLoad={() => handleImageLoad(index)}
                 />
               </motion.div>
             )}
@@ -132,7 +84,7 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
         ))}
 
         {/* Fallback gradient while loading */}
-        {images.every(img => img.loading || !img.url) && (
+        {!imagesLoaded.some(loaded => loaded) && (
           <div className="absolute inset-0 bg-gradient-to-br from-wonderland-bg via-alice-purple/20 to-psyche-pink/20">
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-alice-purple/10 to-transparent"
@@ -454,23 +406,6 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
         )}
       </AnimatePresence>
 
-      {/* Loading indicator */}
-      {images.some(img => img.loading) && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10"
-        >
-          <div className="flex items-center gap-2 text-white/60 text-sm">
-            <motion.div
-              className="w-2 h-2 bg-alice-purple rounded-full"
-              animate={{ scale: [1, 1.5, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            />
-            <span>Generating wonderland...</span>
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }
