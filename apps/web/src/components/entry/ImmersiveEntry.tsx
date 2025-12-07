@@ -1,7 +1,7 @@
 // apps/web/src/components/entry/ImmersiveEntry.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 
@@ -9,7 +9,7 @@ interface ImmersiveEntryProps {
   onEnter: () => void
 }
 
-// Pre-generated static background images - user's favorites (no API calls needed)
+// Pre-generated static background images - user's favorites (randomly selected on load)
 const ENTRY_BACKGROUNDS = [
   '/backgrounds/3mr_B6g8YqBNq1lSGdoy2.png',
   '/backgrounds/fULA8zSRF1yodRXjfcVxX.png',
@@ -18,31 +18,15 @@ const ENTRY_BACKGROUNDS = [
 ]
 
 export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([false, false, false, false])
+  // Pick a random background on mount (only once)
+  const [backgroundSrc] = useState(() =>
+    ENTRY_BACKGROUNDS[Math.floor(Math.random() * ENTRY_BACKGROUNDS.length)]
+  )
+  const [imageLoaded, setImageLoaded] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [cookieEaten, setCookieEaten] = useState(false)
   const [shrinkPhase, setShrinkPhase] = useState(0)
 
-  // Mark image as loaded
-  const handleImageLoad = (index: number) => {
-    setImagesLoaded(prev => {
-      const newLoaded = [...prev]
-      newLoaded[index] = true
-      return newLoaded
-    })
-  }
-
-  // Cycle through images
-  useEffect(() => {
-    if (cookieEaten) return
-
-    const interval = setInterval(() => {
-      setCurrentImageIndex(prev => (prev + 1) % ENTRY_BACKGROUNDS.length)
-    }, 8000) // Change every 8 seconds
-
-    return () => clearInterval(interval)
-  }, [cookieEaten])
 
   const handleCookieClick = () => {
     setCookieEaten(true)
@@ -59,33 +43,26 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
 
   return (
     <div className="fixed inset-0 overflow-hidden">
-      {/* Static Pre-generated Backgrounds - Crossfading */}
+      {/* Single Static Background - Randomly Selected */}
       <div className="absolute inset-0">
-        {ENTRY_BACKGROUNDS.map((src, index) => (
-          <AnimatePresence key={index}>
-            {index === currentImageIndex && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 2 }}
-                className="absolute inset-0"
-              >
-                <Image
-                  src={src}
-                  alt="Wonderland"
-                  fill
-                  className="object-cover"
-                  priority={index === 0}
-                  onLoad={() => handleImageLoad(index)}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        ))}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={backgroundSrc}
+            alt="Wonderland"
+            fill
+            className="object-cover"
+            priority
+            onLoad={() => setImageLoaded(true)}
+          />
+        </motion.div>
 
         {/* Fallback gradient while loading */}
-        {!imagesLoaded.some(loaded => loaded) && (
+        {!imageLoaded && (
           <div className="absolute inset-0 bg-gradient-to-br from-wonderland-bg via-alice-purple/20 to-psyche-pink/20">
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-alice-purple/10 to-transparent"
