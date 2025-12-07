@@ -45,15 +45,46 @@ export default function LookingGlassPage() {
     }
   }
 
-  const handleGenerate = async () => {
-    setStep('generating')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    // Simulate AI generation (in production, this would call fal.ai)
-    setTimeout(() => {
-      // For demo, use the uploaded image
-      setGeneratedPreview(uploadedImage)
+  const handleGenerate = async () => {
+    if (!uploadedImage || !selectedStyle) return
+
+    setStep('generating')
+    setIsGenerating(true)
+    setError(null)
+
+    try {
+      // Call the Looking Glass API with the pet photo
+      const response = await fetch('/api/looking-glass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: uploadedImage, // Base64 data URL from file upload
+          style: selectedStyle,
+          color: selectedColor,
+          customNotes: customNotes,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || 'Generation failed')
+      }
+
+      setGeneratedPreview(data.previewUrl)
       setStep('preview')
-    }, 3000)
+    } catch (err) {
+      console.error('Looking Glass error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to generate preview')
+      setStep('style') // Go back to style selection on error
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   return (
@@ -234,14 +265,28 @@ export default function LookingGlassPage() {
                 />
               </div>
 
+              {/* Error message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="card-wonderland p-4 bg-red-500/20 border border-red-500/50 text-center"
+                >
+                  <p className="text-red-300">{error}</p>
+                  <p className="text-wonderland-muted text-sm mt-2">
+                    Please try again or contact us to book directly.
+                  </p>
+                </motion.div>
+              )}
+
               {/* Generate button */}
               <div className="text-center">
                 <button
                   onClick={handleGenerate}
-                  disabled={!selectedStyle}
+                  disabled={!selectedStyle || isGenerating}
                   className="btn-wonderland text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Generate Preview 🪞
+                  {isGenerating ? 'Generating...' : 'Generate Preview 🪞'}
                 </button>
               </div>
             </motion.div>
