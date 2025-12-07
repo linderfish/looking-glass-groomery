@@ -1,20 +1,192 @@
 // apps/web/src/app/api/looking-glass/route.ts
 // All modes use FLUX Kontext Pro with careful prompting to preserve original pet
-// The key is VERY specific prompts that tell the AI exactly what to change and what to keep
+// Uses LLM prompt rewriter to optimize prompts for FLUX Kontext Pro
 // Supports both BFL direct API and fal.ai
 import { NextRequest, NextResponse } from 'next/server'
 
-// Get API key - prefer BFL direct, fallback to fal.ai
+// Get API key - prefer fal.ai, fallback to BFL direct
 function getApiConfig(): { type: 'bfl' | 'fal'; key: string } | null {
-  const bflKey = process.env.BFL_API_KEY
-  if (bflKey) {
-    return { type: 'bfl', key: bflKey }
-  }
   const falKey = process.env.FAL_KEY || process.env.FAL_AI_KEY
   if (falKey) {
     return { type: 'fal', key: falKey }
   }
+  const bflKey = process.env.BFL_API_KEY
+  if (bflKey) {
+    return { type: 'bfl', key: bflKey }
+  }
   return null
+}
+
+// =============================================================================
+// LLM PROMPT REWRITER - Optimizes user requests for FLUX Kontext Pro
+// Uses Claude to transform casual user descriptions into properly structured
+// FLUX Kontext Pro prompts with expert-level detail
+// =============================================================================
+const FLUX_KONTEXT_SYSTEM_PROMPT = `You are an expert prompt engineer for FLUX Kontext Pro, an AI image editing model by Black Forest Labs.
+
+Your job is to transform casual user requests for creative dog grooming into highly detailed, expert-level FLUX Kontext Pro prompts.
+
+## CRITICAL: How FLUX Kontext Pro Works
+
+FLUX Kontext Pro ALREADY SEES the input image. You do NOT need to describe what's already there.
+Instead, describe ONLY what should CHANGE and what should STAY THE SAME.
+
+## The Three-Layer Prompt Framework
+
+Every prompt MUST have these three layers:
+
+1. **ACTION LAYER** - What to do, with extreme specificity:
+   - BAD: "add hearts"
+   - GOOD: "Add red heart-shaped patterns dyed into the dog's fur on the body and sides only"
+
+2. **CONTEXT LAYER** - HOW it should look, describing the realistic appearance:
+   - BAD: (nothing)
+   - GOOD: "The hearts should look like professional pet-safe temporary dye that has absorbed into the fur texture - soft edges, following the natural fur direction, not flat stickers or stamps"
+
+3. **PRESERVATION LAYER** - What must NOT change (be exhaustive):
+   - BAD: "keep the face the same"
+   - GOOD: "Keep the dog's face completely natural and unchanged. Do not add or remove any body parts. Maintain the exact same body shape, pose, tail, legs, ears, background, lighting, and composition as the original image."
+
+## Translating Abstract Concepts to Concrete Visuals
+
+Users say abstract things. You must translate to SPECIFIC VISUAL INSTRUCTIONS:
+
+- "christmas vibe" → "Add bright green dyed fur on the ear tips and a green dyed patch on the chest area, combined with red hearts, creating a Christmas red-and-green color scheme"
+- "valentine's day" → "Add pink and red heart patterns with soft pink tinted fur sections"
+- "halloween" → "Add orange and black colored sections with small bat or pumpkin shapes"
+- "rainbow" → "Add rainbow gradient dyed fur transitioning from red to orange to yellow to green to blue to purple across the body"
+- "galaxy/cosmic" → "Add deep purple and blue dyed sections with small white dot patterns like stars"
+- "patriotic" → "Add red, white, and blue dyed fur sections in bold stripes or star patterns"
+
+## Pattern Appearance Rules
+
+When adding patterns (hearts, stars, paw prints, etc.):
+- Patterns should look DYED INTO the fur, not painted ON TOP
+- Describe: "soft edges, following the natural fur direction"
+- Describe: "absorbed into the fur texture"
+- Explicitly say: "not flat stickers, stamps, or decals"
+- Patterns should be scattered naturally, not in a perfect grid
+
+## Absolute Preservation Rules
+
+ALWAYS include ALL of these in the preservation layer:
+- "Keep the dog's face completely natural and unchanged"
+- "Do not add or remove any body parts"
+- "Maintain the exact same body shape, pose, background, lighting, and composition"
+- "The result should look like a real photograph"
+
+## Example Transformations
+
+USER INPUT: "red hearts, christmas vibe"
+YOUR OUTPUT: Add red heart-shaped patterns dyed into the dog's fur on the body and sides only. The hearts should look like professional pet-safe temporary dye that has absorbed into the fur texture - soft edges, following the natural fur direction, not flat stickers. Add bright green dyed fur on the ear tips and a green dyed stripe on the chest area for a Christmas red-and-green color scheme. Keep the dog's face completely natural and unchanged. Do not add or remove any body parts - maintain the exact same body shape, pose, tail, legs, ears, background, lighting, and composition as the original image. The result should look like a real photograph of a professionally groomed dog with creative color work.
+
+USER INPUT: "pink and purple"
+YOUR OUTPUT: Add soft pink and purple dyed fur to the dog's body, blending the colors naturally across different sections of the coat. The dye should look like professional pet-safe color that has absorbed into the fur texture, following the natural fur direction with soft gradients between colors. Keep the dog's face completely natural with no color. Do not add or remove any body parts - maintain the exact same body shape, pose, background, lighting, and composition as the original image. The result should look like a real photograph.
+
+USER INPUT: "rainbow ears"
+YOUR OUTPUT: Add rainbow gradient dyed fur to the dog's ears only, transitioning smoothly from red to orange to yellow to green to blue to purple. The color should look like professional pet-safe dye absorbed into the fur texture with soft blended edges. Keep the rest of the dog's body and face completely natural and unchanged. Do not add or remove any body parts - maintain the exact same body shape, pose, background, lighting, and composition as the original image.
+
+## Output Format
+
+Return ONLY the optimized prompt. No explanations, no quotes, no markdown, just the prompt text ready to send to FLUX Kontext Pro.`
+
+async function rewritePromptWithLLM(userDescription: string, mode: 'creative' | 'grooming' | 'ai-designer', style?: string): Promise<string | null> {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY
+
+  // If no Anthropic key, fall back to basic prompt building
+  if (!anthropicKey) {
+    console.log('No ANTHROPIC_API_KEY - using basic prompt builder')
+    return null
+  }
+
+  let userMessage: string
+
+  if (mode === 'creative') {
+    userMessage = `Transform this user request into an optimized FLUX Kontext Pro prompt:
+
+"${userDescription}"
+
+Apply all the rules from your training. Output ONLY the prompt.`
+  } else if (mode === 'grooming') {
+    const styleDescriptions: Record<string, string> = {
+      teddy: 'teddy bear cut - round fluffy face, even plush fur all over',
+      lion: 'lion cut - full mane around face/neck, shorter body fur',
+      asian: 'Asian fusion - perfectly round face, fluffy rounded cheeks',
+      breed: 'breed standard show cut - precise angles, competition quality',
+      puppy: 'puppy cut - even length all over, soft natural look',
+    }
+    userMessage = `Transform this grooming style request into an optimized FLUX Kontext Pro prompt:
+
+Style requested: ${style} (${styleDescriptions[style || 'teddy'] || 'standard grooming'})
+
+Remember:
+- This changes the fur SHAPE, not color
+- Keep the dog's face, eyes, nose, expression identical
+- Only modify fur length and shape
+- Preserve exact pose and background`
+  } else {
+    // ai-designer mode
+    const designDescriptions: Record<string, string> = {
+      whimsical: 'soft pastel pink and lavender, fairy-tale magical feeling',
+      bold: 'vibrant hot pink and electric blue, vivid saturated colors',
+      elegant: 'rose gold and champagne tones, sophisticated and refined',
+      rainbow: 'full rainbow gradient - red, orange, yellow, green, blue, purple',
+      seasonal: 'Christmas theme - red and green with small heart patterns',
+    }
+    userMessage = `Transform this AI-designed color theme into an optimized FLUX Kontext Pro prompt:
+
+Theme: ${style} (${designDescriptions[style || 'whimsical'] || 'creative colors'})
+
+Remember:
+- Apply color to body fur, keep face natural
+- Colors should look like professional pet-safe dye
+- Preserve exact pose, background, fur texture
+- The dog must be clearly recognizable`
+  }
+
+  try {
+    console.log('Rewriting prompt with Claude...')
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: FLUX_KONTEXT_SYSTEM_PROMPT,
+        messages: [
+          { role: 'user', content: userMessage }
+        ],
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Claude API error:', response.status, errorText)
+      return null
+    }
+
+    const data = await response.json()
+    const rewrittenPrompt = data.content?.[0]?.text?.trim()
+
+    if (!rewrittenPrompt) {
+      console.error('No prompt in Claude response')
+      return null
+    }
+
+    console.log('=== LLM REWRITTEN PROMPT ===')
+    console.log(rewrittenPrompt)
+    console.log('=== END PROMPT ===')
+    return rewrittenPrompt
+
+  } catch (error) {
+    console.error('LLM rewrite error:', error)
+    return null
+  }
 }
 
 // =============================================================================
@@ -291,14 +463,18 @@ export async function POST(request: NextRequest) {
     // GROOMING MODE - Changes fur shape (most invasive)
     // =======================================================================
     if (mode === 'grooming') {
-      prompt = GROOMING_STYLE_PROMPTS[style] || GROOMING_STYLE_PROMPTS.teddy
+      // Try LLM rewrite first, fall back to static prompts
+      const rewritten = await rewritePromptWithLLM('', 'grooming', style)
+      prompt = rewritten || GROOMING_STYLE_PROMPTS[style] || GROOMING_STYLE_PROMPTS.teddy
       disclaimer = 'AI-generated grooming style preview. Your pet\'s actual results will be tailored by our professional groomer.'
     }
     // =======================================================================
     // AI DESIGNER MODE - Predefined color themes
     // =======================================================================
     else if (mode === 'ai-designer') {
-      prompt = AI_DESIGNER_PROMPTS[designStyle] || AI_DESIGNER_PROMPTS.whimsical
+      // Try LLM rewrite first, fall back to static prompts
+      const rewritten = await rewritePromptWithLLM('', 'ai-designer', designStyle)
+      prompt = rewritten || AI_DESIGNER_PROMPTS[designStyle] || AI_DESIGNER_PROMPTS.whimsical
       disclaimer = 'AI-generated color preview showing how pet-safe dye colors could look on your pet.'
     }
     // =======================================================================
@@ -311,7 +487,9 @@ export async function POST(request: NextRequest) {
           error: 'Please describe what colors or patterns you want',
         }, { status: 400 })
       }
-      prompt = buildCreativePrompt(colorDescription)
+      // Try LLM rewrite first - this is where it matters most!
+      const rewritten = await rewritePromptWithLLM(colorDescription, 'creative')
+      prompt = rewritten || buildCreativePrompt(colorDescription)
       disclaimer = 'AI-generated creative color preview based on your description. Actual results crafted by our professional groomer.'
     }
     // =======================================================================
@@ -324,7 +502,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log('Built prompt:', prompt.substring(0, 150) + '...')
+    console.log('Final prompt:', prompt.substring(0, 150) + '...')
 
     // Generate with FLUX Kontext Pro
     const previewUrl = await generateWithKontext(imageUrl, prompt, apiConfig)
