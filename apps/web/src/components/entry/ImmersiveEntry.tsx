@@ -44,6 +44,7 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
   // Generate AI images on mount
   const generateImage = useCallback(async (promptIndex: number) => {
     try {
+      console.log(`[ImmersiveEntry] Generating image ${promptIndex}...`)
       const response = await fetch('/api/generate-background', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,6 +53,7 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
         }),
       })
       const data = await response.json()
+      console.log(`[ImmersiveEntry] Response for image ${promptIndex}:`, data)
 
       if (data.imageUrl) {
         setImages(prev => {
@@ -59,9 +61,16 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
           newImages[promptIndex] = { url: data.imageUrl, loading: false }
           return newImages
         })
+      } else if (data.fallback) {
+        console.log(`[ImmersiveEntry] Using fallback for image ${promptIndex}:`, data.message)
+        setImages(prev => {
+          const newImages = [...prev]
+          newImages[promptIndex] = { url: '', loading: false }
+          return newImages
+        })
       }
     } catch (err) {
-      console.error('Failed to generate entry image:', err)
+      console.error('[ImmersiveEntry] Failed to generate entry image:', err)
       setImages(prev => {
         const newImages = [...prev]
         newImages[promptIndex] = { url: '', loading: false }
