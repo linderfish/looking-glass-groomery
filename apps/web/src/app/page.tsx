@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { EatMeCookie } from '@/components/entry/EatMeCookie'
 import { RabbitHole } from '@/components/entry/RabbitHole'
+import { AIBackground } from '@/components/effects/AIBackground'
 
 export default function EntryPage() {
   const [hasEntered, setHasEntered] = useState(false)
@@ -33,8 +34,11 @@ export default function EntryPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-wonderland-bg">
-      {/* Starfield background */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* AI-generated psychedelic entry background */}
+      <AIBackground scene="entry" priority />
+
+      {/* Starfield overlay */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
         {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
@@ -57,7 +61,7 @@ export default function EntryPage() {
       </div>
 
       {/* Checkerboard floor */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 checkerboard opacity-20 transform perspective-1000 rotateX-60" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 checkerboard opacity-20 transform perspective-1000 rotateX-60 z-[1]" />
 
       <AnimatePresence mode="wait">
         {!isAnimating ? (

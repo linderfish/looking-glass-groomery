@@ -2,7 +2,7 @@
 import { WonderlandNav } from '@/components/layout/WonderlandNav'
 import { CheshireChat } from '@/components/layout/CheshireChat'
 import { Footer } from '@/components/layout/Footer'
-import { BreathingBackground } from '@/components/effects/BreathingBackground'
+import { AIBackground } from '@/components/effects/AIBackground'
 
 export default function WonderlandLayout({
   children,
@@ -11,8 +11,8 @@ export default function WonderlandLayout({
 }) {
   return (
     <div className="relative min-h-screen">
-      {/* Animated background */}
-      <BreathingBackground />
+      {/* AI-generated immersive background with CSS fallback */}
+      <AIBackground scene="garden" />
 
       {/* Navigation */}
       <WonderlandNav />

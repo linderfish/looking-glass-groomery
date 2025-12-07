@@ -18,12 +18,23 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'fal.media',
       },
+      {
+        protocol: 'https',
+        hostname: 'fal.run',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.fal.run',
+      },
+      {
+        protocol: 'https',
+        hostname: 'v3.fal.media',
+      },
     ],
   },
   experimental: {
     optimizePackageImports: ['framer-motion', 'gsap'],
   },
-  transpilePackages: ['@looking-glass/db', '@looking-glass/shared', '@looking-glass/ai'],
 }
 
 module.exports = nextConfig
