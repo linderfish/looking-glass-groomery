@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Build a precise prompt that only does what the user asked
-      editPrompt = `${colorDescription.trim()}. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Only add the color described. No other changes.`
+      // Include realistic grooming constraints for dye application
+      editPrompt = `${colorDescription.trim()}. Apply this as a realistic pet-safe dye job that a professional groomer could actually achieve. Consider realistic limitations: dye bleeds between layers so avoid ultra-thin patterns, ears and face have delicate skin limiting color saturation, short fur areas show color differently than fluffy areas, and patterns must follow the natural fur growth direction. Keep the same dog, same face, same eye color, same nose, same background, same lighting, same fur shape and length. Only add the color described in a realistically achievable way. No other changes.`
 
     } else {
       // =======================================================================
