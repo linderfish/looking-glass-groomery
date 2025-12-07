@@ -1,0 +1,23 @@
+{
+  "name": "@looking-glass/cheshire",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir=dist --target=bun"
+  },
+  "dependencies": {
+    "@looking-glass/ai": "*",
+    "@looking-glass/db": "*",
+    "@looking-glass/shared": "*",
+    "@hono/zod-validator": "^0.4.0",
+    "hono": "^4.6.0",
+    "date-fns": "^4.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}

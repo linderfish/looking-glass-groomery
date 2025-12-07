@@ -1,0 +1,242 @@
+// apps/cheshire/src/routes/webhook.ts
+import { Hono } from 'hono'
+import {
+  getOrCreateConversation,
+  addMessage,
+  formatHistoryForLLM,
+} from '../services/conversation'
+import { detectIntent } from '../services/intent'
+import { generateResponse } from '../services/response'
+import { handleBookingFlow } from '../services/booking'
+import { ConversationChannel } from '@looking-glass/db'
+
+export const webhookRoutes = new Hono()
+
+// Instagram webhook verification
+webhookRoutes.get('/instagram', async (c) => {
+  const mode = c.req.query('hub.mode')
+  const token = c.req.query('hub.verify_token')
+  const challenge = c.req.query('hub.challenge')
+
+  const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('Instagram webhook verified')
+    return c.text(challenge || '')
+  }
+
+  return c.text('Verification failed', 403)
+})
+
+// Instagram incoming messages
+webhookRoutes.post('/instagram', async (c) => {
+  try {
+    const body = await c.req.json()
+
+    // Handle Instagram DM messages
+    if (body.object === 'instagram') {
+      for (const entry of body.entry || []) {
+        for (const messaging of entry.messaging || []) {
+          await handleInstagramMessage(messaging)
+        }
+      }
+    }
+
+    return c.text('EVENT_RECEIVED')
+  } catch (error) {
+    console.error('Instagram webhook error:', error)
+    return c.text('ERROR', 500)
+  }
+})
+
+// Facebook webhook verification
+webhookRoutes.get('/facebook', async (c) => {
+  const mode = c.req.query('hub.mode')
+  const token = c.req.query('hub.verify_token')
+  const challenge = c.req.query('hub.challenge')
+
+  const VERIFY_TOKEN = process.env.FACEBOOK_VERIFY_TOKEN
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('Facebook webhook verified')
+    return c.text(challenge || '')
+  }
+
+  return c.text('Verification failed', 403)
+})
+
+// Facebook Messenger incoming messages
+webhookRoutes.post('/facebook', async (c) => {
+  try {
+    const body = await c.req.json()
+
+    // Handle Messenger messages
+    if (body.object === 'page') {
+      for (const entry of body.entry || []) {
+        for (const messaging of entry.messaging || []) {
+          await handleFacebookMessage(messaging)
+        }
+      }
+    }
+
+    return c.text('EVENT_RECEIVED')
+  } catch (error) {
+    console.error('Facebook webhook error:', error)
+    return c.text('ERROR', 500)
+  }
+})
+
+/**
+ * Handle Instagram DM message
+ */
+async function handleInstagramMessage(messaging: {
+  sender: { id: string }
+  message?: { text: string; mid: string }
+}): Promise<void> {
+  if (!messaging.message?.text) return
+
+  const senderId = messaging.sender.id
+  const messageText = messaging.message.text
+
+  console.log(`Instagram message from ${senderId}: ${messageText}`)
+
+  // Process message through Cheshire
+  const response = await processChannelMessage(
+    'INSTAGRAM',
+    senderId,
+    messageText
+  )
+
+  // Send response back via Instagram API
+  await sendInstagramReply(senderId, response)
+}
+
+/**
+ * Handle Facebook Messenger message
+ */
+async function handleFacebookMessage(messaging: {
+  sender: { id: string }
+  message?: { text: string; mid: string }
+}): Promise<void> {
+  if (!messaging.message?.text) return
+
+  const senderId = messaging.sender.id
+  const messageText = messaging.message.text
+
+  console.log(`Facebook message from ${senderId}: ${messageText}`)
+
+  // Process message through Cheshire
+  const response = await processChannelMessage(
+    'FACEBOOK',
+    senderId,
+    messageText
+  )
+
+  // Send response back via Facebook API
+  await sendFacebookReply(senderId, response)
+}
+
+/**
+ * Process a message from any channel through Cheshire
+ */
+async function processChannelMessage(
+  channel: ConversationChannel,
+  externalId: string,
+  message: string
+): Promise<string> {
+  // Get or create conversation
+  const conversation = await getOrCreateConversation(channel, externalId)
+
+  // Add user message
+  await addMessage(conversation.id, 'USER', message)
+
+  // Get history
+  const history = formatHistoryForLLM(conversation.messages)
+
+  // Detect intent
+  const intent = await detectIntent(message, history)
+
+  // Generate response based on intent
+  let response: string
+
+  if (intent.intent === 'BOOKING') {
+    response = await handleBookingFlow(message, conversation, intent)
+  } else {
+    response = await generateResponse(message, {
+      conversationHistory: history,
+      intent,
+    })
+  }
+
+  // Save response
+  await addMessage(conversation.id, 'ASSISTANT', response)
+
+  return response
+}
+
+/**
+ * Send reply via Instagram API
+ */
+async function sendInstagramReply(recipientId: string, message: string): Promise<void> {
+  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
+
+  if (!accessToken) {
+    console.error('Instagram access token not configured')
+    return
+  }
+
+  const url = `https://graph.instagram.com/v18.0/me/messages`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text: message },
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Instagram API error:', error)
+    }
+  } catch (error) {
+    console.error('Failed to send Instagram reply:', error)
+  }
+}
+
+/**
+ * Send reply via Facebook Messenger API
+ */
+async function sendFacebookReply(recipientId: string, message: string): Promise<void> {
+  const accessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+
+  if (!accessToken) {
+    console.error('Facebook page access token not configured')
+    return
+  }
+
+  const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${accessToken}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text: message },
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Facebook API error:', error)
+    }
+  } catch (error) {
+    console.error('Failed to send Facebook reply:', error)
+  }
+}
