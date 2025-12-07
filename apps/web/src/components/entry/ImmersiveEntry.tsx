@@ -90,33 +90,145 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
         />
       </div>
 
-      {/* Floating particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              x: [0, Math.random() * 20 - 10, 0],
-              opacity: [0.3, 0.8, 0.3],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          >
-            <span className="text-xl opacity-60">
-              {['✨', '🌟', '💫', '⭐', '🦋', '🍄', '🃏', '🫖', '🔮'][Math.floor(Math.random() * 9)]}
-            </span>
-          </motion.div>
-        ))}
+      {/* Swirling particles - falling into rabbit hole effect */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Outer ring of swirling elements - slow, large orbit */}
+        {[...Array(12)].map((_, i) => {
+          const angle = (i / 12) * 360
+          const delay = i * 0.3
+          const duration = 20 + Math.random() * 5
+          const size = 24 + Math.random() * 12
+          const icons = ['✨', '🌟', '🦋', '🍄', '🃏', '🫖', '🔮', '💫', '⭐', '🌸', '🎀', '🗝️']
+          return (
+            <motion.div
+              key={`outer-${i}`}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: size }}
+              animate={{
+                rotate: [angle, angle + 360],
+                x: [0, 0],
+                y: [0, 0],
+              }}
+              transition={{
+                rotate: { duration, repeat: Infinity, ease: 'linear' },
+              }}
+            >
+              <motion.span
+                className="absolute opacity-40"
+                style={{
+                  transform: `translateX(${35 + Math.random() * 10}vw)`,
+                }}
+                animate={{
+                  opacity: [0.2, 0.5, 0.2],
+                  scale: [0.8, 1.1, 0.8],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  delay,
+                }}
+              >
+                {icons[i]}
+              </motion.span>
+            </motion.div>
+          )
+        })}
+
+        {/* Middle ring - medium speed */}
+        {[...Array(10)].map((_, i) => {
+          const angle = (i / 10) * 360 + 18
+          const delay = i * 0.2
+          const duration = 15 + Math.random() * 3
+          const size = 20 + Math.random() * 8
+          const icons = ['🦋', '💫', '✨', '🍄', '🌟', '🔮', '🃏', '⭐', '🫖', '🌙']
+          return (
+            <motion.div
+              key={`middle-${i}`}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: size }}
+              animate={{
+                rotate: [angle, angle + 360],
+              }}
+              transition={{
+                rotate: { duration, repeat: Infinity, ease: 'linear' },
+              }}
+            >
+              <motion.span
+                className="absolute opacity-50"
+                style={{
+                  transform: `translateX(${22 + Math.random() * 8}vw)`,
+                }}
+                animate={{
+                  opacity: [0.3, 0.6, 0.3],
+                  scale: [0.9, 1.2, 0.9],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay,
+                }}
+              >
+                {icons[i]}
+              </motion.span>
+            </motion.div>
+          )
+        })}
+
+        {/* Inner ring - faster, smaller orbit */}
+        {[...Array(8)].map((_, i) => {
+          const angle = (i / 8) * 360 + 22.5
+          const delay = i * 0.15
+          const duration = 10 + Math.random() * 2
+          const size = 16 + Math.random() * 6
+          const icons = ['✨', '💫', '🦋', '⭐', '🌟', '🔮', '🍄', '🌸']
+          return (
+            <motion.div
+              key={`inner-${i}`}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: size }}
+              animate={{
+                rotate: [angle, angle + 360],
+              }}
+              transition={{
+                rotate: { duration, repeat: Infinity, ease: 'linear' },
+              }}
+            >
+              <motion.span
+                className="absolute opacity-60"
+                style={{
+                  transform: `translateX(${12 + Math.random() * 5}vw)`,
+                }}
+                animate={{
+                  opacity: [0.4, 0.7, 0.4],
+                  scale: [1, 1.3, 1],
+                }}
+                transition={{
+                  duration: 2.5,
+                  repeat: Infinity,
+                  delay,
+                }}
+              >
+                {icons[i]}
+              </motion.span>
+            </motion.div>
+          )
+        })}
+
+        {/* Subtle swirling vortex overlay */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'conic-gradient(from 0deg at 50% 50%, transparent 0%, rgba(139, 92, 246, 0.03) 25%, transparent 50%, rgba(236, 72, 153, 0.03) 75%, transparent 100%)',
+          }}
+          animate={{
+            rotate: [0, 360],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
       </div>
 
       {/* Main Content - Shrinks when cookie eaten */}
