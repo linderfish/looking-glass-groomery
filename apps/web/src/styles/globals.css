@@ -28,26 +28,40 @@
 @layer components {
   .btn-wonderland {
     @apply px-6 py-3 rounded-full font-display text-lg transition-all duration-300;
-    @apply bg-gradient-to-r from-alice-purple to-psyche-pink;
+    @apply bg-gradient-to-r from-alice-purple to-psyche-pink text-white font-semibold;
     @apply hover:scale-105 hover:shadow-lg hover:shadow-alice-purple/50;
     @apply active:scale-95;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   }
 
   .card-wonderland {
-    @apply bg-wonderland-card rounded-2xl border border-alice-purple/20;
-    @apply backdrop-blur-sm shadow-lg shadow-alice-purple/5;
+    @apply bg-wonderland-card/90 rounded-2xl border border-alice-purple/20;
+    @apply backdrop-blur-md shadow-lg shadow-alice-purple/5;
     @apply transition-all duration-300 hover:border-alice-purple/40;
   }
 
   .text-gradient {
     @apply bg-gradient-to-r from-alice-gold via-alice-pink to-alice-purple;
     @apply bg-clip-text text-transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
   }
 
   .text-psychedelic {
     @apply bg-gradient-to-r from-psyche-pink via-psyche-purple to-psyche-blue;
     @apply bg-clip-text text-transparent;
     animation: colorShift 10s ease infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  /* Ensure text is always readable against any background */
+  .text-readable {
+    @apply text-white;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  .text-readable-muted {
+    @apply text-white/90;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
   }
 
   .glow-effect {

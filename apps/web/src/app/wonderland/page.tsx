@@ -65,7 +65,7 @@ export default function WonderlandHome() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="font-body text-xl md:text-2xl text-wonderland-muted max-w-2xl mx-auto mb-12"
+            className="font-body text-xl md:text-2xl text-white max-w-2xl mx-auto mb-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
           >
             Where every pet becomes a masterpiece. Professional grooming with a
             touch of magic in Nuevo, CA.
@@ -77,12 +77,12 @@ export default function WonderlandHome() {
             transition={{ delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link href="/wonderland/looking-glass" className="btn-wonderland">
+            <Link href="/wonderland/looking-glass" className="btn-wonderland text-white font-semibold">
               Try the Looking Glass 🪞
             </Link>
             <Link
               href="/wonderland/services"
-              className="px-6 py-3 rounded-full font-display text-lg border border-alice-purple text-alice-purple hover:bg-alice-purple/10 transition-colors"
+              className="px-6 py-3 rounded-full font-display text-lg border-2 border-white text-white bg-wonderland-bg/50 backdrop-blur-sm hover:bg-white/20 transition-colors drop-shadow-lg"
             >
               View Services
             </Link>

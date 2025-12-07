@@ -16,17 +16,18 @@ interface AIImage {
 
 // Prompts for the cycling psychedelic backgrounds
 const ENTRY_PROMPTS = [
-  `Surreal Alice in Wonderland dreamscape, giant psychedelic mushrooms glowing with bioluminescence,
-   swirling purple and pink nebula sky, floating playing cards and pocket watches,
-   ethereal mist, checkerboard ground fading into infinity, magical portal, 4k digital art`,
+  `Magical whimsical pet grooming salon exterior at twilight, ornate Victorian building with a large elegant sign reading "Through The Looking Glass Groomery" in gold cursive lettering above the entrance,
+   giant psychedelic mushrooms glowing with bioluminescence around the entrance, swirling purple and pink nebula sky,
+   floating playing cards and pocket watches, ethereal mist, checkerboard pathway leading to door, Alice in Wonderland aesthetic, 4k digital art`,
 
-  `Trippy rabbit hole tunnel, spiraling geometric patterns in purple pink and teal,
-   floating teacups and roses, Cheshire cat eyes glowing in the darkness,
-   kaleidoscopic colors, surreal fantasy art, psychedelic wonderland`,
+  `Enchanted wonderland pet spa palace, grand entrance with illuminated marquee sign "Through The Looking Glass Groomery",
+   trippy rabbit hole tunnel entrance, spiraling geometric patterns in purple pink and teal,
+   floating teacups and grooming scissors, Cheshire cat grin floating above the sign,
+   kaleidoscopic colors, surreal fantasy art, psychedelic wonderland, professional signage`,
 
-  `Enchanted wonderland garden at night, oversized glowing flowers in impossible colors,
-   floating lanterns, magical sparkles, purple sky with aurora,
-   dreamy ethereal atmosphere, Alice in Wonderland aesthetic, stunning digital art`,
+  `Dreamy Alice in Wonderland themed pet salon at night, beautiful storefront with glowing neon sign "Through The Looking Glass Groomery",
+   oversized glowing roses and flowers framing the entrance, floating lanterns and magical sparkles,
+   purple aurora sky, pets silhouettes in windows, whimsical architecture, stunning digital art, clear readable text on sign`,
 ]
 
 export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
@@ -139,8 +140,8 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
           </div>
         )}
 
-        {/* Dreamy overlay */}
-        <div className="absolute inset-0 bg-gradient-radial from-transparent via-wonderland-bg/30 to-wonderland-bg/80" />
+        {/* Dreamy overlay - darker for better text readability */}
+        <div className="absolute inset-0 bg-gradient-radial from-wonderland-bg/40 via-wonderland-bg/50 to-wonderland-bg/90" />
 
         {/* Animated color wash */}
         <motion.div
@@ -204,44 +205,49 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
           ease: 'easeIn',
         }}
       >
-        {/* Title */}
+        {/* Title with dark backdrop for readability */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 1 }}
-          className="text-center mb-12"
+          className="text-center mb-12 px-4"
         >
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl mb-4">
-            <motion.span
-              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold"
-              animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-              style={{ backgroundSize: '200% 200%' }}
+          {/* Title background for better contrast */}
+          <div className="relative inline-block">
+            <div className="absolute inset-0 bg-wonderland-bg/60 backdrop-blur-sm rounded-3xl -m-6" />
+            <h1 className="relative font-display text-5xl md:text-7xl lg:text-8xl mb-4 p-4" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)' }}>
+              <motion.span
+                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+                style={{ backgroundSize: '200% 200%', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
+              >
+                Through the
+              </motion.span>
+              <br />
+              <motion.span
+                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue"
+                animate={{
+                  backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+                style={{ backgroundSize: '200% 200%', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
+              >
+                Looking Glass
+              </motion.span>
+            </h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="relative font-whimsy text-xl md:text-2xl text-white pb-2"
+              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}
             >
-              Through the
-            </motion.span>
-            <br />
-            <motion.span
-              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue"
-              animate={{
-                backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-              style={{ backgroundSize: '200% 200%' }}
-            >
-              Looking Glass
-            </motion.span>
-          </h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="font-whimsy text-xl md:text-2xl text-white/80 drop-shadow-lg"
-          >
-            Where every pet becomes a work of art
-          </motion.p>
+              Where every pet becomes a work of art
+            </motion.p>
+          </div>
         </motion.div>
 
         {/* Enhanced Eat Me Cookie */}

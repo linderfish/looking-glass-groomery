@@ -5,9 +5,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "regions": ["sfo1"],
-  "env": {
-    "CHESHIRE_API_URL": "@cheshire-api-url"
-  },
   "headers": [
     {
       "source": "/(.*)",
