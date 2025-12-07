@@ -1,0 +1,131 @@
+// apps/telegram-bot/src/index.ts
+import { bot, KIMMIE_CHAT_ID } from './bot'
+import {
+  bookingsHandler,
+  remindersHandler,
+  achievementsHandler,
+  sendRandomHype,
+} from './handlers'
+import {
+  checkForEasterEggTrigger,
+  getEasterEggResponse,
+  getRandomEasterEgg,
+} from './services/kimmie-persona'
+
+// Register handlers
+bot.use(bookingsHandler)
+bot.use(remindersHandler)
+bot.use(achievementsHandler)
+
+// Start command
+bot.command('start', async (ctx) => {
+  await ctx.reply(
+    `✨ *slowly materializes* ✨
+
+Well, well, well~ Look who's here!
+
+Hey gorgeous! 👋 I'm your Cheshire assistant, here to make your grooming life FABULOUS.
+
+Here's what I can do for you:
+📅 Notify you about new bookings
+📸 Remind you about before/after photos
+🏆 Track your achievements
+📊 Show your stats
+
+Commands:
+/stats - View your stats
+/achievements - See your trophy case
+/hype - Get some motivation
+
+Let's make magic happen, queen! 👑`,
+    { parse_mode: 'HTML' }
+  )
+})
+
+// Help command
+bot.command('help', async (ctx) => {
+  await ctx.reply(
+    `🐱 <b>Cheshire Cat Help</b> 🐱
+
+<b>Commands:</b>
+/start - Wake me up
+/stats - View your grooming stats
+/achievements - See unlocked achievements
+/hype - Get a random motivation boost
+
+<b>How I Work:</b>
+• I'll notify you when new bookings come in
+• I'll remind you to take before/after photos
+• Send me photos anytime and I'll help organize them
+• I track your streaks and achievements automatically
+
+<b>Easter Eggs:</b>
+Try mentioning Pokemon, Grey's Anatomy, dinosaurs, lizards, or Mormon Wives... 😼
+
+Questions? Just ask! I'm always here~ ✨`,
+    { parse_mode: 'HTML' }
+  )
+})
+
+// Random response to unhandled messages
+bot.on('message:text', async (ctx) => {
+  const text = ctx.message.text
+
+  // Check for easter eggs first
+  const easterEgg = checkForEasterEggTrigger(text)
+  if (easterEgg) {
+    await ctx.reply(getEasterEggResponse(easterEgg))
+    return
+  }
+
+  // Generic responses
+  const responses = [
+    "I heard you! Not sure what to do with that though... 😸 Try /help?",
+    "*tilts head* Interesting! But I'm not sure how to help with that~ Try /help!",
+    "Ooh, words! I love words. But these ones confuse me 😹 /help has my tricks!",
+    "My Cheshire brain is still learning~ Check /help for what I can do!",
+  ]
+
+  const response = responses[Math.floor(Math.random() * responses.length)]
+  await ctx.reply(response)
+
+  // Small chance of random easter egg
+  if (Math.random() < 0.05) {
+    await ctx.reply(getRandomEasterEgg())
+  }
+})
+
+// Error handling
+bot.catch((err) => {
+  console.error('Bot error:', err)
+})
+
+// Start the bot
+async function start() {
+  console.log('🐱 Cheshire Cat is waking up...')
+  console.log(`📱 Configured for chat ID: ${KIMMIE_CHAT_ID}`)
+
+  // Start polling
+  await bot.start({
+    onStart: (botInfo) => {
+      console.log(`✨ @${botInfo.username} is now online!`)
+      console.log('Ready to serve the queen~ 👑')
+    },
+  })
+}
+
+// Graceful shutdown
+process.once('SIGINT', () => {
+  console.log('\n😿 Cheshire Cat is fading away...')
+  bot.stop()
+})
+
+process.once('SIGTERM', () => {
+  console.log('\n😿 Cheshire Cat is fading away...')
+  bot.stop()
+})
+
+start().catch((err) => {
+  console.error('Failed to start bot:', err)
+  process.exit(1)
+})
