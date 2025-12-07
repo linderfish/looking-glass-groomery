@@ -1,7 +1,8 @@
 // apps/web/src/app/api/generate-background/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-const FAL_AI_KEY = process.env.FAL_AI_KEY
+// Support both FAL_KEY (official) and FAL_AI_KEY (our custom name)
+const FAL_AI_KEY = process.env.FAL_KEY || process.env.FAL_AI_KEY
 
 // Predefined prompts for different scenes in Wonderland
 const WONDERLAND_PROMPTS: Record<string, string> = {
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     // If no API key, return a placeholder/fallback
     if (!FAL_AI_KEY) {
+      console.log('No FAL_KEY or FAL_AI_KEY found in environment')
       return NextResponse.json({
         imageUrl: null,
         fallback: true,
@@ -63,8 +65,10 @@ export async function POST(request: NextRequest) {
 
     const prompt = customPrompt || WONDERLAND_PROMPTS[scene] || WONDERLAND_PROMPTS.entry
 
-    // Call fal.ai Nano Banana model
-    const response = await fetch('https://fal.run/fal-ai/nano-banana', {
+    console.log('Calling fal.ai with prompt:', prompt.substring(0, 100) + '...')
+
+    // Call fal.ai Nano Banana Pro model (better text rendering)
+    const response = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
       method: 'POST',
       headers: {
         'Authorization': `Key ${FAL_AI_KEY}`,
@@ -80,11 +84,12 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error('fal.ai error:', error)
-      throw new Error(`fal.ai API error: ${response.status}`)
+      console.error('fal.ai error response:', response.status, error)
+      throw new Error(`fal.ai API error: ${response.status} - ${error}`)
     }
 
     const data = await response.json()
+    console.log('fal.ai response:', JSON.stringify(data).substring(0, 200))
     const imageUrl = data.images?.[0]?.url
 
     if (!imageUrl) {
