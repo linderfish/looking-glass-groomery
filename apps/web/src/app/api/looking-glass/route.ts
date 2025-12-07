@@ -5,24 +5,24 @@ function getFalApiKey(): string | undefined {
   return process.env.FAL_KEY || process.env.FAL_AI_KEY
 }
 
-// Edit prompts for Nano Banana Pro - ONLY change the fur/grooming, nothing else
+// Edit prompts for Nano Banana Pro - very minimal, specific edits only
 const STYLE_EDIT_PROMPTS: Record<string, string> = {
-  teddy: 'Only change the fur grooming style to a teddy bear cut with round fluffy face and soft plush fur. Do not change the background, pose, eyes, nose, or any other features. Keep everything else exactly the same.',
-  lion: 'Only change the fur grooming style to a lion cut with fluffy mane around face and short trimmed body fur. Do not change the background, pose, eyes, nose, or any other features. Keep everything else exactly the same.',
-  asian: 'Only change the fur grooming style to Asian fusion style with perfectly round face shape and fluffy cheeks. Do not change the background, pose, eyes, nose, or any other features. Keep everything else exactly the same.',
-  creative: 'Only add colorful pet-safe dye to the fur in an artistic pattern. Do not change the background, pose, eyes, nose, fur shape, or any other features. Keep everything else exactly the same.',
-  breed: 'Only change the fur grooming to show-quality breed standard with clean precise lines. Do not change the background, pose, eyes, nose, or any other features. Keep everything else exactly the same.',
-  custom: 'Only change the fur to look professionally groomed and well-styled. Do not change the background, pose, eyes, nose, or any other features. Keep everything else exactly the same.',
+  teddy: 'Make the fur rounder and fluffier like a teddy bear grooming cut',
+  lion: 'Make the fur around the face and neck fuller like a lion mane, body fur shorter',
+  asian: 'Make the face fur rounder and cheeks fluffier in Asian grooming style',
+  creative: 'Keep the exact same image',
+  breed: 'Make the fur neat and precisely trimmed in show dog style',
+  custom: 'Make the fur look freshly groomed and neat',
 }
 
-// Color additions for creative style - minimal changes only
+// Color additions - only when creative style selected
 const COLOR_EDIT_ADDITIONS: Record<string, string> = {
-  pink: ' Add pink color only to the ear tips and tail.',
-  purple: ' Add purple color only to the ear tips and tail.',
-  blue: ' Add blue color only to the ear tips and tail.',
-  rainbow: ' Add rainbow pink purple blue gradient only to the ears and tail.',
-  teal: ' Add teal color only to the ear tips and tail.',
-  gold: ' Add golden highlights only to the ear tips.',
+  pink: ', dye the ear fur pink',
+  purple: ', dye the ear fur purple',
+  blue: ', dye the ear fur blue',
+  rainbow: ', dye the ears with rainbow colors',
+  teal: ', dye the ear fur teal',
+  gold: ', add golden blonde highlights to the fur',
 }
 
 export async function POST(request: NextRequest) {
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         num_images: 1,
         aspect_ratio: 'auto',
         output_format: 'png',
-        resolution: '1K',
+        resolution: '2K', // Higher resolution to avoid washed out look
       }),
     })
 
