@@ -249,49 +249,43 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
           ease: 'easeIn',
         }}
       >
-        {/* Title with dark backdrop for readability */}
+        {/* Title */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 1 }}
           className="text-center mb-12 px-4"
         >
-          {/* Title background for better contrast */}
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-wonderland-bg/60 backdrop-blur-sm rounded-3xl -m-6" />
-            <h1 className="relative font-display text-5xl md:text-7xl lg:text-8xl mb-4 p-4" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)' }}>
-              <motion.span
-                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold"
-                animate={{
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                }}
-                transition={{ duration: 5, repeat: Infinity }}
-                style={{ backgroundSize: '200% 200%', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
-              >
-                Through the
-              </motion.span>
-              <br />
-              <motion.span
-                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue"
-                animate={{
-                  backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
-                }}
-                transition={{ duration: 5, repeat: Infinity }}
-                style={{ backgroundSize: '200% 200%', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.8))' }}
-              >
-                Looking Glass
-              </motion.span>
-            </h1>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="relative font-whimsy text-xl md:text-2xl text-white pb-2"
-              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight">
+            <motion.span
+              className="block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold pb-2"
+              animate={{
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+              }}
+              transition={{ duration: 5, repeat: Infinity }}
+              style={{ backgroundSize: '200% 200%' }}
             >
-              Where every pet becomes a work of art
-            </motion.p>
-          </div>
+              Through the
+            </motion.span>
+            <motion.span
+              className="block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue pb-2"
+              animate={{
+                backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
+              }}
+              transition={{ duration: 5, repeat: Infinity }}
+              style={{ backgroundSize: '200% 200%' }}
+            >
+              Looking Glass
+            </motion.span>
+          </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="font-whimsy text-xl md:text-2xl text-white/90"
+          >
+            Where every pet becomes a work of art
+          </motion.p>
         </motion.div>
 
         {/* Enhanced Eat Me Cookie */}
