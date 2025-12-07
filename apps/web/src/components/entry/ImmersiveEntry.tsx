@@ -94,122 +94,126 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Outer ring of swirling elements - slow, large orbit */}
         {[...Array(12)].map((_, i) => {
-          const angle = (i / 12) * 360
-          const delay = i * 0.3
-          const duration = 20 + Math.random() * 5
-          const size = 24 + Math.random() * 12
+          const startAngle = (i / 12) * 360
+          const duration = 25 + (i % 3) * 5
+          const radius = 42 + (i % 4) * 3
           const icons = ['✨', '🌟', '🦋', '🍄', '🃏', '🫖', '🔮', '💫', '⭐', '🌸', '🎀', '🗝️']
+          const size = 20 + (i % 3) * 4
           return (
             <motion.div
               key={`outer-${i}`}
-              className="absolute left-1/2 top-1/2"
-              style={{ fontSize: size }}
+              className="absolute"
+              style={{
+                left: '50%',
+                top: '50%',
+                fontSize: size,
+                marginLeft: -size / 2,
+                marginTop: -size / 2,
+              }}
               animate={{
-                rotate: [angle, angle + 360],
-                x: [0, 0],
-                y: [0, 0],
+                x: [
+                  Math.cos((startAngle * Math.PI) / 180) * radius + 'vw',
+                  Math.cos(((startAngle + 360) * Math.PI) / 180) * radius + 'vw',
+                ],
+                y: [
+                  Math.sin((startAngle * Math.PI) / 180) * radius + 'vh',
+                  Math.sin(((startAngle + 360) * Math.PI) / 180) * radius + 'vh',
+                ],
+                opacity: [0.3, 0.5, 0.3],
+                scale: [0.9, 1.1, 0.9],
               }}
               transition={{
-                rotate: { duration, repeat: Infinity, ease: 'linear' },
+                x: { duration, repeat: Infinity, ease: 'linear' },
+                y: { duration, repeat: Infinity, ease: 'linear' },
+                opacity: { duration: 4, repeat: Infinity },
+                scale: { duration: 4, repeat: Infinity },
               }}
             >
-              <motion.span
-                className="absolute opacity-40"
-                style={{
-                  transform: `translateX(${35 + Math.random() * 10}vw)`,
-                }}
-                animate={{
-                  opacity: [0.2, 0.5, 0.2],
-                  scale: [0.8, 1.1, 0.8],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  delay,
-                }}
-              >
-                {icons[i]}
-              </motion.span>
+              {icons[i]}
             </motion.div>
           )
         })}
 
         {/* Middle ring - medium speed */}
         {[...Array(10)].map((_, i) => {
-          const angle = (i / 10) * 360 + 18
-          const delay = i * 0.2
-          const duration = 15 + Math.random() * 3
-          const size = 20 + Math.random() * 8
+          const startAngle = (i / 10) * 360 + 18
+          const duration = 18 + (i % 3) * 3
+          const radius = 28 + (i % 3) * 3
           const icons = ['🦋', '💫', '✨', '🍄', '🌟', '🔮', '🃏', '⭐', '🫖', '🌙']
+          const size = 18 + (i % 3) * 3
           return (
             <motion.div
               key={`middle-${i}`}
-              className="absolute left-1/2 top-1/2"
-              style={{ fontSize: size }}
+              className="absolute"
+              style={{
+                left: '50%',
+                top: '50%',
+                fontSize: size,
+                marginLeft: -size / 2,
+                marginTop: -size / 2,
+              }}
               animate={{
-                rotate: [angle, angle + 360],
+                x: [
+                  Math.cos((startAngle * Math.PI) / 180) * radius + 'vw',
+                  Math.cos(((startAngle + 360) * Math.PI) / 180) * radius + 'vw',
+                ],
+                y: [
+                  Math.sin((startAngle * Math.PI) / 180) * radius + 'vh',
+                  Math.sin(((startAngle + 360) * Math.PI) / 180) * radius + 'vh',
+                ],
+                opacity: [0.35, 0.6, 0.35],
+                scale: [0.95, 1.15, 0.95],
               }}
               transition={{
-                rotate: { duration, repeat: Infinity, ease: 'linear' },
+                x: { duration, repeat: Infinity, ease: 'linear' },
+                y: { duration, repeat: Infinity, ease: 'linear' },
+                opacity: { duration: 3, repeat: Infinity },
+                scale: { duration: 3, repeat: Infinity },
               }}
             >
-              <motion.span
-                className="absolute opacity-50"
-                style={{
-                  transform: `translateX(${22 + Math.random() * 8}vw)`,
-                }}
-                animate={{
-                  opacity: [0.3, 0.6, 0.3],
-                  scale: [0.9, 1.2, 0.9],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay,
-                }}
-              >
-                {icons[i]}
-              </motion.span>
+              {icons[i]}
             </motion.div>
           )
         })}
 
         {/* Inner ring - faster, smaller orbit */}
         {[...Array(8)].map((_, i) => {
-          const angle = (i / 8) * 360 + 22.5
-          const delay = i * 0.15
-          const duration = 10 + Math.random() * 2
-          const size = 16 + Math.random() * 6
+          const startAngle = (i / 8) * 360 + 22.5
+          const duration = 12 + (i % 3) * 2
+          const radius = 15 + (i % 3) * 2
           const icons = ['✨', '💫', '🦋', '⭐', '🌟', '🔮', '🍄', '🌸']
+          const size = 14 + (i % 3) * 2
           return (
             <motion.div
               key={`inner-${i}`}
-              className="absolute left-1/2 top-1/2"
-              style={{ fontSize: size }}
+              className="absolute"
+              style={{
+                left: '50%',
+                top: '50%',
+                fontSize: size,
+                marginLeft: -size / 2,
+                marginTop: -size / 2,
+              }}
               animate={{
-                rotate: [angle, angle + 360],
+                x: [
+                  Math.cos((startAngle * Math.PI) / 180) * radius + 'vw',
+                  Math.cos(((startAngle + 360) * Math.PI) / 180) * radius + 'vw',
+                ],
+                y: [
+                  Math.sin((startAngle * Math.PI) / 180) * radius + 'vh',
+                  Math.sin(((startAngle + 360) * Math.PI) / 180) * radius + 'vh',
+                ],
+                opacity: [0.4, 0.7, 0.4],
+                scale: [1, 1.2, 1],
               }}
               transition={{
-                rotate: { duration, repeat: Infinity, ease: 'linear' },
+                x: { duration, repeat: Infinity, ease: 'linear' },
+                y: { duration, repeat: Infinity, ease: 'linear' },
+                opacity: { duration: 2.5, repeat: Infinity },
+                scale: { duration: 2.5, repeat: Infinity },
               }}
             >
-              <motion.span
-                className="absolute opacity-60"
-                style={{
-                  transform: `translateX(${12 + Math.random() * 5}vw)`,
-                }}
-                animate={{
-                  opacity: [0.4, 0.7, 0.4],
-                  scale: [1, 1.3, 1],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  delay,
-                }}
-              >
-                {icons[i]}
-              </motion.span>
+              {icons[i]}
             </motion.div>
           )
         })}
