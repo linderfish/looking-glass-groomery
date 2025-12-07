@@ -7,22 +7,22 @@ function getFalApiKey(): string | undefined {
 
 // Edit prompts for Nano Banana Pro - very minimal, specific edits only
 const STYLE_EDIT_PROMPTS: Record<string, string> = {
-  teddy: 'Make the fur rounder and fluffier like a teddy bear grooming cut',
-  lion: 'Make the fur around the face and neck fuller like a lion mane, body fur shorter',
-  asian: 'Make the face fur rounder and cheeks fluffier in Asian grooming style',
-  creative: 'Keep the exact same image',
-  breed: 'Make the fur neat and precisely trimmed in show dog style',
-  custom: 'Make the fur look freshly groomed and neat',
+  teddy: 'Make the fur rounder and fluffier like a teddy bear grooming cut. Change nothing else.',
+  lion: 'Make the fur around the face and neck fuller like a lion mane, body fur shorter. Change nothing else.',
+  asian: 'Make the face fur rounder and cheeks fluffier in Asian grooming style. Change nothing else.',
+  creative: '', // Creative uses only custom notes and/or color selection
+  breed: 'Make the fur neat and precisely trimmed in show dog style. Change nothing else.',
+  custom: 'Make the fur look freshly groomed and neat. Change nothing else.',
 }
 
-// Color additions - only when creative style selected
+// Color additions - ONLY applied if user selects a color, and ONLY to specified area
 const COLOR_EDIT_ADDITIONS: Record<string, string> = {
-  pink: ', dye the ear fur pink',
-  purple: ', dye the ear fur purple',
-  blue: ', dye the ear fur blue',
-  rainbow: ', dye the ears with rainbow colors',
-  teal: ', dye the ear fur teal',
-  gold: ', add golden blonde highlights to the fur',
+  pink: 'Add pink dye',
+  purple: 'Add purple dye',
+  blue: 'Add blue dye',
+  rainbow: 'Add rainbow colored dye',
+  teal: 'Add teal dye',
+  gold: 'Add golden blonde dye',
 }
 
 export async function POST(request: NextRequest) {
@@ -53,16 +53,37 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the edit prompt for Nano Banana Pro
-    let editPrompt = STYLE_EDIT_PROMPTS[style] || STYLE_EDIT_PROMPTS.custom
+    let editPrompt = ''
 
-    // Add color if creative style selected
-    if (color && COLOR_EDIT_ADDITIONS[color]) {
-      editPrompt += COLOR_EDIT_ADDITIONS[color]
-    }
+    // For creative style, build prompt from color + custom notes only
+    if (style === 'creative') {
+      const parts: string[] = []
 
-    // Add custom notes
-    if (customNotes.trim()) {
-      editPrompt += `, also ${customNotes.trim()}`
+      // Add color instruction if selected
+      if (color && COLOR_EDIT_ADDITIONS[color]) {
+        parts.push(COLOR_EDIT_ADDITIONS[color])
+      }
+
+      // Add custom notes as the main instruction
+      if (customNotes.trim()) {
+        parts.push(customNotes.trim())
+      }
+
+      // If nothing specified, just do a basic groom
+      if (parts.length === 0) {
+        editPrompt = 'Make the fur look freshly groomed. Change nothing else.'
+      } else {
+        editPrompt = parts.join('. ') + '. Change nothing else.'
+      }
+    } else {
+      // For other styles, use the preset prompt
+      editPrompt = STYLE_EDIT_PROMPTS[style] || STYLE_EDIT_PROMPTS.custom
+
+      // Only add custom notes if provided (no color additions for non-creative styles)
+      if (customNotes.trim()) {
+        // Replace the "Change nothing else" with the custom note, then re-add it
+        editPrompt = editPrompt.replace('. Change nothing else.', '') + '. ' + customNotes.trim() + '. Change nothing else.'
+      }
     }
 
     console.log('Looking Glass edit prompt:', editPrompt)
