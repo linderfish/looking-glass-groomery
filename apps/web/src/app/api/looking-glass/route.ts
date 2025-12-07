@@ -1,7 +1,6 @@
 // apps/web/src/app/api/looking-glass/route.ts
-// Hybrid approach:
-// - Color modes: Get segmentation mask, apply color in browser (100% preserves original)
-// - Grooming modes: Use AI generation (labeled as "artistic inspiration")
+// All modes use FLUX Kontext Pro with careful prompting to preserve original pet
+// The key is VERY specific prompts that tell the AI exactly what to change and what to keep
 import { NextRequest, NextResponse } from 'next/server'
 
 function getFalApiKey(): string | undefined {
@@ -9,92 +8,38 @@ function getFalApiKey(): string | undefined {
 }
 
 // =============================================================================
-// COLOR DEFINITIONS for canvas-based overlay
-// These will be applied client-side using the mask
-// =============================================================================
-const COLOR_PRESETS: Record<string, { hue: number; saturation: number; name: string }> = {
-  // Whimsical - soft pastels
-  whimsical_pink: { hue: 330, saturation: 40, name: 'Soft Pink' },
-  whimsical_lavender: { hue: 270, saturation: 35, name: 'Lavender' },
-  whimsical_mint: { hue: 150, saturation: 30, name: 'Mint' },
-  // Bold - vibrant colors
-  bold_hotpink: { hue: 330, saturation: 90, name: 'Hot Pink' },
-  bold_blue: { hue: 210, saturation: 85, name: 'Electric Blue' },
-  bold_purple: { hue: 280, saturation: 80, name: 'Vivid Purple' },
-  // Elegant - refined tones
-  elegant_rosegold: { hue: 15, saturation: 45, name: 'Rose Gold' },
-  elegant_champagne: { hue: 45, saturation: 30, name: 'Champagne' },
-  elegant_silver: { hue: 220, saturation: 10, name: 'Silver' },
-  // Rainbow - multiple colors (client will handle gradient)
-  rainbow: { hue: 0, saturation: 70, name: 'Rainbow' },
-  // Seasonal
-  seasonal_spring: { hue: 330, saturation: 50, name: 'Spring Pink' },
-  seasonal_summer: { hue: 45, saturation: 70, name: 'Summer Gold' },
-  seasonal_fall: { hue: 25, saturation: 60, name: 'Fall Orange' },
-  seasonal_winter: { hue: 200, saturation: 40, name: 'Winter Blue' },
-}
-
-// =============================================================================
-// GROOMING STYLE PROMPTS (AI-generated, labeled as inspiration)
+// GROOMING STYLE PROMPTS
+// These change the fur shape - must be labeled as "artistic inspiration"
 // =============================================================================
 const GROOMING_STYLE_PROMPTS: Record<string, string> = {
-  teddy: 'A cute dog with a teddy bear grooming cut: round fluffy face, rounded ears, even plush fur all over. Professional pet grooming photo, studio lighting.',
-  lion: 'A dog with a lion cut grooming style: full fluffy mane around face and neck, shorter body fur. Professional pet grooming photo, studio lighting.',
-  asian: 'A dog with Asian fusion grooming style: perfectly round face shape, fluffy rounded cheeks, clean scissor lines. Professional pet grooming photo, studio lighting.',
-  breed: 'A dog with show-quality breed standard grooming: precise scissor work, clean angles, professional competition grooming. Professional pet grooming photo, studio lighting.',
-  puppy: 'A dog with a puppy cut: even fur length all over, soft and natural looking. Professional pet grooming photo, studio lighting.',
+  teddy: 'Change the dog\'s fur to a teddy bear grooming cut with round fluffy face and rounded ears. Keep the dog\'s exact face, eyes, nose, expression, body pose, and background identical. Only modify the fur shape and length.',
+  lion: 'Change the dog\'s fur to a lion cut grooming style with full fluffy mane around face and neck, and shorter body fur. Keep the dog\'s exact face, eyes, nose, expression, body pose, and background identical. Only modify the fur shape.',
+  asian: 'Change the dog\'s fur to Asian fusion grooming style with perfectly round face shape and fluffy rounded cheeks. Keep the dog\'s exact face, eyes, nose, expression, body pose, and background identical. Only modify the fur shape.',
+  breed: 'Change the dog\'s fur to show-quality breed standard grooming with precise scissor work and clean angles. Keep the dog\'s exact face, eyes, nose, expression, body pose, and background identical. Only modify the fur shape.',
+  puppy: 'Change the dog\'s fur to a puppy cut with even fur length all over, soft and natural looking. Keep the dog\'s exact face, eyes, nose, expression, body pose, and background identical. Only modify the fur length.',
 }
 
 // =============================================================================
-// Get segmentation mask for color overlay (used by creative/ai-designer modes)
+// AI DESIGNER STYLE PROMPTS
+// These add creative color/patterns to the fur
 // =============================================================================
-async function getSegmentationMask(imageUrl: string, apiKey: string): Promise<{ maskUrl: string; isolatedUrl: string }> {
-  console.log('Getting segmentation mask with BiRefNet...')
-
-  const response = await fetch('https://fal.run/fal-ai/birefnet', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Key ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      image_url: imageUrl,
-      model: 'General Use (Heavy)', // Best quality
-      operating_resolution: '1024x1024',
-      output_mask: true, // We need the mask for color overlay
-      refine_foreground: true,
-      output_format: 'png',
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('BiRefNet error:', response.status, errorText)
-    throw new Error(`Segmentation failed: ${response.status}`)
-  }
-
-  const data = await response.json()
-  console.log('BiRefNet response:', JSON.stringify(data).substring(0, 300))
-
-  const isolatedUrl = data?.image?.url
-  const maskUrl = data?.mask_image?.url
-
-  if (!maskUrl) {
-    throw new Error('No segmentation mask generated')
-  }
-
-  return { maskUrl, isolatedUrl: isolatedUrl || maskUrl }
+const AI_DESIGNER_PROMPTS: Record<string, string> = {
+  whimsical: 'Add soft pastel pink and lavender colored fur dye to the dog\'s fur in a whimsical fairy-tale style. Keep the dog\'s exact face shape, eyes, nose, expression, body pose, fur texture, and background completely identical. Only add gentle pastel color to the existing fur.',
+  bold: 'Add vibrant hot pink and electric blue colored fur dye to the dog\'s fur in bold vivid sections. Keep the dog\'s exact face shape, eyes, nose, expression, body pose, fur texture, and background completely identical. Only add bold color to the existing fur.',
+  elegant: 'Add rose gold and champagne colored fur dye to the dog\'s fur in an elegant refined style. Keep the dog\'s exact face shape, eyes, nose, expression, body pose, fur texture, and background completely identical. Only add sophisticated color tints to the existing fur.',
+  rainbow: 'Add rainbow colored fur dye to the dog\'s fur with red, orange, yellow, green, blue, and purple sections blending together. Keep the dog\'s exact face shape, eyes, nose, expression, body pose, fur texture, and background completely identical. Only add rainbow colors to the existing fur.',
+  seasonal: 'Add festive holiday-themed colored fur dye to the dog\'s fur with red and green Christmas colors, plus small decorative heart patterns stenciled in the fur. Keep the dog\'s exact face shape, eyes, nose, expression, body pose, fur texture, and background completely identical. Only add seasonal colors and small patterns to the existing fur.',
 }
 
 // =============================================================================
-// Generate AI grooming style (for shape changes only)
+// Generate with FLUX Kontext Pro - uses very specific prompts to preserve pet
 // =============================================================================
-async function generateGroomingPreview(imageUrl: string, style: string, apiKey: string): Promise<string> {
-  console.log('Generating AI grooming preview with FLUX Kontext...')
+async function generateWithKontext(imageUrl: string, prompt: string, apiKey: string): Promise<string> {
+  console.log('Generating with FLUX Kontext Pro...')
+  console.log('Prompt:', prompt.substring(0, 100) + '...')
 
-  const prompt = GROOMING_STYLE_PROMPTS[style] || GROOMING_STYLE_PROMPTS.teddy
-
-  const response = await fetch('https://fal.run/fal-ai/flux-kontext-lora', {
+  // Use FLUX Kontext Pro for best quality and adherence to prompts
+  const response = await fetch('https://fal.run/fal-ai/flux-pro/kontext', {
     method: 'POST',
     headers: {
       'Authorization': `Key ${apiKey}`,
@@ -103,24 +48,25 @@ async function generateGroomingPreview(imageUrl: string, style: string, apiKey: 
     body: JSON.stringify({
       prompt,
       image_url: imageUrl,
-      strength: 0.75, // Balance between reference and style
-      num_inference_steps: 28,
-      guidance_scale: 3.5,
+      aspect_ratio: 'match_input_image', // Preserve original dimensions
       output_format: 'png',
-      num_images: 1,
+      safety_tolerance: 6, // More permissive for pet colors
     }),
   })
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('FLUX Kontext error:', response.status, errorText)
+    console.error('FLUX Kontext Pro error:', response.status, errorText)
     throw new Error(`Generation failed: ${response.status}`)
   }
 
   const data = await response.json()
+  console.log('FLUX response keys:', Object.keys(data))
+
   const generatedUrl = data?.images?.[0]?.url
 
   if (!generatedUrl) {
+    console.error('No image in response:', JSON.stringify(data).substring(0, 500))
     throw new Error('No image generated')
   }
 
@@ -128,7 +74,73 @@ async function generateGroomingPreview(imageUrl: string, style: string, apiKey: 
 }
 
 // =============================================================================
+// Build creative prompt from user description
+// Constructs a very specific prompt that preserves the pet while adding colors
+// =============================================================================
+function buildCreativePrompt(userDescription: string): string {
+  // Clean and parse the description
+  const desc = userDescription.toLowerCase().trim()
+
+  // Build specific color instructions based on what user asked for
+  let colorInstructions = ''
+
+  // Detect specific patterns/designs
+  if (desc.includes('heart')) {
+    colorInstructions += 'small heart-shaped patterns stenciled into the fur, '
+  }
+  if (desc.includes('star')) {
+    colorInstructions += 'small star-shaped patterns stenciled into the fur, '
+  }
+  if (desc.includes('paw') || desc.includes('pawprint')) {
+    colorInstructions += 'small paw print patterns stenciled into the fur, '
+  }
+
+  // Detect colors
+  const colors: string[] = []
+  if (desc.includes('red')) colors.push('red')
+  if (desc.includes('pink')) colors.push('pink')
+  if (desc.includes('purple') || desc.includes('violet')) colors.push('purple')
+  if (desc.includes('blue')) colors.push('blue')
+  if (desc.includes('green')) colors.push('green')
+  if (desc.includes('orange')) colors.push('orange')
+  if (desc.includes('yellow')) colors.push('yellow')
+  if (desc.includes('rainbow')) colors.push('rainbow-colored')
+  if (desc.includes('gold')) colors.push('gold')
+  if (desc.includes('silver')) colors.push('silver')
+
+  // Detect themes
+  if (desc.includes('christmas') || desc.includes('holiday') || desc.includes('festive')) {
+    colorInstructions += 'festive Christmas-themed '
+  }
+  if (desc.includes('valentine')) {
+    colorInstructions += 'Valentine\'s Day themed '
+  }
+  if (desc.includes('halloween') || desc.includes('spooky')) {
+    colorInstructions += 'Halloween-themed '
+  }
+  if (desc.includes('easter') || desc.includes('spring')) {
+    colorInstructions += 'spring/Easter-themed pastel '
+  }
+
+  // Build the color part
+  if (colors.length > 0) {
+    colorInstructions += colors.join(' and ') + ' colored '
+  } else if (!colorInstructions) {
+    // Default to something if no color specified
+    colorInstructions = 'colorful '
+  }
+
+  // Construct the full prompt with STRICT preservation instructions
+  const prompt = `Add ${colorInstructions}fur dye to the dog's fur. ${userDescription}.
+
+CRITICAL: Keep the dog's exact face shape, exact eyes, exact nose, exact expression, exact body pose, exact fur texture and length, and exact background COMPLETELY IDENTICAL. Do not change ANYTHING about the dog except adding color/patterns to the fur. The dog must look exactly like itself, just with added color.`
+
+  return prompt
+}
+
+// =============================================================================
 // MAIN API HANDLER
+// All modes now use FLUX Kontext Pro with specific prompts
 // =============================================================================
 export async function POST(request: NextRequest) {
   try {
@@ -139,7 +151,6 @@ export async function POST(request: NextRequest) {
       style = 'teddy',
       colorDescription = '',
       designStyle = 'whimsical',
-      colorPreset = '', // For direct color selection
     } = body
 
     const apiKey = getFalApiKey()
@@ -160,95 +171,61 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== Looking Glass Generation ===')
-    console.log('Mode:', mode)
+    console.log('Mode:', mode, '| Style:', style, '| DesignStyle:', designStyle)
+
+    let prompt: string
+    let disclaimer: string
 
     // =======================================================================
-    // GROOMING MODE - AI generated (labeled as "artistic inspiration")
-    // This is the only mode that uses AI to regenerate
+    // GROOMING MODE - Changes fur shape (most invasive)
     // =======================================================================
     if (mode === 'grooming') {
-      const previewUrl = await generateGroomingPreview(imageUrl, style, apiKey)
-
-      return NextResponse.json({
-        success: true,
-        previewUrl,
-        mode: 'grooming',
-        style,
-        method: 'ai-generated', // Client knows to show "artistic inspiration" label
-        disclaimer: 'AI-generated artistic interpretation. Actual results will be tailored to your pet.',
-      })
+      prompt = GROOMING_STYLE_PROMPTS[style] || GROOMING_STYLE_PROMPTS.teddy
+      disclaimer = 'AI-generated grooming style preview. Your pet\'s actual results will be tailored by our professional groomer.'
     }
-
     // =======================================================================
-    // CREATIVE & AI-DESIGNER MODES - Canvas-based color overlay
-    // Returns mask + color info, client applies the color
-    // Original image is 100% preserved
+    // AI DESIGNER MODE - Predefined color themes
     // =======================================================================
-
-    // Get segmentation mask
-    const { maskUrl, isolatedUrl } = await getSegmentationMask(imageUrl, apiKey)
-
-    // Determine color settings
-    let colorSettings: { hue: number; saturation: number; name: string } | null = null
-
-    if (mode === 'creative') {
+    else if (mode === 'ai-designer') {
+      prompt = AI_DESIGNER_PROMPTS[designStyle] || AI_DESIGNER_PROMPTS.whimsical
+      disclaimer = 'AI-generated color preview showing how pet-safe dye colors could look on your pet.'
+    }
+    // =======================================================================
+    // CREATIVE MODE - User describes what they want
+    // =======================================================================
+    else if (mode === 'creative') {
       if (!colorDescription.trim()) {
         return NextResponse.json({
           success: false,
-          error: 'Please describe what colors you want',
+          error: 'Please describe what colors or patterns you want',
         }, { status: 400 })
       }
-
-      // Parse user's color description into approximate hue/saturation
-      // This is a simple keyword-based approach
-      const desc = colorDescription.toLowerCase()
-      if (desc.includes('pink')) {
-        colorSettings = { hue: 330, saturation: 60, name: 'Pink' }
-      } else if (desc.includes('purple') || desc.includes('violet')) {
-        colorSettings = { hue: 280, saturation: 65, name: 'Purple' }
-      } else if (desc.includes('blue')) {
-        colorSettings = { hue: 210, saturation: 70, name: 'Blue' }
-      } else if (desc.includes('green') || desc.includes('mint') || desc.includes('teal')) {
-        colorSettings = { hue: 160, saturation: 55, name: 'Green/Teal' }
-      } else if (desc.includes('orange')) {
-        colorSettings = { hue: 30, saturation: 75, name: 'Orange' }
-      } else if (desc.includes('red')) {
-        colorSettings = { hue: 0, saturation: 70, name: 'Red' }
-      } else if (desc.includes('yellow') || desc.includes('gold')) {
-        colorSettings = { hue: 50, saturation: 65, name: 'Yellow/Gold' }
-      } else if (desc.includes('rainbow')) {
-        colorSettings = { hue: -1, saturation: 70, name: 'Rainbow' } // -1 = rainbow mode
-      } else {
-        // Default to a soft pink if we can't parse
-        colorSettings = { hue: 330, saturation: 50, name: 'Custom' }
-      }
-
-    } else if (mode === 'ai-designer') {
-      // Map design style to color preset
-      const styleToPreset: Record<string, string> = {
-        whimsical: 'whimsical_pink',
-        bold: 'bold_hotpink',
-        elegant: 'elegant_rosegold',
-        rainbow: 'rainbow',
-        seasonal: 'seasonal_spring', // TODO: detect actual season
-      }
-      const presetKey = styleToPreset[designStyle] || 'whimsical_pink'
-      colorSettings = COLOR_PRESETS[presetKey]
+      prompt = buildCreativePrompt(colorDescription)
+      disclaimer = 'AI-generated creative color preview based on your description. Actual results crafted by our professional groomer.'
     }
+    // =======================================================================
+    // Unknown mode
+    // =======================================================================
+    else {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid mode',
+      }, { status: 400 })
+    }
+
+    console.log('Built prompt:', prompt.substring(0, 150) + '...')
+
+    // Generate with FLUX Kontext Pro
+    const previewUrl = await generateWithKontext(imageUrl, prompt, apiKey)
 
     return NextResponse.json({
       success: true,
-      // For color modes, we return the mask and color info
-      // Client will composite the color using Canvas API
+      previewUrl,
       mode,
-      method: 'canvas-overlay', // Client knows to use canvas compositing
-      maskUrl,
-      isolatedUrl,
-      originalUrl: imageUrl,
-      colorSettings,
-      style: mode === 'ai-designer' ? designStyle : null,
+      style: mode === 'grooming' ? style : (mode === 'ai-designer' ? designStyle : null),
       colorDescription: mode === 'creative' ? colorDescription : null,
-      instructions: 'Apply color overlay using Canvas API with the provided mask. Original image is preserved.',
+      method: 'ai-generated',
+      disclaimer,
     })
 
   } catch (error) {

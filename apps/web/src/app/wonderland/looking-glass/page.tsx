@@ -1,29 +1,16 @@
 // apps/web/src/app/wonderland/looking-glass/page.tsx
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 
 type Step = 'upload' | 'mode' | 'style' | 'generating' | 'preview'
 type Mode = 'grooming' | 'creative' | 'ai-designer'
-type PreviewMethod = 'ai-generated' | 'canvas-overlay'
-
-interface ColorSettings {
-  hue: number
-  saturation: number
-  name: string
-}
 
 interface PreviewResult {
-  method: PreviewMethod
-  // For AI-generated (grooming mode)
-  previewUrl?: string
-  disclaimer?: string
-  // For canvas-overlay (color modes)
-  maskUrl?: string
-  originalUrl?: string
-  colorSettings?: ColorSettings
+  previewUrl: string
+  disclaimer: string
 }
 
 // Grooming style options
@@ -41,136 +28,8 @@ const aiDesignStyles = [
   { id: 'bold', name: 'Bold & Vibrant', icon: '🔥', description: 'Rich saturated colors that pop' },
   { id: 'elegant', name: 'Elegant', icon: '💎', description: 'Refined rose gold, champagne, silver' },
   { id: 'rainbow', name: 'Rainbow', icon: '🌈', description: 'Multi-color gradient magic' },
-  { id: 'seasonal', name: 'Seasonal', icon: '🍂', description: 'Themed for the current season' },
+  { id: 'seasonal', name: 'Seasonal', icon: '🎄', description: 'Christmas colors with hearts & patterns' },
 ]
-
-// =============================================================================
-// Canvas Color Overlay Component
-// Applies color tint to the pet using the segmentation mask
-// =============================================================================
-function ColorOverlayCanvas({
-  originalUrl,
-  maskUrl,
-  colorSettings,
-  onReady,
-}: {
-  originalUrl: string
-  maskUrl: string
-  colorSettings: ColorSettings
-  onReady: (dataUrl: string) => void
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const applyColorOverlay = useCallback(async () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    try {
-      // Load original image
-      const originalImg = new window.Image()
-      originalImg.crossOrigin = 'anonymous'
-
-      await new Promise<void>((resolve, reject) => {
-        originalImg.onload = () => resolve()
-        originalImg.onerror = reject
-        originalImg.src = originalUrl
-      })
-
-      // Load mask image
-      const maskImg = new window.Image()
-      maskImg.crossOrigin = 'anonymous'
-
-      await new Promise<void>((resolve, reject) => {
-        maskImg.onload = () => resolve()
-        maskImg.onerror = reject
-        maskImg.src = maskUrl
-      })
-
-      // Set canvas size to match original
-      canvas.width = originalImg.width
-      canvas.height = originalImg.height
-
-      // Draw original image
-      ctx.drawImage(originalImg, 0, 0)
-
-      // Create a temporary canvas for the color layer
-      const colorCanvas = document.createElement('canvas')
-      colorCanvas.width = canvas.width
-      colorCanvas.height = canvas.height
-      const colorCtx = colorCanvas.getContext('2d')
-      if (!colorCtx) return
-
-      // Draw the mask to determine where to apply color
-      colorCtx.drawImage(maskImg, 0, 0, canvas.width, canvas.height)
-
-      // Get mask data
-      const maskData = colorCtx.getImageData(0, 0, canvas.width, canvas.height)
-
-      // Create color overlay
-      colorCtx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Fill with the target color
-      const { hue, saturation } = colorSettings
-
-      if (hue === -1) {
-        // Rainbow mode - create gradient
-        const gradient = colorCtx.createLinearGradient(0, 0, canvas.width, canvas.height)
-        gradient.addColorStop(0, 'hsl(0, 70%, 60%)')
-        gradient.addColorStop(0.17, 'hsl(30, 70%, 60%)')
-        gradient.addColorStop(0.33, 'hsl(60, 70%, 60%)')
-        gradient.addColorStop(0.5, 'hsl(120, 70%, 60%)')
-        gradient.addColorStop(0.67, 'hsl(210, 70%, 60%)')
-        gradient.addColorStop(0.83, 'hsl(270, 70%, 60%)')
-        gradient.addColorStop(1, 'hsl(330, 70%, 60%)')
-        colorCtx.fillStyle = gradient
-      } else {
-        colorCtx.fillStyle = `hsl(${hue}, ${saturation}%, 60%)`
-      }
-      colorCtx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Get color data
-      const colorData = colorCtx.getImageData(0, 0, canvas.width, canvas.height)
-
-      // Apply mask - only keep color where mask is white (pet area)
-      for (let i = 0; i < maskData.data.length; i += 4) {
-        // Check if this pixel is part of the pet (white in mask = high values)
-        const maskBrightness = (maskData.data[i] + maskData.data[i + 1] + maskData.data[i + 2]) / 3
-        if (maskBrightness < 128) {
-          // Not part of pet - make transparent
-          colorData.data[i + 3] = 0
-        } else {
-          // Part of pet - apply semi-transparent color
-          colorData.data[i + 3] = Math.floor((saturation / 100) * 180) // More saturation = more visible
-        }
-      }
-
-      colorCtx.putImageData(colorData, 0, 0)
-
-      // Composite: draw color layer on top of original with 'color' blend mode
-      ctx.globalCompositeOperation = 'color'
-      ctx.drawImage(colorCanvas, 0, 0)
-
-      // Reset composite operation
-      ctx.globalCompositeOperation = 'source-over'
-
-      // Return the result as data URL
-      const dataUrl = canvas.toDataURL('image/png')
-      onReady(dataUrl)
-
-    } catch (error) {
-      console.error('Error applying color overlay:', error)
-    }
-  }, [originalUrl, maskUrl, colorSettings, onReady])
-
-  useEffect(() => {
-    applyColorOverlay()
-  }, [applyColorOverlay])
-
-  return <canvas ref={canvasRef} className="hidden" />
-}
 
 // =============================================================================
 // Main Page Component
@@ -183,7 +42,6 @@ export default function LookingGlassPage() {
   const [designStyle, setDesignStyle] = useState<string | null>(null)
   const [colorDescription, setColorDescription] = useState('')
   const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null)
-  const [canvasPreview, setCanvasPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -213,7 +71,6 @@ export default function LookingGlassPage() {
     setStep('generating')
     setIsGenerating(true)
     setError(null)
-    setCanvasPreview(null)
 
     try {
       const response = await fetch('/api/looking-glass', {
@@ -236,25 +93,11 @@ export default function LookingGlassPage() {
         throw new Error(data.message || data.error || 'Generation failed')
       }
 
-      // Handle different response types
-      if (data.method === 'ai-generated') {
-        // Grooming mode - direct preview URL
-        setPreviewResult({
-          method: 'ai-generated',
-          previewUrl: data.previewUrl,
-          disclaimer: data.disclaimer,
-        })
-        setStep('preview')
-      } else if (data.method === 'canvas-overlay') {
-        // Color modes - need to apply overlay in browser
-        setPreviewResult({
-          method: 'canvas-overlay',
-          maskUrl: data.maskUrl,
-          originalUrl: uploadedImage,
-          colorSettings: data.colorSettings,
-        })
-        // Step will change to 'preview' once canvas is ready
-      }
+      setPreviewResult({
+        previewUrl: data.previewUrl,
+        disclaimer: data.disclaimer,
+      })
+      setStep('preview')
 
     } catch (err) {
       console.error('Looking Glass error:', err)
@@ -265,11 +108,6 @@ export default function LookingGlassPage() {
     }
   }
 
-  const handleCanvasReady = (dataUrl: string) => {
-    setCanvasPreview(dataUrl)
-    setStep('preview')
-  }
-
   const handleStartOver = () => {
     setStep('upload')
     setUploadedImage(null)
@@ -278,16 +116,7 @@ export default function LookingGlassPage() {
     setDesignStyle(null)
     setColorDescription('')
     setPreviewResult(null)
-    setCanvasPreview(null)
     setError(null)
-  }
-
-  // Get the preview image URL based on method
-  const getPreviewUrl = () => {
-    if (previewResult?.method === 'ai-generated') {
-      return previewResult.previewUrl
-    }
-    return canvasPreview
   }
 
   const stepLabels = ['Upload', 'Mode', 'Details', 'Preview']
@@ -297,16 +126,6 @@ export default function LookingGlassPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Canvas for color overlay (hidden, renders in background) */}
-        {previewResult?.method === 'canvas-overlay' && previewResult.maskUrl && previewResult.colorSettings && uploadedImage && (
-          <ColorOverlayCanvas
-            originalUrl={uploadedImage}
-            maskUrl={previewResult.maskUrl}
-            colorSettings={previewResult.colorSettings}
-            onReady={handleCanvasReady}
-          />
-        )}
-
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -433,39 +252,33 @@ export default function LookingGlassPage() {
 
                   <button
                     onClick={() => handleModeSelect('creative')}
-                    className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left relative"
+                    className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left"
                   >
-                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                      ACCURATE
-                    </div>
                     <span className="text-5xl block mb-4">🎨</span>
                     <span className="font-display text-xl text-wonderland-text block mb-2">
                       Creative Color
                     </span>
                     <span className="text-wonderland-muted text-sm">
-                      Preview colors on YOUR actual pet photo.
+                      Describe any colors, patterns, or themes you want!
                     </span>
-                    <span className="text-xs text-green-400 block mt-2">
-                      Your photo preserved
+                    <span className="text-xs text-alice-purple block mt-2">
+                      Hearts, stars, holidays, anything!
                     </span>
                   </button>
 
                   <button
                     onClick={() => handleModeSelect('ai-designer')}
-                    className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left relative"
+                    className="p-6 rounded-xl border-2 border-alice-purple/30 hover:border-alice-gold transition-all text-left"
                   >
-                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                      ACCURATE
-                    </div>
                     <span className="text-5xl block mb-4">🤖</span>
                     <span className="font-display text-xl text-wonderland-text block mb-2">
                       AI Designer
                     </span>
                     <span className="text-wonderland-muted text-sm">
-                      Pick a vibe, see colors on YOUR pet.
+                      Pick a vibe and let AI design the colors.
                     </span>
-                    <span className="text-xs text-green-400 block mt-2">
-                      Your photo preserved
+                    <span className="text-xs text-alice-purple block mt-2">
+                      Curated color palettes
                     </span>
                   </button>
                 </div>
@@ -531,23 +344,23 @@ export default function LookingGlassPage() {
               {mode === 'creative' && (
                 <div className="card-wonderland p-8">
                   <h2 className="font-display text-2xl text-center mb-2 text-wonderland-text">
-                    What Colors Do You Want?
+                    Describe Your Dream Look
                   </h2>
-                  <p className="text-center text-green-400 text-sm mb-6">
-                    Color will be applied to YOUR actual photo
+                  <p className="text-center text-alice-purple text-sm mb-6">
+                    Tell us about colors, patterns, themes, or anything you can imagine!
                   </p>
 
                   <textarea
                     value={colorDescription}
                     onChange={e => setColorDescription(e.target.value)}
-                    placeholder="Examples:&#10;• Pink ears and tail&#10;• Purple all over&#10;• Blue and green rainbow&#10;• Rose gold highlights"
+                    placeholder="Examples:&#10;• Red hearts, Christmas vibe&#10;• Pink and purple rainbow&#10;• Blue stars on the ears&#10;• Halloween orange and black&#10;• Valentine's Day hearts"
                     className="w-full bg-wonderland-bg border border-alice-purple/30 rounded-xl p-4 text-wonderland-text placeholder-wonderland-muted focus:border-alice-purple focus:outline-none resize-none h-32"
                   />
 
-                  <div className="mt-4 p-4 bg-green-500/10 rounded-xl border border-green-500/30">
-                    <p className="text-sm text-green-300">
-                      <strong>How it works:</strong> We detect your pet in the photo and apply the color tint directly.
-                      Your original photo stays intact - we just add color on top!
+                  <div className="mt-4 p-4 bg-alice-purple/10 rounded-xl border border-alice-purple/30">
+                    <p className="text-sm text-wonderland-muted">
+                      <strong>Tip:</strong> Be specific! Mention colors, patterns (hearts, stars, paws),
+                      and themes (Christmas, Valentine&apos;s, Halloween). The more detail, the better!
                     </p>
                   </div>
                 </div>
@@ -559,8 +372,8 @@ export default function LookingGlassPage() {
                   <h2 className="font-display text-2xl text-center mb-2 text-wonderland-text">
                     Choose Your Vibe
                   </h2>
-                  <p className="text-center text-green-400 text-sm mb-6">
-                    Color will be applied to YOUR actual photo
+                  <p className="text-center text-alice-purple text-sm mb-6">
+                    Pick a style and let AI design the perfect colors
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {aiDesignStyles.map(style => (
@@ -660,7 +473,7 @@ export default function LookingGlassPage() {
           )}
 
           {/* Step 5: Preview */}
-          {step === 'preview' && getPreviewUrl() && (
+          {step === 'preview' && previewResult?.previewUrl && (
             <motion.div
               key="preview"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -671,16 +484,9 @@ export default function LookingGlassPage() {
                 <h2 className="font-display text-2xl text-center mb-2 text-wonderland-text">
                   Your Pet&apos;s {mode === 'grooming' ? 'Style Inspiration' : 'Color Preview'}
                 </h2>
-                {previewResult?.method === 'ai-generated' && (
-                  <p className="text-center text-alice-purple text-sm mb-6">
-                    {previewResult.disclaimer}
-                  </p>
-                )}
-                {previewResult?.method === 'canvas-overlay' && (
-                  <p className="text-center text-green-400 text-sm mb-6">
-                    This is YOUR photo with color applied - exactly how it would look!
-                  </p>
-                )}
+                <p className="text-center text-alice-purple text-sm mb-6">
+                  {previewResult.disclaimer}
+                </p>
 
                 <div className="grid md:grid-cols-2 gap-8">
                   {/* Before */}
@@ -699,25 +505,17 @@ export default function LookingGlassPage() {
 
                   {/* After */}
                   <div className="text-center">
-                    <span className="text-alice-gold text-sm block mb-2">
-                      {previewResult?.method === 'ai-generated' ? 'Inspiration' : 'Preview'}
-                    </span>
+                    <span className="text-alice-gold text-sm block mb-2">Preview</span>
                     <div className="relative">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={getPreviewUrl()!}
+                        src={previewResult.previewUrl}
                         alt="Preview"
                         className="rounded-xl object-cover w-full aspect-square"
                       />
                       <div className="absolute bottom-4 left-4 right-4 text-center">
-                        <span className={`px-4 py-2 rounded-full text-sm ${
-                          previewResult?.method === 'ai-generated'
-                            ? 'bg-alice-purple/80 text-white'
-                            : 'bg-green-500/80 text-white'
-                        }`}>
-                          {previewResult?.method === 'ai-generated'
-                            ? 'AI Inspiration - Style reference only'
-                            : 'Accurate Preview - Your actual photo'}
+                        <span className="px-4 py-2 rounded-full text-sm bg-alice-purple/80 text-white">
+                          AI Preview - Professional results may vary
                         </span>
                       </div>
                     </div>
@@ -730,7 +528,6 @@ export default function LookingGlassPage() {
                 <button
                   onClick={() => {
                     setPreviewResult(null)
-                    setCanvasPreview(null)
                     setStep('style')
                   }}
                   className="px-6 py-3 rounded-full font-display border-2 border-white text-white hover:bg-white/10 transition-colors"
