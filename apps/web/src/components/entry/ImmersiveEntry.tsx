@@ -159,10 +159,10 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
         animate={
           shrinkPhase >= 1
             ? {
-                scale: shrinkPhase >= 2 ? 0.1 : 0.5,
+                scale: shrinkPhase >= 3 ? 0.05 : shrinkPhase >= 2 ? 0.2 : 0.5,
                 opacity: shrinkPhase >= 3 ? 0 : 1,
-                y: shrinkPhase >= 2 ? 500 : 0,
-                rotate: shrinkPhase >= 3 ? 360 : 0,
+                y: shrinkPhase >= 2 ? 400 : 0,
+                rotate: shrinkPhase >= 3 ? 180 : shrinkPhase >= 2 ? 90 : shrinkPhase >= 1 ? 15 : 0,
               }
             : {}
         }
@@ -178,33 +178,45 @@ export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
           transition={{ delay: 0.5, duration: 1 }}
           className="text-center mb-12 px-4"
         >
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight">
-            <motion.span
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold pb-2"
-              animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-              style={{ backgroundSize: '200% 200%' }}
-            >
-              Through the
-            </motion.span>
-            <motion.span
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue pb-2"
-              animate={{
-                backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-              style={{ backgroundSize: '200% 200%' }}
-            >
-              Looking Glass
-            </motion.span>
-          </h1>
+          {/* Title container with subtle backdrop for readability */}
+          <div className="relative inline-block">
+            {/* Soft glow behind text */}
+            <div className="absolute inset-0 blur-2xl bg-wonderland-bg/60 scale-110 rounded-full" />
+
+            <h1 className="relative font-display text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+              <motion.span
+                className="block text-transparent bg-clip-text bg-gradient-to-r from-alice-purple via-psyche-pink to-alice-gold pb-2"
+                animate={{
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+                style={{
+                  backgroundSize: '200% 200%',
+                  WebkitTextStroke: '1px rgba(0,0,0,0.3)',
+                }}
+              >
+                Through the
+              </motion.span>
+              <motion.span
+                className="block text-transparent bg-clip-text bg-gradient-to-r from-psyche-pink via-alice-purple to-psyche-blue pb-2"
+                animate={{
+                  backgroundPosition: ['100% 50%', '0% 50%', '100% 50%'],
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+                style={{
+                  backgroundSize: '200% 200%',
+                  WebkitTextStroke: '1px rgba(0,0,0,0.3)',
+                }}
+              >
+                Looking Glass
+              </motion.span>
+            </h1>
+          </div>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="font-whimsy text-xl md:text-2xl text-white/90"
+            className="font-whimsy text-xl md:text-2xl text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
           >
             Where every pet becomes a work of art
           </motion.p>

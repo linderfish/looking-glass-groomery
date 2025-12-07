@@ -2,7 +2,7 @@
 import { WonderlandNav } from '@/components/layout/WonderlandNav'
 import { CheshireChat } from '@/components/layout/CheshireChat'
 import { Footer } from '@/components/layout/Footer'
-import { AIBackground } from '@/components/effects/AIBackground'
+import { DynamicBackground } from '@/components/effects/DynamicBackground'
 
 export default function WonderlandLayout({
   children,
@@ -11,8 +11,8 @@ export default function WonderlandLayout({
 }) {
   return (
     <div className="relative min-h-screen">
-      {/* AI-generated immersive background with CSS fallback */}
-      <AIBackground scene="garden" />
+      {/* AI-generated immersive background - changes per route */}
+      <DynamicBackground />
 
       {/* Navigation */}
       <WonderlandNav />

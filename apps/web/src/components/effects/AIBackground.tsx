@@ -11,32 +11,39 @@ interface AIBackgroundProps {
 
 // Pre-generated static backgrounds for each scene
 const SCENE_BACKGROUNDS: Record<string, string[]> = {
+  // Homepage/Services - Royal pet spa throne room
   garden: [
+    '/backgrounds/services-1.png',
     '/backgrounds/garden-1.png',
     '/backgrounds/garden-2.png',
     '/backgrounds/garden-3.png',
   ],
-  // All other scenes use garden backgrounds for now
+  // Looking Glass page - Mirror portal to another dimension
+  lookingGlass: [
+    '/backgrounds/looking-glass-1.png',
+  ],
+  // Gallery page - Wonderland art exhibition hall
+  gallery: [
+    '/backgrounds/gallery-1.png',
+  ],
+  // Shelter Angels page - Welcoming rescue sanctuary cottage
+  shelter: [
+    '/backgrounds/shelter-2.png',
+  ],
+  // Contact page - Cozy tea party setting
   teaParty: [
-    '/backgrounds/garden-1.png',
-    '/backgrounds/garden-2.png',
-    '/backgrounds/garden-3.png',
+    '/backgrounds/contact-1.png',
   ],
+  contact: [
+    '/backgrounds/contact-1.png',
+  ],
+  // Cheshire cat themed areas
   cheshire: [
     '/backgrounds/garden-1.png',
     '/backgrounds/garden-2.png',
     '/backgrounds/garden-3.png',
   ],
-  lookingGlass: [
-    '/backgrounds/garden-1.png',
-    '/backgrounds/garden-2.png',
-    '/backgrounds/garden-3.png',
-  ],
-  shelter: [
-    '/backgrounds/garden-1.png',
-    '/backgrounds/garden-2.png',
-    '/backgrounds/garden-3.png',
-  ],
+  // Entry/Intro page - User's favorites
   entry: [
     '/backgrounds/3mr_B6g8YqBNq1lSGdoy2.png',
     '/backgrounds/fULA8zSRF1yodRXjfcVxX.png',
