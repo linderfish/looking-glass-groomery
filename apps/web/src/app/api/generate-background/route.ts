@@ -1,8 +1,10 @@
 // apps/web/src/app/api/generate-background/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-// Support both FAL_KEY (official) and FAL_AI_KEY (our custom name)
-const FAL_AI_KEY = process.env.FAL_KEY || process.env.FAL_AI_KEY
+// Get API key at request time (not module load time) to ensure env vars are available
+function getFalApiKey(): string | undefined {
+  return process.env.FAL_KEY || process.env.FAL_AI_KEY
+}
 
 // Predefined prompts for different scenes in Wonderland
 const WONDERLAND_PROMPTS: Record<string, string> = {
@@ -52,8 +54,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Get API key at request time
+    const apiKey = getFalApiKey()
+
     // If no API key, return a placeholder/fallback
-    if (!FAL_AI_KEY) {
+    if (!apiKey) {
       console.log('No FAL_KEY or FAL_AI_KEY found in environment')
       return NextResponse.json({
         imageUrl: null,
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch('https://fal.run/fal-ai/nano-banana-pro', {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${FAL_AI_KEY}`,
+        'Authorization': `Key ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
