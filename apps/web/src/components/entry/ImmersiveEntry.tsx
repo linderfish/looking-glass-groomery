@@ -14,20 +14,13 @@ interface AIImage {
   loading: boolean
 }
 
-// Prompts for the cycling psychedelic backgrounds
+// Prompts for the cycling psychedelic backgrounds - focused on rabbit hole / magical doorway concept
 const ENTRY_PROMPTS = [
-  `Magical whimsical pet grooming salon exterior at twilight, ornate Victorian building with a large elegant sign reading "Through The Looking Glass Groomery" in gold cursive lettering above the entrance,
-   giant psychedelic mushrooms glowing with bioluminescence around the entrance, swirling purple and pink nebula sky,
-   floating playing cards and pocket watches, ethereal mist, checkerboard pathway leading to door, Alice in Wonderland aesthetic, 4k digital art`,
+  `A magical glowing rabbit hole entrance in a mystical forest, circular tunnel doorway framed by giant bioluminescent mushrooms and twisted tree roots, swirling purple and pink vortex visible through the opening, floating playing cards and pocket watches spiraling into the hole, ethereal mist and sparkles, Alice in Wonderland aesthetic, dreamy fantasy art, 4k digital painting, centered composition`,
 
-  `Enchanted wonderland pet spa palace, grand entrance with illuminated marquee sign "Through The Looking Glass Groomery",
-   trippy rabbit hole tunnel entrance, spiraling geometric patterns in purple pink and teal,
-   floating teacups and grooming scissors, Cheshire cat grin floating above the sign,
-   kaleidoscopic colors, surreal fantasy art, psychedelic wonderland, professional signage`,
+  `Enchanted doorway portal to wonderland, ornate arched entrance glowing with psychedelic colors, spiraling tunnel visible through the door leading to another dimension, giant colorful mushrooms and oversized roses on either side, Cheshire cat grin floating above, purple and teal aurora sky, magical sparkles and floating teacups, surreal fantasy digital art, cinematic lighting`,
 
-  `Dreamy Alice in Wonderland themed pet salon at night, beautiful storefront with glowing neon sign "Through The Looking Glass Groomery",
-   oversized glowing roses and flowers framing the entrance, floating lanterns and magical sparkles,
-   purple aurora sky, pets silhouettes in windows, whimsical architecture, stunning digital art, clear readable text on sign`,
+  `A dreamy looking glass mirror portal entrance, large ornate gilded mirror frame in a mystical garden, swirling iridescent vortex visible through the glass surface, bioluminescent flowers and mushrooms surrounding the frame, floating keys and playing cards, purple pink and gold color palette, Alice in Wonderland rabbit hole aesthetic, magical ethereal atmosphere, stunning fantasy art`,
 ]
 
 export function ImmersiveEntry({ onEnter }: ImmersiveEntryProps) {
