@@ -1,0 +1,777 @@
+// packages/db/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============== CLIENTS & PETS ==============
+
+model Client {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Contact Info
+  firstName     String
+  lastName      String
+  email         String?   @unique
+  phone         String    @unique
+
+  // Communication Preferences
+  preferredContact  ContactMethod @default(TEXT)
+
+  // Subscription Status
+  membershipTier    MembershipTier @default(NONE)
+  membershipStarted DateTime?
+
+  // Relations
+  pets              Pet[]
+  appointments      Appointment[]
+  waivers           SignedWaiver[]
+  payments          Payment[]
+  conversations     Conversation[]
+
+  // Metadata
+  source            LeadSource @default(DIRECT)
+  notes             String?
+
+  @@index([phone])
+  @@index([email])
+}
+
+model Pet {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Basic Info
+  name          String
+  species       Species
+  breed         String?
+  color         String?
+  weight        Float?
+  birthDate     DateTime?
+  sex           Sex?
+  isFixed       Boolean   @default(false)
+
+  // Medical & Behavior
+  medicalNotes  String?
+  behaviorNotes String?
+  temperament   Temperament @default(NORMAL)
+
+  // Photos
+  photoUrl      String?
+
+  // Relations
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      String
+  appointments  Appointment[]
+  passport      PetPassport?
+  designs       GroomingDesign[]
+
+  @@index([clientId])
+}
+
+model PetPassport {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  petId         String    @unique
+
+  // Vaccination Records
+  vaccinations  Vaccination[]
+
+  // Grooming History
+  groomingHistory GroomingRecord[]
+
+  // Saved Designs
+  savedDesigns  GroomingDesign[]
+
+  // Preferences
+  preferredStyles   String?   // JSON array of style preferences
+  allergies         String?
+  specialInstructions String?
+}
+
+model Vaccination {
+  id            String    @id @default(cuid())
+  passportId    String
+  passport      PetPassport @relation(fields: [passportId], references: [id], onDelete: Cascade)
+
+  name          String    // Rabies, Bordetella, etc.
+  dateGiven     DateTime
+  expiresAt     DateTime?
+  vetName       String?
+  documentUrl   String?   // Photo of vaccination record
+
+  @@index([passportId])
+}
+
+model GroomingRecord {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  passportId    String
+  passport      PetPassport @relation(fields: [passportId], references: [id], onDelete: Cascade)
+
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  // What was done
+  services      String[]  // Array of service codes
+  notes         String?
+
+  // Before/After Photos
+  beforePhotoUrl  String?
+  afterPhotoUrl   String?
+
+  // Design used (if any)
+  designId      String?
+  design        GroomingDesign? @relation(fields: [designId], references: [id])
+
+  @@index([passportId])
+}
+
+model GroomingDesign {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Ownership
+  petId         String
+  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  passportId    String?
+  passport      PetPassport? @relation(fields: [passportId], references: [id])
+
+  // Design Details
+  name          String?   // "Summer Rainbow", "Cheshire Stripes"
+  description   String?   // Client's original description
+
+  // AI-Generated Previews (multiple angles)
+  previewFront  String?   // fal.ai generated URL
+  previewLeft   String?
+  previewRight  String?
+  previewBack   String?
+  previewTop    String?
+
+  // Blueprint for Kimmie
+  blueprint     Json?     // Structured grooming instructions
+
+  // Status
+  status        DesignStatus @default(DRAFT)
+  approvedAt    DateTime?
+
+  // Usage tracking
+  timesUsed     Int       @default(0)
+  lastUsedAt    DateTime?
+
+  groomingRecords GroomingRecord[]
+
+  @@index([petId])
+}
+
+// ============== APPOINTMENTS & BOOKING ==============
+
+model Appointment {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Scheduling
+  scheduledAt   DateTime
+  duration      Int       // Minutes
+  endTime       DateTime
+
+  // Who
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id])
+  petId         String
+  pet           Pet       @relation(fields: [petId], references: [id])
+
+  // What
+  services      Service[]
+  designId      String?   // If using a Looking Glass design
+
+  // Status
+  status        AppointmentStatus @default(PENDING)
+  confirmedAt   DateTime?
+  checkedInAt   DateTime?
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  // Pricing
+  estimatedPrice  Float?
+  finalPrice      Float?
+  depositPaid     Float?
+
+  // Notes
+  clientNotes     String?   // What client requested
+  groomingNotes   String?   // Kimmie's notes during/after
+
+  // Photos
+  beforePhotoUrl  String?
+  afterPhotoUrl   String?
+
+  // Reminders
+  reminderSent    Boolean   @default(false)
+  photoReminderSent Boolean @default(false)
+
+  // Relations
+  payment         Payment?
+  groomingRecords GroomingRecord[]
+
+  // Source tracking
+  bookedVia       BookingSource @default(WEBSITE)
+  conversationId  String?
+
+  // Shelter Angel specific
+  isShelterAngel  Boolean   @default(false)
+  shelterName     String?
+
+  @@index([clientId])
+  @@index([petId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model Service {
+  id            String    @id @default(cuid())
+
+  // Service Details
+  name          String
+  description   String?
+  category      ServiceCategory
+
+  // Pricing
+  basePrice     Float
+  pricingType   PricingType @default(FLAT)
+
+  // Duration
+  baseDuration  Int       // Minutes
+
+  // Availability
+  isActive      Boolean   @default(true)
+
+  // Species restrictions
+  availableFor  Species[]
+
+  appointments  Appointment[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+// ============== PAYMENTS ==============
+
+model Payment {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  // Amount
+  amount        Float
+  currency      String    @default("usd")
+
+  // Type
+  type          PaymentType
+
+  // Status
+  status        PaymentStatus @default(PENDING)
+
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeChargeId        String?
+
+  // Relations
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id])
+  appointmentId String?   @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  donationId    String?
+  donation      Donation? @relation(fields: [donationId], references: [id])
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// ============== WAIVERS ==============
+
+model Waiver {
+  id            String    @id @default(cuid())
+  name          String    // "Liability Waiver", "Grooming Agreement"
+  content       String    // HTML content
+  version       Int       @default(1)
+  isActive      Boolean   @default(true)
+  isRequired    Boolean   @default(true)
+
+  signedWaivers SignedWaiver[]
+}
+
+model SignedWaiver {
+  id            String    @id @default(cuid())
+  signedAt      DateTime  @default(now())
+
+  waiverId      String
+  waiver        Waiver    @relation(fields: [waiverId], references: [id])
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id])
+
+  // Signature
+  signatureUrl  String?   // Canvas signature image
+  ipAddress     String?
+  userAgent     String?
+
+  @@unique([waiverId, clientId])
+  @@index([clientId])
+}
+
+// ============== CONVERSATIONS & AI ==============
+
+model Conversation {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Participant
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+
+  // Channel
+  channel       ConversationChannel
+  externalId    String?   // Instagram/Facebook message ID
+
+  // Status
+  status        ConversationStatus @default(ACTIVE)
+  handedOffAt   DateTime? // When escalated to Kimmie
+
+  messages      Message[]
+
+  @@index([clientId])
+  @@index([channel, externalId])
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  conversationId String
+  conversation  Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Content
+  role          MessageRole
+  content       String
+
+  // AI metadata
+  intent        String?   // Detected intent: BOOKING, FAQ, CONSULTATION, etc.
+  confidence    Float?
+
+  @@index([conversationId])
+}
+
+// ============== 501(c)(3) DONATIONS ==============
+
+model ShelterPet {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Shelter Data (from OSINT scrape)
+  shelterId     String    @unique  // ID from county shelter
+  shelterName   String?
+
+  // Pet Info
+  name          String
+  species       Species
+  breed         String?
+  age           String?   // "2 years", "puppy", etc.
+  sex           Sex?
+  weight        Float?
+
+  // Photos
+  originalPhotoUrl  String?
+  makeoverPreviewUrl String?  // AI-generated "after" preview
+
+  // Status
+  status        ShelterPetStatus @default(AVAILABLE)
+  intakeDate    DateTime?
+
+  // Makeover Status
+  makeoverStatus  MakeoverStatus @default(NONE)
+  makeoverDate    DateTime?
+  makeoverPhotoUrl String?
+
+  // Donations received
+  donations     Donation[]
+  totalDonated  Float     @default(0)
+
+  // Size category for donation minimum
+  sizeCategory  SizeCategory
+  donationMinimum Float
+
+  @@index([status])
+  @@index([makeoverStatus])
+}
+
+model Donation {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+
+  // Amount
+  amount        Float
+
+  // Donor (optional - can be anonymous)
+  donorName     String?
+  donorEmail    String?
+  isAnonymous   Boolean   @default(false)
+
+  // What it's for
+  shelterPetId  String?
+  shelterPet    ShelterPet? @relation(fields: [shelterPetId], references: [id])
+
+  // Game participation
+  gameScore     Int?
+
+  // Payment
+  payment       Payment?
+
+  // For 501(c)(3) tracking
+  receiptSent   Boolean   @default(false)
+  receiptUrl    String?
+
+  @@index([shelterPetId])
+}
+
+// ============== KIMMIE'S GAMIFICATION ==============
+
+model KimmieAchievement {
+  id            String    @id @default(cuid())
+  unlockedAt    DateTime  @default(now())
+
+  achievementType String   // BOOKINGS_10, STREAK_7, CONTENT_QUEEN, etc.
+  metadata      Json?     // Extra data about the achievement
+  notified      Boolean   @default(false)
+}
+
+model KimmieStats {
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now()) @unique
+
+  // Daily stats
+  bookingsCount     Int   @default(0)
+  appointmentsCompleted Int @default(0)
+  photosUploaded    Int   @default(0)
+  contentPosted     Int   @default(0)
+
+  // Streaks
+  photoStreak       Int   @default(0)
+  contentStreak     Int   @default(0)
+
+  @@index([date])
+}
+
+model DailyMood {
+  id   String @id @default(cuid())
+  date String @unique  // YYYY-MM-DD
+  mood String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============== SOCIAL MEDIA ==============
+
+model PhotoReminder {
+  id            String   @id @default(cuid())
+  appointmentId String
+
+  type          PhotoReminderType
+  status        ReminderStatus @default(PENDING)
+  scheduledFor  DateTime
+  sentAt        DateTime?
+  completedAt   DateTime?
+  followUpCount Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, scheduledFor])
+}
+
+model AppointmentPhoto {
+  id            String   @id @default(cuid())
+  appointmentId String
+
+  type          PhotoReminderType
+  originalUrl   String
+  processedUrl  String?
+  thumbnailUrl  String?
+  status        PhotoStatus @default(PENDING_REVIEW)
+
+  metadata      Json?    // EXIF data, dimensions, etc.
+
+  createdAt     DateTime @default(now())
+
+  @@index([appointmentId, type])
+}
+
+model SocialContent {
+  id            String   @id @default(cuid())
+  appointmentId String
+
+  content       Json     // ContentGenerationResult
+  status        ContentStatus @default(DRAFT)
+  scheduledFor  DateTime?
+  platforms     Platform[]
+
+  posts         SocialPost[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SocialPost {
+  id         String   @id @default(cuid())
+  contentId  String
+  content    SocialContent @relation(fields: [contentId], references: [id])
+
+  platform   Platform
+  postId     String?  // Platform's post ID
+  postUrl    String?
+  status     PostStatus
+  error      String?
+
+  // Engagement metrics (updated via webhooks/polling)
+  likes      Int?
+  comments   Int?
+  shares     Int?
+  reach      Int?
+
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([platform, publishedAt])
+}
+
+model TelegramContext {
+  id            String   @id @default(cuid())
+  chatId        String   @unique
+  pendingAction String?
+  actionData    Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  odinguserId   String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  @@unique([odinguserId, achievementId])
+  @@index([odinguserId])
+}
+
+// ============== ENUMS ==============
+
+enum Species {
+  DOG
+  CAT
+  GOAT
+  PIG
+  GUINEA_PIG
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum Temperament {
+  NORMAL
+  ANXIOUS
+  FEARFUL
+  AGGRESSIVE
+  PUPPY
+  SENIOR
+  NURSING
+  SERVICE_ANIMAL
+}
+
+enum MembershipTier {
+  NONE
+  CURIOUS       // Basic tier
+  CURIOUSER     // Mid tier
+  ROYALTY       // Premium tier
+}
+
+enum ContactMethod {
+  TEXT
+  EMAIL
+  PHONE
+  INSTAGRAM
+  FACEBOOK
+}
+
+enum LeadSource {
+  DIRECT
+  WEBSITE
+  INSTAGRAM
+  FACEBOOK
+  REFERRAL
+  SHELTER
+  EVENT
+}
+
+enum DesignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum AppointmentStatus {
+  PENDING       // Draft, not confirmed
+  CONFIRMED     // Client confirmed
+  CHECKED_IN    // Client arrived
+  IN_PROGRESS   // Grooming happening
+  COMPLETED     // Done
+  CANCELLED     // Cancelled
+  NO_SHOW       // Client didn't show
+}
+
+enum BookingSource {
+  WEBSITE
+  INSTAGRAM
+  FACEBOOK
+  TELEGRAM
+  PHONE
+  TEXT
+  WALK_IN
+}
+
+enum ServiceCategory {
+  FULL_GROOM
+  BATH_TIDY
+  A_LA_CARTE
+  CREATIVE
+  SPA
+  PACKAGE
+}
+
+enum PricingType {
+  FLAT
+  BY_WEIGHT
+  BY_BREED
+  CUSTOM
+}
+
+enum PaymentType {
+  DEPOSIT
+  FULL_PAYMENT
+  TIP
+  DONATION
+  MEMBERSHIP
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum ConversationChannel {
+  WEBSITE
+  INSTAGRAM
+  FACEBOOK
+  TELEGRAM
+  SMS
+}
+
+enum ConversationStatus {
+  ACTIVE
+  HANDED_OFF    // Escalated to Kimmie
+  RESOLVED
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum ShelterPetStatus {
+  AVAILABLE
+  ADOPTED
+  TRANSFERRED
+  UNAVAILABLE
+}
+
+enum MakeoverStatus {
+  NONE
+  SPONSORED     // Donation received
+  SCHEDULED     // Makeover appointment set
+  COMPLETED     // Makeover done
+}
+
+enum SizeCategory {
+  SMALL         // $45 minimum
+  MEDIUM        // $55 minimum
+  XL_XXL        // $75 minimum
+  GIANT         // $100 minimum (150+ lbs)
+}
+
+enum PhotoReminderType {
+  BEFORE
+  AFTER
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  COMPLETED
+  SKIPPED
+  EXPIRED
+}
+
+enum PhotoStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  PARTIAL
+  FAILED
+}
+
+enum Platform {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+}
+
+enum PostStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+  DELETED
+}
