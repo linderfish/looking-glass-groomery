@@ -206,10 +206,12 @@ Style: Professional pet photography, sharp focus, natural lighting.
     return `
 Edit this dog photo to add ${themeDesc}.
 
+${GROOMING_REALISM_RULES}
+
 Apply the colors/patterns ONLY to the body, legs, and tail.
 ${preservationClause}
 
-The colors should look like professional pet-safe dye, naturally blended into the fur texture.
+The result should look like what a professional pet groomer could actually achieve with pet-safe dye.
 Style: Professional pet photography, sharp focus, studio lighting.
 `.trim()
   }
