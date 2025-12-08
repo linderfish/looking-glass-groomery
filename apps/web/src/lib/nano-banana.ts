@@ -169,11 +169,11 @@ Style: Professional pet photography, sharp focus, natural lighting.
 
   if (mode === 'ai-designer') {
     const themeDescriptions: Record<string, string> = {
-      whimsical: 'soft pastel colors (lavender, mint, baby pink) dyed into the fur in gentle swirls',
-      bold: 'vibrant saturated colors (hot pink, electric blue) dyed into the fur in bold sections',
-      elegant: 'rose gold and champagne tones with subtle silver accents dyed into the fur',
-      rainbow: 'a rainbow gradient (red to purple) dyed across the body fur',
-      seasonal: 'festive red and green sections with small heart patterns dyed into the fur',
+      whimsical: 'soft pastel colors (lavender, mint, baby pink) blending gently with soft feathered edges - no sharp boundaries',
+      bold: 'rich colors (hot pink, electric blue) with soft blended transitions between sections - saturated but natural-looking, not neon',
+      elegant: 'rose gold and champagne tones with subtle silver accents, colors blending softly into the fur texture',
+      rainbow: 'a rainbow gradient with colors blending smoothly into each other through soft, feathered transitions',
+      seasonal: 'festive red and green sections with LARGE (3+ inch) simple heart shapes - all edges soft and feathered',
     }
     const themeDesc = themeDescriptions[options.designStyle || 'whimsical'] || themeDescriptions.whimsical
 
