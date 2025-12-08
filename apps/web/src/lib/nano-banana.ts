@@ -238,25 +238,37 @@ Style: Professional pet photography, sharp focus, natural lighting.
  */
 export function buildCorrectionPrompt(issues: string[]): string {
   const corrections = issues.map((issue) => {
-    if (issue.includes('face') || issue.includes('Face')) {
+    const issueLower = issue.toLowerCase()
+
+    if (issueLower.includes('face')) {
       return 'Remove any color from the face - the face must be completely natural'
     }
-    if (issue.includes('flat') || issue.includes('sticker')) {
+    if (issueLower.includes('flat') || issueLower.includes('sticker')) {
       return 'Make the patterns look more naturally dyed into the fur, not like flat stickers'
     }
-    if (issue.includes('theme') || issue.includes('Theme')) {
+    if (issueLower.includes('sharp') || issueLower.includes('edge')) {
+      return 'Soften all color edges - real dye bleeds into surrounding fur, creating feathered transitions'
+    }
+    if (issueLower.includes('small') || issueLower.includes('intricate') || issueLower.includes('detailed')) {
+      return 'Make patterns LARGER and simpler - small patterns blur in real fur. Minimum 3 inches.'
+    }
+    if (issueLower.includes('neon') || issueLower.includes('bright') || issueLower.includes('saturated')) {
+      return 'Reduce color intensity - pet-safe dyes are semi-transparent and look more natural/muted'
+    }
+    if (issueLower.includes('theme')) {
       return 'Make the theme elements more visible and prominent'
     }
-    if (issue.includes('intense') || issue.includes('Softer')) {
+    if (issueLower.includes('intense') || issueLower.includes('softer')) {
       return 'Make the colors softer and less saturated'
     }
     return issue
   })
 
   return `
-That's good, but please make these adjustments:
+That's good, but please make these adjustments for realism:
 ${corrections.map((c) => `- ${c}`).join('\n')}
 
+Remember: Pet-safe dye has soft feathered edges, large simple patterns, and natural saturation.
 Keep everything else the same.
 `.trim()
 }
