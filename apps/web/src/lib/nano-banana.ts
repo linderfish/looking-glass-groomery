@@ -2,6 +2,21 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '')
 
+/**
+ * Professional grooming physics knowledge for realistic AI generation
+ */
+const GROOMING_REALISM_RULES = `
+CRITICAL REALISM RULES - Pet-safe dyes behave differently from digital graphics:
+
+1. DYE BLEED: All color edges must be SOFT and FEATHERED - dye naturally bleeds into surrounding fur. NO sharp color boundaries ever.
+
+2. PATTERN SIZE: Minimum practical pattern is 3+ inches. Small hearts/stars/paws blur into unrecognizable blobs. Make all patterns LARGE and SIMPLE.
+
+3. SATURATION: Pet-safe dyes are semi-transparent - they TINT fur, not paint it. Colors appear natural and muted, never neon or fluorescent.
+
+4. FUR TEXTURE: Color follows fur grain, creating subtle variation. Never perfectly uniform solid blocks.
+`.trim()
+
 export interface NanoBananaResult {
   success: boolean
   imageBase64?: string
