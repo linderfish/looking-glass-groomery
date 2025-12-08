@@ -216,14 +216,17 @@ Style: Professional pet photography, sharp focus, studio lighting.
 
   // Creative mode - user's description
   const userDescription = options.colorDescription || 'colorful patterns'
+  const simplifiedDescription = simplifyPatternForRealism(userDescription)
 
   return `
-Edit this dog photo to add: ${userDescription}
+Edit this dog photo to add: ${simplifiedDescription}
+
+${GROOMING_REALISM_RULES}
 
 Apply any colors or patterns ONLY to the body, legs, ears, and tail - NEVER the face.
 ${preservationClause}
 
-The colors should look like professional pet-safe dye, naturally blended into the fur texture.
+The result should look like what a professional pet groomer could actually achieve with pet-safe dye.
 Style: Professional pet photography, sharp focus, natural lighting.
 `.trim()
 }
