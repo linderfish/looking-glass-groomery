@@ -17,6 +17,32 @@ CRITICAL REALISM RULES - Pet-safe dyes behave differently from digital graphics:
 4. FUR TEXTURE: Color follows fur grain, creating subtle variation. Never perfectly uniform solid blocks.
 `.trim()
 
+/**
+ * Simplifies pattern descriptions to favor realistic, achievable designs
+ */
+function simplifyPatternForRealism(description: string): string {
+  let simplified = description
+
+  // Convert small pattern requests to large ones
+  simplified = simplified.replace(
+    /\b(small|tiny|little|mini|detailed|intricate)\s+(hearts?|stars?|paws?|shapes?|patterns?)/gi,
+    'large, simple $2'
+  )
+
+  // Add size guidance for patterns without size specified
+  if (/hearts?|stars?|paws?/i.test(simplified) && !/large|big/i.test(simplified)) {
+    simplified = simplified.replace(/(hearts?|stars?|paws?)/gi, 'large (3+ inch) $1')
+  }
+
+  // Convert sharp edge requests to soft
+  simplified = simplified.replace(/\b(sharp|crisp|clean|defined)\s+edges?/gi, 'soft, feathered edges')
+
+  // Convert neon/fluorescent to natural
+  simplified = simplified.replace(/\b(neon|fluorescent|electric|bright)\s+/gi, 'saturated but natural ')
+
+  return simplified
+}
+
 export interface NanoBananaResult {
   success: boolean
   imageBase64?: string
