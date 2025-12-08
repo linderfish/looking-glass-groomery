@@ -28,8 +28,9 @@ export async function startSession(
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-pro-image-preview',
     generationConfig: {
+      // responseModalities enables image generation output
       responseModalities: ['text', 'image'],
-    },
+    } as any, // Type assertion needed - responseModalities is valid but not in older type definitions
   })
 
   const chat = model.startChat()

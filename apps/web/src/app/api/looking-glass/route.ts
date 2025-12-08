@@ -1,9 +1,18 @@
 // apps/web/src/app/api/looking-glass/route.ts
-// All modes use FLUX Kontext Pro with careful prompting to preserve original pet
+// Prioritizes Nano Banana Pro (Gemini) for better identity preservation
+// Falls back to FLUX Kontext Pro with careful prompting
 // Uses LLM prompt rewriter to optimize prompts for FLUX Kontext Pro
 // Uses Claude Vision to analyze results and auto-correct issues
 // Supports both BFL direct API and fal.ai
 import { NextRequest, NextResponse } from 'next/server'
+import {
+  startSession,
+  editImage,
+  endSession,
+  buildPetEditPrompt,
+  buildCorrectionPrompt,
+  NanoBananaResult,
+} from '@/lib/nano-banana'
 
 // =============================================================================
 // TYPES
@@ -42,15 +51,20 @@ interface GenerationResult {
   error?: string;
 }
 
-// Get API key - prefer fal.ai, fallback to BFL direct
-function getApiConfig(): { type: 'bfl' | 'fal'; key: string } | null {
+// Get API key - prefer Google AI (Nano Banana Pro), fallback to fal.ai, then BFL
+function getApiConfig(): { provider: 'google' | 'fal' | 'bfl'; apiKey: string } | null {
+  // Prefer Google AI (Nano Banana Pro) for better identity preservation
+  if (process.env.GOOGLE_AI_API_KEY) {
+    return { provider: 'google', apiKey: process.env.GOOGLE_AI_API_KEY }
+  }
+  // Fallback to fal.ai
   const falKey = process.env.FAL_KEY || process.env.FAL_AI_KEY
   if (falKey) {
-    return { type: 'fal', key: falKey }
+    return { provider: 'fal', apiKey: falKey }
   }
-  const bflKey = process.env.BFL_API_KEY
-  if (bflKey) {
-    return { type: 'bfl', key: bflKey }
+  // Fallback to BFL direct
+  if (process.env.BFL_API_KEY) {
+    return { provider: 'bfl', apiKey: process.env.BFL_API_KEY }
   }
   return null
 }
@@ -622,13 +636,75 @@ async function generateWithFal(imageUrl: string, prompt: string, apiKey: string)
 }
 
 // =============================================================================
-// Generate with appropriate API based on config
+// Generate with appropriate API based on config (FLUX Kontext fallback)
 // =============================================================================
-async function generateWithKontext(imageUrl: string, prompt: string, config: { type: 'bfl' | 'fal'; key: string }): Promise<string> {
-  if (config.type === 'bfl') {
-    return generateWithBFL(imageUrl, prompt, config.key)
+async function generateWithKontext(imageUrl: string, prompt: string, config: { provider: 'fal' | 'bfl'; apiKey: string }): Promise<string> {
+  if (config.provider === 'bfl') {
+    return generateWithBFL(imageUrl, prompt, config.apiKey)
   } else {
-    return generateWithFal(imageUrl, prompt, config.key)
+    return generateWithFal(imageUrl, prompt, config.apiKey)
+  }
+}
+
+// =============================================================================
+// Generate with Nano Banana Pro (Google Gemini)
+// Supports conversational refinement via sessions
+// =============================================================================
+async function generateWithNanoBanana(
+  imageBase64: string,
+  mode: 'grooming' | 'creative' | 'ai-designer',
+  options: {
+    style?: string
+    designStyle?: string
+    colorDescription?: string
+    userFixes?: string[]
+    sessionId?: string
+  }
+): Promise<{ previewUrl: string; sessionId: string; promptUsed: string }> {
+  let sessionId = options.sessionId
+  let isFirstEdit = true
+
+  // Start new session if needed
+  if (!sessionId) {
+    // Extract base64 data from data URL if needed
+    const base64Data = imageBase64.includes(',')
+      ? imageBase64.split(',')[1]
+      : imageBase64
+    const mimeType = imageBase64.includes('image/png') ? 'image/png' : 'image/jpeg'
+
+    const session = await startSession(base64Data, mimeType)
+    sessionId = session.sessionId
+  } else {
+    isFirstEdit = false
+  }
+
+  // Build prompt
+  let prompt: string
+  if (options.userFixes && options.userFixes.length > 0) {
+    // Correction prompt for iterative refinement
+    prompt = buildCorrectionPrompt(options.userFixes)
+  } else {
+    // Initial edit prompt
+    prompt = buildPetEditPrompt(mode, options)
+  }
+
+  // Generate
+  const result = await editImage(sessionId, prompt, isFirstEdit)
+
+  if (!result.success || !result.imageBase64) {
+    // Clean up session on failure
+    endSession(sessionId)
+    throw new Error(result.error || 'Failed to generate image')
+  }
+
+  // Convert base64 to data URL for frontend display
+  const mimeType = result.mimeType || 'image/jpeg'
+  const previewUrl = `data:${mimeType};base64,${result.imageBase64}`
+
+  return {
+    previewUrl,
+    sessionId,
+    promptUsed: prompt,
   }
 }
 
@@ -736,6 +812,8 @@ export async function POST(request: NextRequest) {
       // For regeneration with user fixes
       userFixes = [],
       previousPrompt = null,
+      // For Nano Banana Pro iterative refinement
+      sessionId: existingSessionId = null,
     } = body
 
     const apiConfig = getApiConfig()
@@ -744,11 +822,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'API not configured',
-        message: 'Looking Glass preview is not available - no API key configured (BFL_API_KEY or FAL_KEY)',
+        message: 'Looking Glass preview is not available - no API key configured (GOOGLE_AI_API_KEY, BFL_API_KEY, or FAL_KEY)',
       }, { status: 503 })
     }
 
-    console.log('Using API:', apiConfig.type)
+    console.log('Using API:', apiConfig.provider)
 
     if (!imageUrl) {
       return NextResponse.json({
@@ -822,59 +900,86 @@ export async function POST(request: NextRequest) {
     console.log('Final prompt:', prompt.substring(0, 150) + '...')
 
     // =======================================================================
-    // GENERATION WITH AUTO-RETRY LOOP
-    // Max 2 automatic retries for obvious issues
+    // GENERATION - Branch based on provider
     // =======================================================================
-    const MAX_AUTO_RETRIES = 2
-    let autoRetryCount = 0
     let previewUrl: string | null = null
     let finalAnalysis: VisionAnalysis | null = null
     let currentPrompt = prompt
+    let sessionId: string | undefined
     const issuesDetected: string[] = []
 
-    while (autoRetryCount <= MAX_AUTO_RETRIES) {
-      console.log(`\n=== Generation Attempt ${autoRetryCount + 1} ===`)
+    if (apiConfig.provider === 'google') {
+      // =======================================================================
+      // NANO BANANA PRO (Google Gemini) - Built-in identity preservation
+      // No auto-retry loop needed - uses conversational refinement instead
+      // =======================================================================
+      console.log('\n=== Using Nano Banana Pro ===')
 
-      // Generate image
-      previewUrl = await generateWithKontext(imageUrl, currentPrompt, apiConfig)
+      const nanoBananaResult = await generateWithNanoBanana(imageUrl, mode, {
+        style,
+        designStyle,
+        colorDescription,
+        userFixes: userFixes.length > 0 ? userFixes : undefined,
+        sessionId: existingSessionId || undefined,
+      })
 
-      // Analyze the result (only for creative and ai-designer modes where we're adding color)
-      if (mode !== 'grooming') {
-        finalAnalysis = await analyzeGeneration(imageUrl, previewUrl, userRequest)
+      previewUrl = nanoBananaResult.previewUrl
+      sessionId = nanoBananaResult.sessionId
+      currentPrompt = nanoBananaResult.promptUsed
 
-        if (finalAnalysis) {
-          console.log('Analysis result:', {
-            passesQuality: finalAnalysis.passesQuality,
-            shouldAutoRetry: finalAnalysis.shouldAutoRetry,
-            obviousIssues: finalAnalysis.obviousIssues,
-          })
+      console.log('Nano Banana Pro generation complete, sessionId:', sessionId)
 
-          // Collect issues for reporting
-          if (finalAnalysis.obviousIssues.colorOnFace) {
-            issuesDetected.push('Color detected on face')
-          }
-          if (finalAnalysis.obviousIssues.bodyPartsChanged) {
-            issuesDetected.push('Body shape was modified')
-          }
-          if (finalAnalysis.obviousIssues.poseChanged) {
-            issuesDetected.push('Pose was changed')
-          }
-          if (finalAnalysis.obviousIssues.backgroundChanged) {
-            issuesDetected.push('Background was altered')
-          }
+    } else {
+      // =======================================================================
+      // FLUX KONTEXT (fal.ai or BFL) - Uses auto-retry loop with vision analysis
+      // =======================================================================
+      const MAX_AUTO_RETRIES = 2
+      let autoRetryCount = 0
 
-          // Should we auto-retry?
-          if (finalAnalysis.shouldAutoRetry && autoRetryCount < MAX_AUTO_RETRIES) {
-            console.log('Auto-retry triggered due to obvious issues')
-            currentPrompt = buildCorrectedPrompt(currentPrompt, finalAnalysis)
-            autoRetryCount++
-            continue
+      while (autoRetryCount <= MAX_AUTO_RETRIES) {
+        console.log(`\n=== Generation Attempt ${autoRetryCount + 1} (FLUX Kontext) ===`)
+
+        // Generate image
+        previewUrl = await generateWithKontext(imageUrl, currentPrompt, apiConfig as { provider: 'fal' | 'bfl'; apiKey: string })
+
+        // Analyze the result (only for creative and ai-designer modes where we're adding color)
+        if (mode !== 'grooming') {
+          finalAnalysis = await analyzeGeneration(imageUrl, previewUrl, userRequest)
+
+          if (finalAnalysis) {
+            console.log('Analysis result:', {
+              passesQuality: finalAnalysis.passesQuality,
+              shouldAutoRetry: finalAnalysis.shouldAutoRetry,
+              obviousIssues: finalAnalysis.obviousIssues,
+            })
+
+            // Collect issues for reporting
+            if (finalAnalysis.obviousIssues.colorOnFace) {
+              issuesDetected.push('Color detected on face')
+            }
+            if (finalAnalysis.obviousIssues.bodyPartsChanged) {
+              issuesDetected.push('Body shape was modified')
+            }
+            if (finalAnalysis.obviousIssues.poseChanged) {
+              issuesDetected.push('Pose was changed')
+            }
+            if (finalAnalysis.obviousIssues.backgroundChanged) {
+              issuesDetected.push('Background was altered')
+            }
+
+            // Should we auto-retry?
+            if (finalAnalysis.shouldAutoRetry && autoRetryCount < MAX_AUTO_RETRIES) {
+              console.log('Auto-retry triggered due to obvious issues')
+              currentPrompt = buildCorrectedPrompt(currentPrompt, finalAnalysis)
+              autoRetryCount++
+              continue
+            }
           }
         }
-      }
 
-      // Either passed quality check or used all retries
-      break
+        // Either passed quality check or used all retries
+        break
+      }
     }
 
     // Build response with analysis info
@@ -884,17 +989,19 @@ export async function POST(request: NextRequest) {
       mode,
       style: mode === 'grooming' ? style : (mode === 'ai-designer' ? designStyle : null),
       colorDescription: mode === 'creative' ? colorDescription : null,
-      method: 'ai-generated',
+      method: apiConfig.provider === 'google' ? 'nano-banana-pro' : 'ai-generated',
       disclaimer,
       // Include the prompt used (for potential user-requested regeneration)
       promptUsed: currentPrompt,
+      // For Nano Banana Pro iterative refinement
+      sessionId,
     }
 
-    // Add analysis results if available
+    // Add analysis results if available (FLUX Kontext only)
     if (finalAnalysis) {
       response.analysis = {
         passedQuality: finalAnalysis.passesQuality,
-        autoRetried: autoRetryCount,
+        autoRetried: 0,
         suggestedFixes: finalAnalysis.userFeedbackNeeded,
         issuesDetected: issuesDetected,
         subjectiveIssues: finalAnalysis.subjectiveIssues,
