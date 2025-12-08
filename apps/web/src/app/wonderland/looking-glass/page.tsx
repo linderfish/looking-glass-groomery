@@ -190,6 +190,46 @@ export default function LookingGlassPage() {
     )
   }
 
+  const handleConversationalRefinement = async () => {
+    if (!uploadedImage || !sessionId || !refinementText.trim()) return
+
+    setIsRegenerating(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/looking-glass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: uploadedImage,
+          mode,
+          sessionId,
+          userFixes: [refinementText.trim()], // Pass as correction
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setPreviewResult({
+          previewUrl: data.previewUrl,
+          disclaimer: data.disclaimer,
+          promptUsed: data.promptUsed,
+          analysis: data.analysis,
+          sessionId: data.sessionId,
+        })
+        setRefinementText('')
+        setSelectedFixes([])
+      } else {
+        setError(data.error || 'Refinement failed')
+      }
+    } catch (err) {
+      setError('Failed to refine image')
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
+
   const handleStartOver = () => {
     setStep('upload')
     setUploadedImage(null)
@@ -714,6 +754,32 @@ export default function LookingGlassPage() {
                       )}
                     </button>
                   )}
+                </div>
+              )}
+
+              {/* Conversational Refinement - Only for Nano Banana Pro sessions */}
+              {sessionId && (
+                <div className="mt-6 p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
+                  <h4 className="font-bold text-purple-300 mb-2">
+                    Need something different?
+                  </h4>
+                  <p className="text-sm text-gray-300 mb-3">
+                    Describe what you&apos;d like to change (Nano Banana Pro remembers your pet):
+                  </p>
+                  <textarea
+                    className="w-full p-3 bg-black/30 rounded-lg text-white placeholder-gray-500 border border-purple-500/30 focus:border-purple-400 focus:outline-none resize-none"
+                    rows={2}
+                    placeholder="e.g., 'Make the hearts bigger' or 'Add more green for Christmas'"
+                    value={refinementText}
+                    onChange={(e) => setRefinementText(e.target.value)}
+                  />
+                  <button
+                    onClick={handleConversationalRefinement}
+                    disabled={!refinementText.trim() || isRegenerating}
+                    className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+                  >
+                    {isRegenerating ? 'Refining...' : 'Refine Image'}
+                  </button>
                 </div>
               )}
 
