@@ -25,6 +25,7 @@ interface PreviewResult {
   disclaimer: string
   promptUsed?: string
   analysis?: AnalysisResult
+  sessionId?: string // For Nano Banana Pro iterative refinement
 }
 
 // Grooming style options
@@ -60,6 +61,8 @@ export default function LookingGlassPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedFixes, setSelectedFixes] = useState<string[]>([])
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [refinementText, setRefinementText] = useState('')
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -114,7 +117,11 @@ export default function LookingGlassPage() {
         disclaimer: data.disclaimer,
         promptUsed: data.promptUsed,
         analysis: data.analysis,
+        sessionId: data.sessionId,
       })
+      if (data.sessionId) {
+        setSessionId(data.sessionId)
+      }
       setSelectedFixes([]) // Reset selected fixes
       setStep('preview')
 
@@ -148,6 +155,8 @@ export default function LookingGlassPage() {
           // Send fixes for regeneration
           userFixes: selectedFixes,
           previousPrompt: previewResult.promptUsed,
+          // Pass session for Nano Banana Pro iterative refinement
+          sessionId: sessionId,
         }),
       })
 
@@ -192,6 +201,8 @@ export default function LookingGlassPage() {
     setError(null)
     setSelectedFixes([])
     setIsRegenerating(false)
+    setSessionId(null)
+    setRefinementText('')
   }
 
   const stepLabels = ['Upload', 'Mode', 'Details', 'Preview']
