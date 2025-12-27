@@ -16,10 +16,6 @@ const ROUTE_BACKGROUNDS: Record<string, string[]> = {
   '/wonderland/services': [
     '/backgrounds/services-new.png',
   ],
-  // Looking Glass page - Ornate mirror portal with swirling energy
-  '/wonderland/looking-glass': [
-    '/backgrounds/looking-glass-new.png',
-  ],
   // Gallery page - Floating pet portrait frames with Alice
   '/wonderland/gallery': [
     '/backgrounds/gallery-new.png',

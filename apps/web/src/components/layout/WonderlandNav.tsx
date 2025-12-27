@@ -8,9 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 const navLinks = [
   { href: '/wonderland', label: 'Home' },
   { href: '/wonderland/services', label: 'Services' },
-  { href: '/wonderland/looking-glass', label: 'Looking Glass' },
-  { href: '/wonderland/why-kimmie', label: 'Why Kimmie' },
-  { href: '/wonderland/shelter-angels', label: 'Shelter Angels' },
+  { href: '/wonderland/gallery', label: 'Gallery' },
+  { href: '/wonderland/areas', label: 'Areas' },
+  { href: '/wonderland/why-kimmie', label: 'About' },
 ]
 
 export function WonderlandNav() {
@@ -56,7 +56,7 @@ export function WonderlandNav() {
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-alice-purple to-psyche-pink group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
-              <Link href="/wonderland/looking-glass" className="btn-wonderland text-sm py-2">
+              <Link href="/wonderland/contact" className="btn-wonderland text-sm py-2">
                 Book Now
               </Link>
             </div>
@@ -130,7 +130,7 @@ export function WonderlandNav() {
                 className="mt-8"
               >
                 <Link
-                  href="/wonderland/looking-glass"
+                  href="/wonderland/contact"
                   onClick={() => setIsMobileOpen(false)}
                   className="btn-wonderland inline-block"
                 >

@@ -3,6 +3,50 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Script from 'next/script'
+
+// TODO: Replace with actual Calendly username
+const CALENDLY_URL = 'https://calendly.com/throughthelookingglass-pet'
+
+// FAQ Schema for AI search visibility
+const contactFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Where is Through the Looking Glass Groomery located?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Through the Looking Glass Groomery is located in Nuevo, CA (Riverside County). We serve Nuevo, Perris, Menifee, Sun City, Homeland, and Winchester areas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I book a grooming appointment in Nuevo, CA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can book online via our Calendly booking system, message us on Instagram, email hello@throughthelookingglass.pet, or text Kimmie directly. We recommend booking 1-2 weeks in advance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the hours for pet grooming at Through the Looking Glass?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Hours are Monday-Friday 9am-5pm, Saturday 9am-3pm, Sunday closed. All appointments are by booking only."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the creative pet color safe?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! Through the Looking Glass Groomery only uses OPAWZ certified pet-safe colors that are non-toxic and temporary. Safe for dogs and approved for pet use."
+      }
+    }
+  ]
+}
 
 const contactMethods = [
   {
@@ -60,6 +104,12 @@ const faqs = [
 
 export default function ContactPage() {
   return (
+    <>
+      <Script id="contact-faq-schema" type="application/ld+json" strategy="afterInteractive">
+        {JSON.stringify(contactFAQSchema)}
+      </Script>
+      {/* Calendly widget script */}
+      <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="lazyOnload" />
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -107,6 +157,29 @@ export default function ContactPage() {
             </motion.a>
           ))}
         </div>
+
+        {/* Calendly Booking Widget */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="card-wonderland p-8 mb-16"
+        >
+          <h2 className="font-display text-2xl text-center mb-6 text-wonderland-text">
+            📅 Book Online
+          </h2>
+          <p className="text-center text-wonderland-muted mb-6">
+            Select a time that works for you. Full groom appointments are typically 2-3 hours.
+          </p>
+          <div
+            className="calendly-inline-widget rounded-xl overflow-hidden"
+            data-url={`${CALENDLY_URL}?hide_gdpr_banner=1&background_color=1a1625&text_color=f5f5f5&primary_color=ffd700`}
+            style={{ minWidth: '320px', height: '700px' }}
+          />
+          <p className="text-center text-wonderland-muted text-sm mt-4">
+            Don&apos;t see a time that works? Message us on Instagram for more options!
+          </p>
+        </motion.div>
 
         {/* Cheshire Chat */}
         <motion.div
@@ -206,8 +279,8 @@ export default function ContactPage() {
             Ready to see the magic?
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/wonderland/looking-glass" className="btn-wonderland text-white">
-              Try the Looking Glass 🪞
+            <Link href="/wonderland/gallery" className="btn-wonderland text-white">
+              See Our Work 📸
             </Link>
             <Link
               href="/wonderland/services"
@@ -219,5 +292,6 @@ export default function ContactPage() {
         </motion.div>
       </div>
     </div>
+    </>
   )
 }

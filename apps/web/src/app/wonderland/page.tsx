@@ -13,18 +13,18 @@ const features = [
     color: 'from-alice-purple to-psyche-pink',
   },
   {
-    icon: '🪞',
-    title: 'The Looking Glass',
-    description: 'See your pet transformed before the groom',
-    href: '/wonderland/looking-glass',
-    color: 'from-psyche-blue to-alice-teal',
-  },
-  {
     icon: '🎨',
     title: 'Creative Color',
     description: 'Pet-safe colors for the boldest transformations',
     href: '/wonderland/services#creative',
     color: 'from-psyche-orange to-psyche-pink',
+  },
+  {
+    icon: '📸',
+    title: 'Gallery',
+    description: 'See our magical transformations',
+    href: '/wonderland/gallery',
+    color: 'from-psyche-blue to-alice-teal',
   },
   {
     icon: '😇',
@@ -61,14 +61,16 @@ export default function WonderlandHome() {
             <span className="text-psychedelic">Wonderland</span>
           </motion.h1>
 
+          {/* Answer Capsule - First 40-60 words for AI extraction */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
             className="font-body text-xl md:text-2xl text-white max-w-2xl mx-auto mb-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
           >
-            Where every pet becomes a masterpiece. Professional grooming with a
-            touch of magic in Nuevo, CA.
+            Through the Looking Glass Groomery offers professional pet grooming in Nuevo, CA.
+            Full groom from $45. Specializing in creative color, Asian Fusion styles, and
+            gentle handling for anxious pets. Serving Nuevo, Perris, Sun City, and Menifee.
           </motion.p>
 
           <motion.div
@@ -77,8 +79,8 @@ export default function WonderlandHome() {
             transition={{ delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link href="/wonderland/looking-glass" className="btn-wonderland text-white font-semibold">
-              Try the Looking Glass 🪞
+            <Link href="/wonderland/contact" className="btn-wonderland text-white font-semibold">
+              Book Your Groom ✨
             </Link>
             <Link
               href="/wonderland/services"
@@ -220,8 +222,8 @@ export default function WonderlandHome() {
               Book your pet&apos;s wonderland experience. From basic grooms to
               creative masterpieces, we make magic happen.
             </p>
-            <Link href="/wonderland/looking-glass" className="btn-wonderland">
-              Start Your Consultation 🪞
+            <Link href="/wonderland/contact" className="btn-wonderland">
+              Book Your Appointment ✨
             </Link>
           </motion.div>
         </div>

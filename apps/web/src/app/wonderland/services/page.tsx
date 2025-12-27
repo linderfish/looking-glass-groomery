@@ -3,6 +3,47 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Script from 'next/script'
+
+// FAQ Schema for AI search visibility
+const serviceFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much does dog grooming cost in Nuevo, CA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dog grooming at Through the Looking Glass Groomery in Nuevo, CA costs $45-$85+ for a full groom depending on size. Small dogs (under 25 lbs) start at $45, medium dogs at $55, large dogs at $70, and extra large dogs at $85+. Bath and tidy services start at $25."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is included in a full dog groom?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A full groom at Through the Looking Glass Groomery includes bath and blow dry, haircut and styling, nail trim and file, ear cleaning, sanitary trim, and a bow or bandana. Service takes 1.5-3+ hours depending on dog size."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do you offer creative color grooming for dogs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! Through the Looking Glass Groomery offers pet-safe creative color grooming using OPAWZ certified products. Options include accent color ($20-35), full creative color ($50-100+), stencil art ($25-50), and glitter application ($10-20)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Asian Fusion dog grooming?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Asian Fusion grooming includes trendy Japanese and Korean styling like Teddy Bear cuts, Lamb cuts, and Korean Round Face styles. These cuts are perfect for Poodles, Bichons, Shih Tzus, and similar breeds. Included in full groom price at Through the Looking Glass Groomery."
+      }
+    }
+  ]
+}
 
 const services = [
   {
@@ -83,6 +124,10 @@ const fadeIn = {
 
 export default function ServicesPage() {
   return (
+    <>
+      <Script id="services-faq-schema" type="application/ld+json" strategy="afterInteractive">
+        {JSON.stringify(serviceFAQSchema)}
+      </Script>
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -239,6 +284,60 @@ export default function ServicesPage() {
           </div>
         </motion.div>
 
+        {/* FAQ Section - Q&A format for AI extraction */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="card-wonderland p-8 mb-12"
+        >
+          <h2 className="font-display text-2xl text-center mb-8 text-alice-gold">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-wonderland-text font-semibold mb-2">
+                How much does dog grooming cost in Nuevo, CA?
+              </h3>
+              <p className="text-wonderland-muted">
+                Dog grooming at Through the Looking Glass Groomery costs $45-$85+ for a full groom
+                depending on size. Small dogs (under 25 lbs) start at $45, medium dogs at $55,
+                large dogs at $70, and extra large dogs at $85+. Bath and tidy services start at $25.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-wonderland-text font-semibold mb-2">
+                What is included in a full dog groom?
+              </h3>
+              <p className="text-wonderland-muted">
+                A full groom includes bath and blow dry, haircut and styling, nail trim and file,
+                ear cleaning, sanitary trim, and a bow or bandana. Service takes 1.5-3+ hours
+                depending on dog size.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-wonderland-text font-semibold mb-2">
+                Do you offer creative color grooming?
+              </h3>
+              <p className="text-wonderland-muted">
+                Yes! We offer pet-safe creative color using OPAWZ certified products. Options include
+                accent color ($20-35), full creative color ($50-100+), stencil art ($25-50), and
+                glitter application ($10-20).
+              </p>
+            </div>
+            <div>
+              <h3 className="text-wonderland-text font-semibold mb-2">
+                What is Asian Fusion dog grooming?
+              </h3>
+              <p className="text-wonderland-muted">
+                Asian Fusion includes trendy Japanese and Korean styles like Teddy Bear cuts, Lamb cuts,
+                and Korean Round Face. Perfect for Poodles, Bichons, Shih Tzus, and similar breeds.
+                Included in full groom price.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -250,8 +349,8 @@ export default function ServicesPage() {
             Ready to book your pet&apos;s transformation?
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/wonderland/looking-glass" className="btn-wonderland text-white">
-              Preview Your Style 🪞
+            <Link href="/wonderland/contact" className="btn-wonderland text-white">
+              Book Your Groom ✨
             </Link>
             <Link
               href="/wonderland/contact"
@@ -263,5 +362,6 @@ export default function ServicesPage() {
         </motion.div>
       </div>
     </div>
+    </>
   )
 }

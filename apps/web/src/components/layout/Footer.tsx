@@ -28,7 +28,7 @@ export function Footer() {
             <ul className="space-y-2">
               {[
                 { href: '/wonderland/services', label: 'Services' },
-                { href: '/wonderland/looking-glass', label: 'Looking Glass' },
+                { href: '/wonderland/gallery', label: 'Gallery' },
                 { href: '/wonderland/why-kimmie', label: 'Why Kimmie' },
                 { href: '/wonderland/shelter-angels', label: 'Shelter Angels' },
               ].map((link) => (

@@ -1,0 +1,30 @@
+# Through the Looking Glass Groomery - robots.txt
+# Allow all crawlers including AI search engines
+
+User-agent: *
+Allow: /
+
+# Explicitly allow AI search engine bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Sitemap location
+Sitemap: https://throughthelookingglass.pet/sitemap.xml

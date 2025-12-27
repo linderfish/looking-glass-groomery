@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Playfair_Display, Inter, Pacifico } from 'next/font/google'
 import '@/styles/globals.css'
 import { BackgroundPreloader } from '@/components/effects/BackgroundPreloader'
+import { LocalBusinessSchema } from '@/components/schema'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -50,6 +51,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${pacifico.variable}`}>
       <body className="min-h-screen bg-wonderland-bg">
+        {/* Structured data for SEO and AI search visibility */}
+        <LocalBusinessSchema />
         {/* Preload AI backgrounds in the background */}
         <BackgroundPreloader scenes={['entry', 'garden', 'teaParty']} />
         {children}
