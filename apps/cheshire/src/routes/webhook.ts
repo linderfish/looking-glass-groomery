@@ -160,7 +160,11 @@ async function processChannelMessage(
   let response: string
 
   if (intent.intent === 'BOOKING') {
-    response = await handleBookingFlow(message, conversation, intent)
+    response = await handleBookingFlow(message, conversation, intent, {
+      conversationId: conversation.id,
+      channel: channel as 'INSTAGRAM' | 'FACEBOOK' | 'WEBSITE',
+      externalId,
+    })
   } else {
     response = await generateResponse(message, {
       conversationHistory: history,

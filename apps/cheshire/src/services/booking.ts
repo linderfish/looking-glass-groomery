@@ -4,16 +4,30 @@ import { detectUserStyle, getPersonalityModifier } from '../personality/adaptive
 import { DetectedIntent, extractBookingData } from './intent'
 import { formatHistoryForLLM } from './conversation'
 import { cheshireChat, CHESHIRE_SYSTEM_PROMPT } from '@looking-glass/ai'
+import { notifyKimmieNewBooking } from './notifications'
+import { getAvailableSlots as getCalendarSlots, createCalendarEvent } from './calendar'
 import { addDays, format, startOfDay, setHours, setMinutes } from 'date-fns'
 
+// Type definitions for Prisma enums (using string literals for compatibility)
+type Species = 'DOG' | 'CAT' | 'GOAT' | 'PIG' | 'GUINEA_PIG'
+type BookingSource = 'WEBSITE' | 'INSTAGRAM' | 'FACEBOOK' | 'TELEGRAM' | 'PHONE' | 'TEXT' | 'WALK_IN'
+type LeadSource = 'DIRECT' | 'WEBSITE' | 'INSTAGRAM' | 'FACEBOOK' | 'REFERRAL' | 'SHELTER' | 'EVENT'
+
 interface BookingFlowState {
-  step: 'INITIAL' | 'COLLECTING_PET' | 'COLLECTING_DATE' | 'COLLECTING_SERVICE' | 'CONFIRMING'
+  step: 'INITIAL' | 'COLLECTING_PET' | 'COLLECTING_DATE' | 'COLLECTING_SERVICE' | 'CONFIRMING' | 'COLLECTING_PHONE'
   petName?: string
   petType?: string
   preferredDate?: Date
   preferredTime?: string
   services?: string[]
   clientPhone?: string
+  clientName?: string
+}
+
+interface BookingContext {
+  conversationId: string
+  channel: 'INSTAGRAM' | 'FACEBOOK' | 'WEBSITE'
+  externalId: string
 }
 
 /**
@@ -24,9 +38,10 @@ export async function handleBookingFlow(
   conversation: {
     id: string
     messages: Array<{ role: 'USER' | 'ASSISTANT' | 'SYSTEM'; content: string }>
-    client?: { firstName: string; lastName: string } | null
+    client?: { firstName: string; lastName: string; phone?: string } | null
   },
-  intent: DetectedIntent
+  intent: DetectedIntent,
+  context: BookingContext
 ): Promise<string> {
   const history = formatHistoryForLLM(conversation.messages)
   const extracted = extractBookingData(message)
@@ -104,12 +119,27 @@ Or tell me your vision and I'll make it happen!`
     case 'CONFIRMING':
       // Handle confirmation or changes
       if (/\b(yes|confirm|perfect|sounds good|book it)\b/i.test(message)) {
-        // TODO: Actually create the booking in database
-        return personalityMode === 'EFFICIENT'
-          ? `✅ Booked! You'll receive a confirmation text shortly. See you soon!`
-          : `🎉 FANTASTIC! Your appointment is CONFIRMED! ✨
+        // Get client name from conversation if available
+        if (conversation.client) {
+          state.clientName = `${conversation.client.firstName} ${conversation.client.lastName}`.trim()
+          state.clientPhone = conversation.client.phone
+        }
 
-You'll receive a confirmation text shortly with all the details.
+        // Create the booking in database and notify Kimmie
+        const result = await createBookingInDatabase(state, context)
+
+        if (!result.success) {
+          return `I'm so sorry, something went wrong while saving your booking! 😿
+
+Don't worry though - just DM us or call and we'll get you sorted right away!
+Phone: (951) 696-9299`
+        }
+
+        return personalityMode === 'EFFICIENT'
+          ? `✅ Booked! Kimmie will confirm your appointment shortly. See you soon!`
+          : `🎉 FANTASTIC! Your booking request is in! ✨
+
+Kimmie will review and confirm your appointment shortly - you'll get a notification!
 
 ${state.petName || 'Your pet'} is going to look absolutely MAGNIFICENT!
 See you soon, gorgeous~ 😸👑`
@@ -125,6 +155,9 @@ See you soon, gorgeous~ 😸👑`
 
       return generateConfirmationMessage(state, personalityMode)
   }
+
+  // Fallback response (should not reach here)
+  return `I'd love to help you book an appointment! Just let me know what you're looking for~ ✨`
 }
 
 /**
@@ -163,21 +196,38 @@ function determineBookingState(
 }
 
 /**
- * Get available appointment slots
+ * Get available appointment slots from calendar
  */
 async function getAvailableSlots(preferredDay?: string): Promise<string[]> {
-  // TODO: Check actual availability from database
-  // For now, return sample slots
-  const today = startOfDay(new Date())
+  try {
+    // Get slots from calendar service (uses Google Calendar if configured, otherwise working hours)
+    const slots = await getCalendarSlots(new Date(), 7, 60) // 7 days ahead, 60 min slots
 
-  const slots = [
-    format(setHours(setMinutes(addDays(today, 1), 0), 10), "EEEE 'at' h:mm a"),
-    format(setHours(setMinutes(addDays(today, 1), 0), 14), "EEEE 'at' h:mm a"),
-    format(setHours(setMinutes(addDays(today, 2), 30), 11), "EEEE 'at' h:mm a"),
-    format(setHours(setMinutes(addDays(today, 3), 0), 9), "EEEE 'at' h:mm a"),
-  ]
+    // If a preferred day is specified, filter to that day
+    if (preferredDay) {
+      const lowerPref = preferredDay.toLowerCase()
+      const filtered = slots.filter(slot =>
+        slot.formatted.toLowerCase().includes(lowerPref)
+      )
+      if (filtered.length > 0) {
+        return filtered.slice(0, 4).map(s => s.formatted)
+      }
+    }
 
-  return slots
+    // Return first 4 available slots
+    return slots.slice(0, 4).map(s => s.formatted)
+  } catch (error) {
+    console.error('Failed to get calendar slots:', error)
+
+    // Fallback to hardcoded slots if calendar fails
+    const today = startOfDay(new Date())
+    return [
+      format(setHours(setMinutes(addDays(today, 1), 0), 10), "EEEE 'at' h:mm a"),
+      format(setHours(setMinutes(addDays(today, 1), 0), 14), "EEEE 'at' h:mm a"),
+      format(setHours(setMinutes(addDays(today, 2), 30), 11), "EEEE 'at' h:mm a"),
+      format(setHours(setMinutes(addDays(today, 3), 0), 9), "EEEE 'at' h:mm a"),
+    ]
+  }
 }
 
 /**
@@ -208,4 +258,195 @@ Does everything look purr-fect? 😸
 
 Say "yes" to confirm and we'll lock it in!
 Or let me know if anything needs adjusting~`
+}
+
+/**
+ * Map pet type string to Species enum
+ */
+function mapPetTypeToSpecies(petType?: string): Species {
+  if (!petType) return 'DOG'
+  const type = petType.toLowerCase()
+  if (type.includes('cat')) return 'CAT'
+  if (type.includes('dog')) return 'DOG'
+  if (type.includes('goat')) return 'GOAT'
+  if (type.includes('pig')) return 'PIG'
+  if (type.includes('guinea')) return 'GUINEA_PIG'
+  return 'DOG' // Default
+}
+
+/**
+ * Parse time string to Date object
+ */
+function parsePreferredTime(timeStr?: string): Date {
+  if (!timeStr) {
+    // Default to tomorrow at 10am
+    return setHours(setMinutes(addDays(new Date(), 1), 0), 10)
+  }
+
+  // Try to parse common time formats
+  // "Tuesday at 2:00 PM" or "tomorrow at 10am"
+  try {
+    // Extract time portion
+    const timeMatch = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i)
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1])
+      const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0
+      const meridian = timeMatch[3]?.toLowerCase()
+
+      if (meridian === 'pm' && hours < 12) hours += 12
+      if (meridian === 'am' && hours === 12) hours = 0
+
+      // Check for day keywords
+      const lowerStr = timeStr.toLowerCase()
+      let targetDate = new Date()
+
+      if (lowerStr.includes('tomorrow')) {
+        targetDate = addDays(targetDate, 1)
+      } else if (lowerStr.includes('monday')) {
+        targetDate = getNextWeekday(targetDate, 1)
+      } else if (lowerStr.includes('tuesday')) {
+        targetDate = getNextWeekday(targetDate, 2)
+      } else if (lowerStr.includes('wednesday')) {
+        targetDate = getNextWeekday(targetDate, 3)
+      } else if (lowerStr.includes('thursday')) {
+        targetDate = getNextWeekday(targetDate, 4)
+      } else if (lowerStr.includes('friday')) {
+        targetDate = getNextWeekday(targetDate, 5)
+      } else if (lowerStr.includes('saturday')) {
+        targetDate = getNextWeekday(targetDate, 6)
+      } else {
+        // Default to tomorrow if no day specified
+        targetDate = addDays(targetDate, 1)
+      }
+
+      return setHours(setMinutes(startOfDay(targetDate), minutes), hours)
+    }
+  } catch (e) {
+    console.error('Failed to parse time:', timeStr, e)
+  }
+
+  // Fallback
+  return setHours(setMinutes(addDays(new Date(), 1), 0), 10)
+}
+
+/**
+ * Get next occurrence of a weekday
+ */
+function getNextWeekday(from: Date, targetDay: number): Date {
+  const current = from.getDay()
+  let daysUntil = targetDay - current
+  if (daysUntil <= 0) daysUntil += 7
+  return addDays(from, daysUntil)
+}
+
+/**
+ * Map booking channel to BookingSource enum
+ */
+function mapChannelToSource(channel: string): BookingSource {
+  switch (channel) {
+    case 'INSTAGRAM': return 'INSTAGRAM'
+    case 'FACEBOOK': return 'FACEBOOK'
+    case 'WEBSITE': return 'WEBSITE'
+    default: return 'WEBSITE'
+  }
+}
+
+/**
+ * Create the booking in the database and notify Kimmie
+ */
+export async function createBookingInDatabase(
+  state: BookingFlowState,
+  context: BookingContext
+): Promise<{ success: boolean; appointmentId?: string; error?: string }> {
+  try {
+    // Find or create client
+    let client = await prisma.client.findFirst({
+      where: state.clientPhone
+        ? { phone: state.clientPhone }
+        : undefined,
+    })
+
+    if (!client) {
+      // Create new client with minimal info
+      // Phone is required by schema, use a placeholder if not provided
+      const phone = state.clientPhone || `pending-${context.externalId}`
+      const [firstName, ...lastNameParts] = (state.clientName || 'New Client').split(' ')
+
+      // Map channel to LeadSource
+      const leadSource = context.channel === 'INSTAGRAM' ? 'INSTAGRAM'
+        : context.channel === 'FACEBOOK' ? 'FACEBOOK'
+        : 'WEBSITE'
+
+      client = await prisma.client.create({
+        data: {
+          firstName: firstName || 'New',
+          lastName: lastNameParts.join(' ') || 'Client',
+          phone,
+          source: leadSource,
+        },
+      })
+    }
+
+    // Find or create pet
+    let pet = await prisma.pet.findFirst({
+      where: {
+        clientId: client.id,
+        name: state.petName || 'Pet',
+      },
+    })
+
+    if (!pet) {
+      pet = await prisma.pet.create({
+        data: {
+          name: state.petName || 'Pet',
+          species: mapPetTypeToSpecies(state.petType),
+          clientId: client.id,
+        },
+      })
+    }
+
+    // Parse the scheduled time
+    const scheduledAt = parsePreferredTime(state.preferredTime)
+    const duration = 60 // Default 1 hour, adjust based on services
+    const endTime = new Date(scheduledAt.getTime() + duration * 60000)
+
+    // Create the appointment
+    const appointment = await prisma.appointment.create({
+      data: {
+        scheduledAt,
+        duration,
+        endTime,
+        clientId: client.id,
+        petId: pet.id,
+        status: 'PENDING',
+        bookedVia: mapChannelToSource(context.channel),
+        clientNotes: state.services?.join(', ') || 'Full Groom',
+      },
+    })
+
+    // Link conversation to client if not already linked
+    await prisma.conversation.update({
+      where: { id: context.conversationId },
+      data: { clientId: client.id },
+    })
+
+    // Notify Kimmie via Telegram
+    await notifyKimmieNewBooking({
+      id: appointment.id,
+      petName: pet.name,
+      clientName: `${client.firstName} ${client.lastName}`.trim(),
+      date: scheduledAt,
+      time: format(scheduledAt, 'h:mm a'),
+      services: state.services || ['Full Groom'],
+      source: context.channel,
+    })
+
+    return { success: true, appointmentId: appointment.id }
+  } catch (error) {
+    console.error('Failed to create booking:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
 }

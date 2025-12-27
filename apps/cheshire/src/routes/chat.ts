@@ -47,9 +47,15 @@ chatRoutes.post(
       let response: string
 
       // Route based on intent
+      const bookingContext = {
+        conversationId: conversation.id,
+        channel: 'WEBSITE' as const,
+        externalId: sessionId || conversation.id,
+      }
+
       switch (intent.intent) {
         case 'BOOKING':
-          response = await handleBookingFlow(message, conversation, intent)
+          response = await handleBookingFlow(message, conversation, intent, bookingContext)
           break
 
         case 'PRICING':
