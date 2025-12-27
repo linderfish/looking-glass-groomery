@@ -3,13 +3,27 @@ import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 import { CHESHIRE_SYSTEM_PROMPT } from './prompts/cheshire'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+// Lazy initialization to avoid crashes when API keys are not configured
+let _anthropic: Anthropic | null = null
+let _openai: OpenAI | null = null
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    })
+  }
+  return _anthropic
+}
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  }
+  return _openai
+}
 
 export type LLMProvider = 'anthropic' | 'openai'
 
@@ -38,7 +52,7 @@ export async function cheshireChat(
 }
 
 async function cheshireChatAnthropic(messages: ChatMessage[]): Promise<ChatResponse> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
     system: CHESHIRE_SYSTEM_PROMPT,
@@ -56,7 +70,7 @@ async function cheshireChatAnthropic(messages: ChatMessage[]): Promise<ChatRespo
 }
 
 async function cheshireChatOpenAI(messages: ChatMessage[]): Promise<ChatResponse> {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4-turbo-preview',
     messages: [
       { role: 'system', content: CHESHIRE_SYSTEM_PROMPT },
@@ -81,7 +95,7 @@ export async function parseBookingIntent(message: string): Promise<{
   services?: string[]
   notes?: string
 }> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 512,
     system: `You are a booking intent parser. Extract booking information from messages.
@@ -115,7 +129,7 @@ export async function generateGroomingBlueprint(
   styleDescription: string,
   petInfo: { species: string; breed?: string; size?: string }
 ): Promise<Record<string, unknown>> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
     system: `You are a professional pet grooming expert. Generate detailed grooming blueprints.
@@ -158,7 +172,7 @@ export async function generateCaption(
   services: string[],
   style?: string
 ): Promise<{ caption: string; hashtags: string[] }> {
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 512,
     system: `You are a social media manager for "Through the Looking Glass Groomery" - an Alice in Wonderland themed pet grooming salon.
