@@ -293,7 +293,7 @@ model Payment {
   client        Client    @relation(fields: [clientId], references: [id])
   appointmentId String?   @unique
   appointment   Appointment? @relation(fields: [appointmentId], references: [id])
-  donationId    String?
+  donationId    String?   @unique
   donation      Donation? @relation(fields: [donationId], references: [id])
 
   @@index([clientId])
