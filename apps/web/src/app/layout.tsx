@@ -2,7 +2,8 @@
 import type { Metadata } from 'next'
 import { Playfair_Display, Inter, Pacifico } from 'next/font/google'
 import '@/styles/globals.css'
-import { BackgroundPreloader } from '@/components/effects/BackgroundPreloader'
+// BackgroundPreloader removed - we now use pre-generated static backgrounds
+// to avoid fal.ai API calls on every visitor (see /public/backgrounds/)
 import { LocalBusinessSchema } from '@/components/schema'
 
 const playfair = Playfair_Display({
@@ -53,8 +54,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-wonderland-bg">
         {/* Structured data for SEO and AI search visibility */}
         <LocalBusinessSchema />
-        {/* Preload AI backgrounds in the background */}
-        <BackgroundPreloader scenes={['entry', 'garden', 'teaParty']} />
         {children}
       </body>
     </html>
