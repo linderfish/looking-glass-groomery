@@ -26,7 +26,7 @@ const galleryFAQSchema = {
       "name": "Can I see examples of creative pet grooming?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes! Our gallery showcases before and after transformations including rainbow colors, pink accents, galaxy patterns, and more. We use pet-safe OPAWZ colors. Follow us on Instagram @throughthelookingglass for daily updates."
+        "text": "Yes! Our gallery showcases before and after transformations including rainbow colors, pink accents, galaxy patterns, and more. We use pet-safe OPAWZ colors. Follow us on Instagram @looknglass.groomery for daily updates."
       }
     }
   ]
@@ -169,12 +169,12 @@ export default function GalleryPage() {
                 Follow us for daily transformations and behind-the-scenes magic
               </p>
               <a
-                href="https://instagram.com/throughthelookingglass"
+                href="https://instagram.com/looknglass.groomery"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-wonderland text-white inline-flex items-center gap-2"
               >
-                <span>@throughthelookingglass</span>
+                <span>@looknglass.groomery</span>
                 <span>📸</span>
               </a>
             </div>

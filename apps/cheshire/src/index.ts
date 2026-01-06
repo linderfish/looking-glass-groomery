@@ -12,7 +12,8 @@ const app = new Hono()
 app.use('*', logger())
 app.use('*', cors({
   origin: [
-    'https://throughthelookingglass.pet',
+    'https://www.lookingglassgroomery.com',
+    'https://lookingglassgroomery.com',
     'http://localhost:3000',
   ],
   credentials: true,

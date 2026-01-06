@@ -51,7 +51,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm text-wonderland-muted">
               <li>📍 Nuevo, CA</li>
-              <li>📧 hello@throughthelookingglass.pet</li>
+              <li>📧 kimmieserrati@gmail.com</li>
               <li>📱 Book via chat or Instagram DM</li>
             </ul>
           </div>
@@ -63,7 +63,7 @@ export function Footer() {
             </h4>
             <div className="flex gap-4">
               <a
-                href="https://instagram.com/throughthelookingglass"
+                href="https://instagram.com/looknglass.groomery"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-wonderland-bg border border-alice-purple/30 flex items-center justify-center hover:border-alice-purple transition-colors"
@@ -71,7 +71,7 @@ export function Footer() {
                 📸
               </a>
               <a
-                href="https://facebook.com/throughthelookingglass"
+                href="https://facebook.com/lookingglassgroomery"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-wonderland-bg border border-alice-purple/30 flex items-center justify-center hover:border-alice-purple transition-colors"
@@ -79,7 +79,7 @@ export function Footer() {
                 👍
               </a>
               <a
-                href="https://tiktok.com/@throughthelookingglass"
+                href="https://tiktok.com/@lookingglassgroomery"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-wonderland-bg border border-alice-purple/30 flex items-center justify-center hover:border-alice-purple transition-colors"

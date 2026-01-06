@@ -14,7 +14,7 @@ const localSchema = {
   "@type": "PetGroomingService",
   "name": "Through the Looking Glass Groomery - Serving Perris",
   "description": "Professional pet grooming serving Perris, CA. Located in nearby Nuevo, just 10 minutes away. Full groom services start at $45.",
-  "url": "https://throughthelookingglass.pet/wonderland/areas/perris-ca",
+  "url": "https://www.lookingglassgroomery.com/wonderland/areas/perris-ca",
   "areaServed": {
     "@type": "City",
     "name": "Perris",

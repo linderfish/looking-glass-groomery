@@ -14,7 +14,7 @@ const localSchema = {
   "@type": "PetGroomingService",
   "name": "Through the Looking Glass Groomery - Serving Menifee",
   "description": "Professional pet grooming serving Menifee, CA. Located in nearby Nuevo, just 20 minutes away. Full groom services start at $45.",
-  "url": "https://throughthelookingglass.pet/wonderland/areas/menifee-ca",
+  "url": "https://www.lookingglassgroomery.com/wonderland/areas/menifee-ca",
   "areaServed": {
     "@type": "City",
     "name": "Menifee",

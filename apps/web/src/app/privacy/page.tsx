@@ -166,8 +166,8 @@ export default function PrivacyPage() {
             <div className="mt-4 text-wonderland-muted">
               <p><strong className="text-wonderland-text">Through the Looking Glass Groomery</strong></p>
               <p>Nuevo, CA (Riverside County)</p>
-              <p>Email: hello@throughthelookingglass.pet</p>
-              <p>Instagram: @throughthelookingglass</p>
+              <p>Email: kimmieserrati@gmail.com</p>
+              <p>Instagram: @looknglass.groomery</p>
             </div>
           </section>
         </motion.div>

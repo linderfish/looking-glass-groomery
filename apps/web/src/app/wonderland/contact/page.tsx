@@ -5,8 +5,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Script from 'next/script'
 
-// TODO: Replace with actual Calendly username
-const CALENDLY_URL = 'https://calendly.com/throughthelookingglass-pet'
+// TODO: Verify Calendly username matches actual account
+const CALENDLY_URL = 'https://calendly.com/lookingglassgroomery'
 
 // FAQ Schema for AI search visibility
 const contactFAQSchema = {
@@ -26,7 +26,7 @@ const contactFAQSchema = {
       "name": "How do I book a grooming appointment in Nuevo, CA?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You can book online via our Calendly booking system, message us on Instagram, email hello@throughthelookingglass.pet, or text Kimmie directly. We recommend booking 1-2 weeks in advance."
+        "text": "You can book online via our Calendly booking system, message us on Instagram @looknglass.groomery, email kimmieserrati@gmail.com, or text Kimmie directly. We recommend booking 1-2 weeks in advance."
       }
     },
     {
@@ -54,15 +54,15 @@ const contactMethods = [
     title: 'Instagram DM',
     description: 'Fastest response! DM us anytime',
     action: 'Message on Instagram',
-    href: 'https://instagram.com/throughthelookingglass',
+    href: 'https://instagram.com/looknglass.groomery',
     primary: true,
   },
   {
     icon: '📧',
     title: 'Email',
     description: 'For detailed inquiries',
-    action: 'hello@throughthelookingglass.pet',
-    href: 'mailto:hello@throughthelookingglass.pet',
+    action: 'kimmieserrati@gmail.com',
+    href: 'mailto:kimmieserrati@gmail.com',
     primary: false,
   },
   {

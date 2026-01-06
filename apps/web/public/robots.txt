@@ -27,4 +27,4 @@ User-agent: Bytespider
 Allow: /
 
 # Sitemap location
-Sitemap: https://throughthelookingglass.pet/sitemap.xml
+Sitemap: https://www.lookingglassgroomery.com/sitemap.xml

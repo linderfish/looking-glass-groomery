@@ -178,7 +178,7 @@ export default function ShelterAngelsPage() {
 
           <div className="text-center mt-8">
             <a
-              href={`https://venmo.com/throughthelookingglass?txn=pay&amount=${
+              href={`https://venmo.com/lookingglassgroomery?txn=pay&amount=${
                 donationAmount || customAmount || 0
               }&note=Shelter%20Angels%20Donation`}
               target="_blank"
@@ -249,7 +249,7 @@ export default function ShelterAngelsPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://instagram.com/throughthelookingglass"
+              href="https://instagram.com/looknglass.groomery"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-wonderland text-white"

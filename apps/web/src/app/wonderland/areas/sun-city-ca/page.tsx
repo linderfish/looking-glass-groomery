@@ -14,7 +14,7 @@ const localSchema = {
   "@type": "PetGroomingService",
   "name": "Through the Looking Glass Groomery - Serving Sun City",
   "description": "Professional pet grooming serving Sun City, CA. Located in nearby Nuevo, just 15 minutes away. Full groom services start at $45.",
-  "url": "https://throughthelookingglass.pet/wonderland/areas/sun-city-ca",
+  "url": "https://www.lookingglassgroomery.com/wonderland/areas/sun-city-ca",
   "areaServed": {
     "@type": "City",
     "name": "Sun City",

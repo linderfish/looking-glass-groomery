@@ -14,7 +14,7 @@ const localSchema = {
   "@type": "PetGroomingService",
   "name": "Through the Looking Glass Groomery - Nuevo",
   "description": "Professional pet grooming in Nuevo, CA. Full groom services start at $45 for small dogs. Specializing in creative grooming, Asian Fusion styles, and anxious pet handling.",
-  "url": "https://throughthelookingglass.pet/wonderland/areas/nuevo-ca",
+  "url": "https://www.lookingglassgroomery.com/wonderland/areas/nuevo-ca",
   "areaServed": {
     "@type": "City",
     "name": "Nuevo",

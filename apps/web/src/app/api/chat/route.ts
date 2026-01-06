@@ -10,15 +10,15 @@ const FALLBACK_RESPONSES: Record<string, string> = {
 Ah, you've found me! I'm still setting up my tea party here in Wonderland~
 
 For now, the best way to reach us is:
-📱 DM us on Instagram: @throughthelookingglass
-📧 Email: hello@throughthelookingglass.pet
+📱 DM us on Instagram: @looknglass.groomery
+📧 Email: kimmieserrati@gmail.com
 
 I'll be fully awake soon to help with bookings and questions! ✨`,
 
   booking: `Ooh, looking to book? How exciting! 🎉
 
 While I'm still waking up from my catnap, you can book directly:
-📱 DM us on Instagram: @throughthelookingglass
+📱 DM us on Instagram: @looknglass.groomery
 📞 Or text Kimmie directly!
 
 I'll be handling bookings myself very soon~ 😸`,

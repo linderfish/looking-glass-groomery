@@ -63,7 +63,7 @@ export const serviceFAQs: FAQItem[] = [
   },
   {
     question: "How do I book a grooming appointment in Nuevo, CA?",
-    answer: "Book your grooming appointment at Through the Looking Glass Groomery through our website, Instagram DM (@throughthelookingglass), or by texting. We serve Nuevo, Perris, Sun City, Menifee, and surrounding Riverside County areas."
+    answer: "Book your grooming appointment at Through the Looking Glass Groomery through our website, Instagram DM (@looknglass.groomery), or by texting. We serve Nuevo, Perris, Sun City, Menifee, and surrounding Riverside County areas."
   }
 ]
 

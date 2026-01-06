@@ -7,15 +7,14 @@ import Script from 'next/script'
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "PetGroomingService",
-  "@id": "https://throughthelookingglass.pet/#business",
+  "@id": "https://www.lookingglassgroomery.com/#business",
   "name": "Through the Looking Glass Groomery",
   "alternateName": "Looking Glass Groomery",
   "description": "Professional pet grooming in Nuevo, CA. Full groom services start at $45 for small dogs. Specializing in creative grooming, Asian Fusion styles, pet-safe color, and anxious pet handling. Force-free certified groomer serving Nuevo, Perris, Sun City, and Riverside County.",
-  "url": "https://throughthelookingglass.pet",
-  "telephone": "+1-951-555-0123",
-  "email": "hello@throughthelookingglass.pet",
-  "image": "https://throughthelookingglass.pet/og-image.jpg",
-  "logo": "https://throughthelookingglass.pet/logo.png",
+  "url": "https://www.lookingglassgroomery.com",
+  "email": "kimmieserrati@gmail.com",
+  "image": "https://www.lookingglassgroomery.com/og-image.jpg",
+  "logo": "https://www.lookingglassgroomery.com/logo.png",
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",
@@ -103,8 +102,8 @@ const localBusinessSchema = {
     "Force-Free Grooming"
   ],
   "sameAs": [
-    "https://instagram.com/throughthelookingglass",
-    "https://facebook.com/throughthelookingglass"
+    "https://instagram.com/looknglass.groomery",
+    "https://facebook.com/lookingglassgroomery"
   ]
 }
 
