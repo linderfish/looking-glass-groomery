@@ -9,6 +9,65 @@ type BotContext = import('../bot').BotContext
 
 export const bookingsHandler = new Composer<BotContext>()
 
+// /today command - show today's appointments with actions
+bookingsHandler.command('today', async (ctx) => {
+  const today = new Date()
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      scheduledAt: {
+        gte: startOfDay(today),
+        lte: new Date(startOfDay(today).getTime() + 24 * 60 * 60 * 1000),
+      },
+      status: { notIn: ['CANCELLED', 'NO_SHOW'] },
+    },
+    include: {
+      pet: true,
+      client: true,
+      services: true,
+    },
+    orderBy: { scheduledAt: 'asc' },
+  })
+
+  if (appointments.length === 0) {
+    await ctx.reply('📅 No appointments today - enjoy your day off! 💅')
+    return
+  }
+
+  let message = `📅 <b>Today's Appointments</b>\n\n`
+
+  for (const apt of appointments) {
+    const time = format(apt.scheduledAt, 'h:mm a')
+    const statusEmoji: Record<string, string> = {
+      PENDING: '⏳',
+      CONFIRMED: '✅',
+      CHECKED_IN: '📍',
+      IN_PROGRESS: '✂️',
+      COMPLETED: '🎉',
+    }
+
+    message += `${statusEmoji[apt.status] || '❓'} <b>${time}</b> - ${apt.pet.name}\n`
+    message += `   ${apt.client.firstName} | ${apt.status.replace('_', ' ')}\n\n`
+  }
+
+  // Build inline keyboard for actionable appointments
+  const buttons: Array<Array<{ text: string; callback_data: string }>> = []
+  for (const apt of appointments) {
+    if (apt.status === 'CONFIRMED') {
+      buttons.push([{ text: `📍 Check In: ${apt.pet.name}`, callback_data: `checkin:${apt.id}` }])
+    } else if (apt.status === 'CHECKED_IN') {
+      buttons.push([{ text: `✂️ Start: ${apt.pet.name}`, callback_data: `start:${apt.id}` }])
+    } else if (apt.status === 'IN_PROGRESS') {
+      buttons.push([{ text: `✅ Complete: ${apt.pet.name}`, callback_data: `complete:${apt.id}` }])
+    }
+  }
+
+  await ctx.reply(message, {
+    parse_mode: 'HTML',
+    reply_markup: buttons.length > 0 ? { inline_keyboard: buttons } : undefined,
+  })
+})
+
 /**
  * Parse a natural language time string into a Date
  */
@@ -133,13 +192,22 @@ bookingsHandler.callbackQuery(/^confirm_booking:(.+)$/, async (ctx) => {
       calendarNote = eventId ? '\n📅 Added to Google Calendar!' : ''
     }
 
-    // Show appointment details
+    // Show appointment details with Check-In button
     await ctx.reply(
       `✅ <b>Confirmed:</b> ${appointment.pet.name}\n` +
       `📅 ${format(appointment.scheduledAt, 'EEEE, MMM d')} at ${format(appointment.scheduledAt, 'h:mm a')}\n` +
       `👤 ${appointment.client.firstName} ${appointment.client.lastName}` +
       calendarNote,
-      { parse_mode: 'HTML' }
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '📍 Check In', callback_data: `checkin:${appointment.id}` },
+            ],
+          ],
+        },
+      }
     )
   } catch (error) {
     console.error('Failed to confirm booking:', error)
@@ -188,6 +256,121 @@ bookingsHandler.callbackQuery(/^decline_booking:(.+)$/, async (ctx) => {
   } catch (error) {
     console.error('Failed to get booking for decline:', error)
     await ctx.answerCallbackQuery({ text: 'Error loading booking' })
+  }
+})
+
+// Handle check-in
+bookingsHandler.callbackQuery(/^checkin:(.+)$/, async (ctx) => {
+  const appointmentId = ctx.match[1]
+
+  try {
+    const appointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'CHECKED_IN',
+        checkedInAt: new Date(),
+      },
+      include: {
+        pet: true,
+        client: true,
+      },
+    })
+
+    await ctx.answerCallbackQuery({ text: 'Checked in! 📍' })
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined })
+
+    await ctx.reply(
+      `📍 <b>${appointment.pet.name} has arrived!</b>\n\n` +
+      `Don't forget to take a BEFORE photo! 📸\n\n` +
+      `Tap when you start grooming:`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✂️ Start Grooming', callback_data: `start:${appointment.id}` },
+            ],
+          ],
+        },
+      }
+    )
+  } catch (error) {
+    console.error('Failed to check in:', error)
+    await ctx.answerCallbackQuery({ text: 'Error checking in 😿' })
+  }
+})
+
+// Handle start grooming (IN_PROGRESS)
+bookingsHandler.callbackQuery(/^start:(.+)$/, async (ctx) => {
+  const appointmentId = ctx.match[1]
+
+  try {
+    const appointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'IN_PROGRESS',
+      },
+      include: {
+        pet: true,
+      },
+    })
+
+    await ctx.answerCallbackQuery({ text: 'Grooming started! ✂️' })
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined })
+
+    await ctx.reply(
+      `✂️ <b>Grooming ${appointment.pet.name}!</b>\n\n` +
+      `Work your magic, queen! 💅\n\n` +
+      `Tap when done:`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ Complete', callback_data: `complete:${appointment.id}` },
+            ],
+          ],
+        },
+      }
+    )
+  } catch (error) {
+    console.error('Failed to start grooming:', error)
+    await ctx.answerCallbackQuery({ text: 'Error starting grooming 😿' })
+  }
+})
+
+// Handle completion
+bookingsHandler.callbackQuery(/^complete:(.+)$/, async (ctx) => {
+  const appointmentId = ctx.match[1]
+
+  try {
+    const appointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+      include: {
+        pet: true,
+        client: true,
+      },
+    })
+
+    await ctx.answerCallbackQuery({ text: 'Completed! 🎉' })
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined })
+
+    await ctx.reply(
+      `🎉 <b>${appointment.pet.name} is all done!</b>\n\n` +
+      `Time for that AFTER photo! 📸\n\n` +
+      `${appointment.pet.name} is looking fabulous, I just know it! ✨`,
+      { parse_mode: 'HTML' }
+    )
+
+    // TODO: In Sprint 3, trigger photo reminder here
+    // TODO: In Sprint 4, update stats and check achievements here
+  } catch (error) {
+    console.error('Failed to complete appointment:', error)
+    await ctx.answerCallbackQuery({ text: 'Error completing appointment 😿' })
   }
 })
 
