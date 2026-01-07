@@ -12,3 +12,4 @@ export {
   notifyAchievementUnlocked,
   notifyLevelUp,
 } from './achievements'
+export { helpHandler } from './help'

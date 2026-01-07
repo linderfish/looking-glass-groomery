@@ -4,6 +4,7 @@ import {
   bookingsHandler,
   remindersHandler,
   achievementsHandler,
+  helpHandler,
   sendRandomHype,
 } from './handlers'
 import {
@@ -12,7 +13,9 @@ import {
   getRandomEasterEgg,
 } from './services/kimmie-persona'
 
-// Register handlers
+// Register handlers - ORDER MATTERS!
+// helpHandler must come early to intercept messages in help mode
+bot.use(helpHandler)
 bot.use(bookingsHandler)
 bot.use(remindersHandler)
 bot.use(achievementsHandler)
@@ -24,7 +27,7 @@ bot.command('start', async (ctx) => {
 
 Well, well, well~ Look who's here!
 
-Hey gorgeous! 👋 I'm your Cheshire assistant, here to make your grooming life FABULOUS.
+Hey gorgeous! I'm your Cheshire assistant, here to make your grooming life FABULOUS.
 
 Here's what I can do for you:
 📅 Notify you about new bookings
@@ -32,40 +35,20 @@ Here's what I can do for you:
 🏆 Track your achievements
 📊 Show your stats
 
-Commands:
+<b>Commands:</b>
+/help - Chat with me! I can guide you through anything
 /stats - View your stats
 /achievements - See your trophy case
 /hype - Get some motivation
+
+Type /help to get started - I'll walk you through everything!
 
 Let's make magic happen, queen! 👑`,
     { parse_mode: 'HTML' }
   )
 })
 
-// Help command
-bot.command('help', async (ctx) => {
-  await ctx.reply(
-    `🐱 <b>Cheshire Cat Help</b> 🐱
-
-<b>Commands:</b>
-/start - Wake me up
-/stats - View your grooming stats
-/achievements - See unlocked achievements
-/hype - Get a random motivation boost
-
-<b>How I Work:</b>
-• I'll notify you when new bookings come in
-• I'll remind you to take before/after photos
-• Send me photos anytime and I'll help organize them
-• I track your streaks and achievements automatically
-
-<b>Easter Eggs:</b>
-Try mentioning Pokemon, Grey's Anatomy, dinosaurs, lizards, or Mormon Wives... 😼
-
-Questions? Just ask! I'm always here~ ✨`,
-    { parse_mode: 'HTML' }
-  )
-})
+// Note: /help is now handled by helpHandler (intelligent AI assistant)
 
 // Random response to unhandled messages
 bot.on('message:text', async (ctx) => {

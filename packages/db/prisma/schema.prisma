@@ -447,7 +447,32 @@ model Donation {
   @@index([shelterPetId])
 }
 
-// ============== KIMMIE'S GAMIFICATION ==============
+// ============== KIMMIE'S SETTINGS & GAMIFICATION ==============
+
+model KimmieSettings {
+  id                    String   @id @default(cuid())
+
+  // Notification preferences
+  dailySummaryTime      String   @default("09:00")  // "HH:MM" format
+  appointmentReminder   Int      @default(30)       // minutes before
+  photoReminderLevel    String   @default("medium") // chill/medium/pushy
+
+  // Feature toggles
+  googleCalendarSync    Boolean  @default(true)
+  autoConfirmReturning  Boolean  @default(false)
+  weekendMode           Boolean  @default(false)    // pause notifications
+
+  // Personalization
+  preferredName         String   @default("queen")
+  hypeFrequency         String   @default("normal") // low/normal/high
+
+  // Onboarding
+  onboardingComplete    Boolean  @default(false)
+  onboardingStep        Int      @default(0)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
 
 model KimmieAchievement {
   id            String    @id @default(cuid())
