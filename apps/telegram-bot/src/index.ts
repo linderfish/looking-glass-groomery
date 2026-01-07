@@ -1,4 +1,10 @@
 // apps/telegram-bot/src/index.ts
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Load environment variables from project root .env
+config({ path: resolve(__dirname, '../../../.env') })
+
 import { bot, KIMMIE_CHAT_ID } from './bot'
 import {
   bookingsHandler,
