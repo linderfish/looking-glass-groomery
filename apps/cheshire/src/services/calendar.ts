@@ -273,6 +273,31 @@ async function fetchBusyTimes(
 }
 
 /**
+ * Get busy times from Google Calendar for availability checking
+ * Exported for use by the unified availability engine
+ */
+export async function getCalendarBusyTimes(
+  startDate: Date,
+  endDate: Date
+): Promise<Array<{ start: Date; end: Date }>> {
+  if (!isCalendarConfigured()) {
+    return []
+  }
+
+  const calendarId = process.env.GOOGLE_CALENDAR_ID!
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n')
+
+  try {
+    const accessToken = await getServiceAccountToken(serviceAccountEmail, privateKey)
+    return await fetchBusyTimes(accessToken, calendarId, startDate, endDate)
+  } catch (error) {
+    console.error('Failed to fetch calendar busy times:', error)
+    return []
+  }
+}
+
+/**
  * Create a calendar event for a confirmed booking
  */
 export async function createCalendarEvent(event: CalendarEvent): Promise<string | null> {

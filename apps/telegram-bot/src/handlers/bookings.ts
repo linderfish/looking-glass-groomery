@@ -8,6 +8,7 @@ import { sendBeforePhotoReminder, sendAfterPhotoReminder } from './reminders'
 import { notifyAchievementUnlocked } from './achievements'
 import { getStats, incrementCompletionStats } from '../services/stats'
 import { checkAndUnlockAchievements } from '../services/achievements'
+import { createWaiverRequest, checkWaiverStatus } from '../services/waiver'
 
 type BotContext = import('../bot').BotContext
 
@@ -213,6 +214,17 @@ bookingsHandler.callbackQuery(/^confirm_booking:(.+)$/, async (ctx) => {
         },
       }
     )
+
+    // Create waiver request and send link to Kimmie
+    const waiverRequest = await createWaiverRequest(appointment.clientId)
+    if (waiverRequest) {
+      await ctx.reply(
+        `📋 <b>Waiver Link for ${appointment.client.firstName}:</b>\n\n` +
+        `${waiverRequest.waiverUrl}\n\n` +
+        `Send this to the client before their appointment! `,
+        { parse_mode: 'HTML' }
+      )
+    }
   } catch (error) {
     console.error('Failed to confirm booking:', error)
     await ctx.answerCallbackQuery({ text: 'Error confirming booking 😿' })
@@ -268,6 +280,24 @@ bookingsHandler.callbackQuery(/^checkin:(.+)$/, async (ctx) => {
   const appointmentId = ctx.match[1]
 
   try {
+    // Get appointment first to check waiver status
+    const appointmentData = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { client: true },
+    })
+
+    if (!appointmentData) {
+      await ctx.answerCallbackQuery({ text: 'Appointment not found' })
+      return
+    }
+
+    // Check waiver status (soft check - warn but don't block)
+    const waiverSigned = await checkWaiverStatus(appointmentData.clientId)
+    let waiverWarning = ''
+    if (!waiverSigned) {
+      waiverWarning = `\n\n⚠️ <b>Note:</b> Waiver not yet signed!`
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id: appointmentId },
       data: {
@@ -284,7 +314,7 @@ bookingsHandler.callbackQuery(/^checkin:(.+)$/, async (ctx) => {
     await ctx.editMessageReplyMarkup({ reply_markup: undefined })
 
     await ctx.reply(
-      `📍 <b>${appointment.pet.name} has arrived!</b>\n\n` +
+      `📍 <b>${appointment.pet.name} has arrived!</b>${waiverWarning}\n\n` +
       `Tap when you start grooming:`,
       {
         parse_mode: 'HTML',

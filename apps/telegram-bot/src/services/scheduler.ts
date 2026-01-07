@@ -2,7 +2,7 @@
 import * as cron from 'node-cron'
 import { getSettings } from './settings'
 import { sendDailyDigest } from './daily-digest'
-import { bot, KIMMIE_CHAT_ID } from '../bot'
+import { bot } from '../bot'
 
 // Track if daily digest was already sent today (prevent duplicates)
 let lastDigestDate: string | null = null
@@ -85,7 +85,7 @@ export function scheduleAppointmentReminder(
   const timeout = setTimeout(async () => {
     try {
       await bot.api.sendMessage(
-        KIMMIE_CHAT_ID,
+        process.env.TELEGRAM_KIMMIE_CHAT_ID!,
         `Appointment in ${minutesBefore} minutes!`
       )
     } catch (error) {
@@ -115,7 +115,7 @@ export function schedulePhotoReminder(
 
   const timeout = setTimeout(async () => {
     try {
-      await bot.api.sendMessage(KIMMIE_CHAT_ID, message)
+      await bot.api.sendMessage(process.env.TELEGRAM_KIMMIE_CHAT_ID!, message)
     } catch (error) {
       console.error(`Failed to send ${type} photo reminder for ${appointmentId}:`, error)
     }

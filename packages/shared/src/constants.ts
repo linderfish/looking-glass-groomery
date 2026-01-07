@@ -78,4 +78,6 @@ export const KIMMIE_EASTER_EGGS = {
   MORMON_WIVES: ['mormon wives', 'swt', 'drama'],
   DINO: ['rawr', 'dinosaur', 'dino', 't-rex'],
   LIZARD: ['lizard', 'button', 'boop'],
+  ANIMAL_CROSSING: ['animal crossing', 'isabelle', 'tom nook', 'bells', 'nook miles', 'turnips'],
+  SPICY: ['good girl', 'good boy', 'behave', 'obey', 'collar', 'brat', 'punishment', 'reward'],
 } as const

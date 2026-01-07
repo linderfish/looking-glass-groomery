@@ -1,6 +1,6 @@
 // apps/telegram-bot/src/services/daily-digest.ts
 import { prisma } from '@looking-glass/db'
-import { bot, KIMMIE_CHAT_ID } from '../bot'
+import { bot } from '../bot'
 import { getSettings } from './settings'
 import { startOfDay, endOfDay, format } from 'date-fns'
 
@@ -58,7 +58,7 @@ export async function sendDailyDigest(): Promise<void> {
   }
 
   // Send the message
-  await bot.api.sendMessage(KIMMIE_CHAT_ID, message)
+  await bot.api.sendMessage(process.env.TELEGRAM_KIMMIE_CHAT_ID!, message)
 
   console.log(`Daily digest sent at ${format(today, 'h:mm a')}`)
 }

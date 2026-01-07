@@ -8,6 +8,7 @@ export interface ResponseContext {
   intent: DetectedIntent
   clientName?: string
   petName?: string
+  isReturningClient?: boolean
 }
 
 /**
@@ -17,8 +18,9 @@ export async function generateResponse(
   userMessage: string,
   context: ResponseContext
 ): Promise<string> {
-  const personalityMode = detectUserStyle(context.conversationHistory)
-  const personalityModifier = getPersonalityModifier(personalityMode)
+  // Detect personality style, incorporating returning client status if available
+  const personality = detectUserStyle(context.conversationHistory, context.isReturningClient ?? false)
+  const personalityModifier = getPersonalityModifier(personality)
 
   const systemPrompt = `${CHESHIRE_SYSTEM_PROMPT}
 
@@ -43,7 +45,7 @@ ${personalityModifier}`
     'anthropic'
   )
 
-  return adjustResponse(response.content, personalityMode)
+  return adjustResponse(response.content, personality)
 }
 
 /**

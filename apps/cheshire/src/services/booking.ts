@@ -1,17 +1,100 @@
 // apps/cheshire/src/services/booking.ts
 import { prisma } from '@looking-glass/db'
-import { detectUserStyle, getPersonalityModifier } from '../personality/adaptive'
+import { detectUserStyle, getPersonalityModifier, PersonalityContext } from '../personality/adaptive'
 import { DetectedIntent, extractBookingData } from './intent'
-import { formatHistoryForLLM } from './conversation'
+import { formatHistoryForLLM, isReturningClient } from './conversation'
 import { cheshireChat, CHESHIRE_SYSTEM_PROMPT } from '@looking-glass/ai'
 import { notifyKimmieNewBooking } from './notifications'
 import { getAvailableSlots as getCalendarSlots, createCalendarEvent } from './calendar'
+import { canBookSlot, getAvailableSlots as getAvailabilitySlots } from './availability'
 import { addDays, format, startOfDay, setHours, setMinutes } from 'date-fns'
 
 // Type definitions for Prisma enums (using string literals for compatibility)
 type Species = 'DOG' | 'CAT' | 'GOAT' | 'PIG' | 'GUINEA_PIG'
 type BookingSource = 'WEBSITE' | 'INSTAGRAM' | 'FACEBOOK' | 'TELEGRAM' | 'PHONE' | 'TEXT' | 'WALK_IN'
 type LeadSource = 'DIRECT' | 'WEBSITE' | 'INSTAGRAM' | 'FACEBOOK' | 'REFERRAL' | 'SHELTER' | 'EVENT'
+
+interface ServiceLookupResult {
+  services: Array<{ id: string; name: string; baseDuration: number; basePrice: number }>
+  totalDuration: number
+  totalPrice: number
+}
+
+/**
+ * Look up services from the database by matching service names
+ * Uses fuzzy matching to handle variations in how users describe services
+ */
+async function lookupServices(serviceNames: string[], petSpecies: Species): Promise<ServiceLookupResult> {
+  // Get all active services available for this species
+  const allServices = await prisma.service.findMany({
+    where: {
+      isActive: true,
+      availableFor: { has: petSpecies },
+    },
+  })
+
+  const matchedServices: ServiceLookupResult['services'] = []
+
+  for (const requestedName of serviceNames) {
+    const normalized = requestedName.toLowerCase().trim()
+
+    // Try exact match first
+    let match = allServices.find((s) =>
+      s.name.toLowerCase() === normalized
+    )
+
+    // Try partial/fuzzy matching
+    if (!match) {
+      match = allServices.find((s) => {
+        const serviceLower = s.name.toLowerCase()
+        return (
+          serviceLower.includes(normalized) ||
+          normalized.includes(serviceLower) ||
+          // Common variations
+          (normalized.includes('groom') && serviceLower.includes('groom')) ||
+          (normalized.includes('bath') && serviceLower.includes('bath')) ||
+          (normalized.includes('nail') && serviceLower.includes('nail')) ||
+          (normalized.includes('color') && serviceLower.includes('color')) ||
+          (normalized.includes('creative') && serviceLower.includes('creative'))
+        )
+      })
+    }
+
+    if (match && !matchedServices.some((m) => m.id === match.id)) {
+      matchedServices.push({
+        id: match.id,
+        name: match.name,
+        baseDuration: match.baseDuration,
+        basePrice: match.basePrice,
+      })
+    }
+  }
+
+  // If no matches found, try to find a default full groom
+  if (matchedServices.length === 0) {
+    const defaultGroom = allServices.find((s) =>
+      s.category === 'FULL_GROOM' && s.name.toLowerCase().includes('medium')
+    ) || allServices.find((s) => s.category === 'FULL_GROOM')
+
+    if (defaultGroom) {
+      matchedServices.push({
+        id: defaultGroom.id,
+        name: defaultGroom.name,
+        baseDuration: defaultGroom.baseDuration,
+        basePrice: defaultGroom.basePrice,
+      })
+    }
+  }
+
+  const totalDuration = matchedServices.reduce((sum, s) => sum + s.baseDuration, 0)
+  const totalPrice = matchedServices.reduce((sum, s) => sum + s.basePrice, 0)
+
+  return {
+    services: matchedServices,
+    totalDuration: totalDuration || 60, // Fallback to 60 min if nothing matched
+    totalPrice,
+  }
+}
 
 interface BookingFlowState {
   step: 'INITIAL' | 'COLLECTING_PET' | 'COLLECTING_DATE' | 'COLLECTING_SERVICE' | 'CONFIRMING' | 'COLLECTING_PHONE'
@@ -38,14 +121,17 @@ export async function handleBookingFlow(
   conversation: {
     id: string
     messages: Array<{ role: 'USER' | 'ASSISTANT' | 'SYSTEM'; content: string }>
-    client?: { firstName: string; lastName: string; phone?: string } | null
+    client?: { id: string; firstName: string; lastName: string; phone?: string } | null
   },
   intent: DetectedIntent,
   context: BookingContext
 ): Promise<string> {
   const history = formatHistoryForLLM(conversation.messages)
   const extracted = extractBookingData(message)
-  const personalityMode = detectUserStyle(history)
+
+  // Check if this is a returning client for personalized greetings
+  const returning = await isReturningClient(conversation.client?.id)
+  const personality = detectUserStyle(history, returning)
 
   // Try to determine current flow state from conversation history
   const state = determineBookingState(history, extracted)
@@ -58,14 +144,14 @@ export async function handleBookingFlow(
         state.petType = extracted.petType
         state.step = 'COLLECTING_DATE'
 
-        return personalityMode === 'EFFICIENT'
+        return personality.mode === 'EFFICIENT'
           ? `Got it${extracted.petName ? `, ${extracted.petName}` : ''}! When works best for you? I have openings this week.`
           : `Wonderful! I can already tell ${extracted.petName || 'your fur baby'} is going to look AMAZING! ✨
 
 When would you like to come in? I have some lovely spots available this week~ 📅`
       }
 
-      return personalityMode === 'EFFICIENT'
+      return personality.mode === 'EFFICIENT'
         ? `I'd love to help you book! What's your pet's name and what kind of pet are they?`
         : `*Cheshire grin appears* ✨
 
@@ -81,7 +167,7 @@ First, tell me about your precious pet - what's their name and what kind of magi
         // Generate available slots based on preference
         const slots = await getAvailableSlots(extracted.preferredDate)
 
-        return personalityMode === 'EFFICIENT'
+        return personality.mode === 'EFFICIENT'
           ? `Here's what's available:\n${slots.map(s => `• ${s}`).join('\n')}\n\nWhich works for you?`
           : `Let me peek through the Looking Glass at our schedule... 🪞
 
@@ -100,10 +186,10 @@ I have openings most days - just let me know what works for your schedule! 📅`
         state.services = extracted.services
         state.step = 'CONFIRMING'
 
-        return generateConfirmationMessage(state, personalityMode)
+        return generateConfirmationMessage(state, personality.mode)
       }
 
-      return personalityMode === 'EFFICIENT'
+      return personality.mode === 'EFFICIENT'
         ? `What services do you need?\n• Full Groom\n• Bath & Tidy\n• Creative Color\n• Nails Only`
         : `Excellent choice! Now for the fun part~ ✨
 
@@ -135,7 +221,7 @@ Don't worry though - just DM us or call and we'll get you sorted right away!
 Phone: (951) 696-9299`
         }
 
-        return personalityMode === 'EFFICIENT'
+        return personality.mode === 'EFFICIENT'
           ? `✅ Booked! Kimmie will confirm your appointment shortly. See you soon!`
           : `🎉 FANTASTIC! Your booking request is in! ✨
 
@@ -153,7 +239,7 @@ See you soon, gorgeous~ 😸👑`
 • Something else?`
       }
 
-      return generateConfirmationMessage(state, personalityMode)
+      return generateConfirmationMessage(state, personality.mode)
   }
 
   // Fallback response (should not reach here)
@@ -196,12 +282,13 @@ function determineBookingState(
 }
 
 /**
- * Get available appointment slots from calendar
+ * Get available appointment slots using the availability engine
+ * Now checks both database appointments and Google Calendar
  */
 async function getAvailableSlots(preferredDay?: string): Promise<string[]> {
   try {
-    // Get slots from calendar service (uses Google Calendar if configured, otherwise working hours)
-    const slots = await getCalendarSlots(new Date(), 7, 60) // 7 days ahead, 60 min slots
+    // Use availability engine (checks DB appointments + Google Calendar + buffer time)
+    const slots = await getAvailabilitySlots(new Date(), 7, 60) // 7 days ahead, 60 min slots
 
     // If a preferred day is specified, filter to that day
     if (preferredDay) {
@@ -217,9 +304,9 @@ async function getAvailableSlots(preferredDay?: string): Promise<string[]> {
     // Return first 4 available slots
     return slots.slice(0, 4).map(s => s.formatted)
   } catch (error) {
-    console.error('Failed to get calendar slots:', error)
+    console.error('Failed to get availability slots:', error)
 
-    // Fallback to hardcoded slots if calendar fails
+    // Fallback to hardcoded slots if availability check fails
     const today = startOfDay(new Date())
     return [
       format(setHours(setMinutes(addDays(today, 1), 0), 10), "EEEE 'at' h:mm a"),
@@ -407,10 +494,26 @@ export async function createBookingInDatabase(
 
     // Parse the scheduled time
     const scheduledAt = parsePreferredTime(state.preferredTime)
-    const duration = 60 // Default 1 hour, adjust based on services
+
+    // Look up services from database and calculate real duration
+    const petSpecies = mapPetTypeToSpecies(state.petType)
+    const serviceResult = await lookupServices(
+      state.services || ['Full Groom'],
+      petSpecies
+    )
+    const duration = serviceResult.totalDuration
     const endTime = new Date(scheduledAt.getTime() + duration * 60000)
 
-    // Create the appointment
+    // Check availability before creating appointment (prevent double-booking)
+    const availability = await canBookSlot(scheduledAt, duration)
+    if (!availability.available) {
+      return {
+        success: false,
+        error: availability.conflictReason || 'This time slot is no longer available',
+      }
+    }
+
+    // Create the appointment with linked services
     const appointment = await prisma.appointment.create({
       data: {
         scheduledAt,
@@ -421,6 +524,11 @@ export async function createBookingInDatabase(
         status: 'PENDING',
         bookedVia: mapChannelToSource(context.channel),
         clientNotes: state.services?.join(', ') || 'Full Groom',
+        estimatedPrice: serviceResult.totalPrice,
+        // Connect actual Service records
+        services: serviceResult.services.length > 0
+          ? { connect: serviceResult.services.map((s) => ({ id: s.id })) }
+          : undefined,
       },
     })
 

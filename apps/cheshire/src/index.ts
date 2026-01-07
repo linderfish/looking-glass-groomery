@@ -5,6 +5,7 @@ import { logger } from 'hono/logger'
 import { healthRoutes } from './routes/health'
 import { chatRoutes } from './routes/chat'
 import { webhookRoutes } from './routes/webhook'
+import { waiver } from './routes/waiver'
 
 const app = new Hono()
 
@@ -23,6 +24,7 @@ app.use('*', cors({
 app.route('/health', healthRoutes)
 app.route('/chat', chatRoutes)
 app.route('/webhook', webhookRoutes)
+app.route('/waiver', waiver)
 
 // Root
 app.get('/', (c) => c.json({

@@ -4,6 +4,7 @@ import {
   getOrCreateConversation,
   addMessage,
   formatHistoryForLLM,
+  isReturningClient,
 } from '../services/conversation'
 import { detectIntent } from '../services/intent'
 import { generateResponse } from '../services/response'
@@ -49,6 +50,48 @@ webhookRoutes.post('/instagram', async (c) => {
   }
 })
 
+// Alternative Facebook webhook path (to bypass cache)
+webhookRoutes.get('/fb', async (c) => {
+  const mode = c.req.query('hub.mode')
+  const token = c.req.query('hub.verify_token')
+  const challenge = c.req.query('hub.challenge')
+
+  const VERIFY_TOKEN = process.env.FACEBOOK_VERIFY_TOKEN
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('Facebook webhook verified (alt path)')
+    return c.text(challenge || '')
+  }
+
+  return c.text('Verification failed', 403)
+})
+
+webhookRoutes.post('/fb', async (c) => {
+  console.log('🚨 WEBHOOK HIT (alt) AT:', new Date().toISOString())
+
+  try {
+    const body = await c.req.json()
+    console.log('📥 Facebook webhook (alt) received:', JSON.stringify(body, null, 2))
+
+    if (body.object === 'page') {
+      for (const entry of body.entry || []) {
+        for (const messaging of entry.messaging || []) {
+          await handleFacebookMessage(messaging)
+        }
+      }
+    }
+
+    return c.text('EVENT_RECEIVED', 200, {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+  } catch (error) {
+    console.error('Facebook webhook error:', error)
+    return c.text('ERROR', 500)
+  }
+})
+
 // Facebook webhook verification
 webhookRoutes.get('/facebook', async (c) => {
   const mode = c.req.query('hub.mode')
@@ -67,8 +110,14 @@ webhookRoutes.get('/facebook', async (c) => {
 
 // Facebook Messenger incoming messages
 webhookRoutes.post('/facebook', async (c) => {
+  // Log IMMEDIATELY before any async
+  console.log('🚨 WEBHOOK HIT AT:', new Date().toISOString())
+
   try {
     const body = await c.req.json()
+
+    // Log ALL incoming webhook payloads for debugging
+    console.log('📥 Facebook webhook received:', JSON.stringify(body, null, 2))
 
     // Handle Messenger messages
     if (body.object === 'page') {
@@ -79,10 +128,17 @@ webhookRoutes.post('/facebook', async (c) => {
       }
     }
 
-    return c.text('EVENT_RECEIVED')
+    // Return with no-cache headers to prevent Cloudflare caching
+    return c.text('EVENT_RECEIVED', 200, {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
   } catch (error) {
     console.error('Facebook webhook error:', error)
-    return c.text('ERROR', 500)
+    return c.text('ERROR', 500, {
+      'Cache-Control': 'no-store'
+    })
   }
 })
 
@@ -156,6 +212,9 @@ async function processChannelMessage(
   // Detect intent
   const intent = await detectIntent(message, history)
 
+  // Check if this is a returning client for personalized greetings
+  const returning = await isReturningClient(conversation.client?.id)
+
   // Generate response based on intent
   let response: string
 
@@ -169,6 +228,7 @@ async function processChannelMessage(
     response = await generateResponse(message, {
       conversationHistory: history,
       intent,
+      isReturningClient: returning,
     })
   }
 

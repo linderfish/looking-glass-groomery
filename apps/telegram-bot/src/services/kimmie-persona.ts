@@ -165,6 +165,9 @@ const EASTER_EGGS = [
   '📺 This is giving main character energy (Mormon Wives would be shook)',
   '🎮 Your grooming skills are SUPER EFFECTIVE!',
   '👻 Mimikyu is hiding somewhere in your success~',
+  '🏝️ Tom Nook says you\'ve paid off your grooming debts in BELLS!',
+  '🍑 Isabelle approves of this island... I mean, salon!',
+  '😈 Such a good girl... I mean, groomer. 💋',
 ]
 
 /**
@@ -244,6 +247,19 @@ export function getEasterEggResponse(category: string): string {
       '🦎 *pushes button aggressively* SEROTONIN DELIVERED!',
       '🔘 *button mashing intensifies* You earned this dopamine!',
       '🦎💚 Lizard approved! *click click click*',
+    ],
+    ANIMAL_CROSSING: [
+      '🏝️ Tom Nook: "Your grooming debt is paid in FULL! Here\'s 10,000 bells~"',
+      '🍑 Isabelle has an announcement: YOU ARE CRUSHING IT! 📢',
+      '🎣 You caught a... perfectly groomed dog! It\'s at least a C+!',
+      '✈️ Dodo Airlines now flying direct to Through the Looking Glass~',
+    ],
+    SPICY: [
+      '😈 Good girl~ ...I mean, good GROOMER. *ahem* 💋',
+      '🖤 The pets aren\'t the only ones who follow commands around here~',
+      '👑 Yes, Queen. Whatever you say, Queen. *kneels in respect*',
+      '😏 Someone\'s been a very good girl today... extra treats earned~',
+      '🔥 Bratty energy detected. Punishment: MORE SUCCESS. 💅',
     ],
   }
 

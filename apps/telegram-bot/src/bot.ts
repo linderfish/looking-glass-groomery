@@ -5,26 +5,60 @@ interface SessionData {
   awaitingAction?: string
   pendingBookingId?: string
   lastInteraction?: Date
+  inHelpMode?: boolean
+  helpHistory?: { role: string; content: string }[]
 }
 
 type BotContext = Context & SessionFlavor<SessionData>
 
-const KIMMIE_CHAT_ID = process.env.TELEGRAM_KIMMIE_CHAT_ID!
+// Lazy initialization to allow dotenv to load first
+let _bot: Bot<BotContext> | null = null
+let _chatId: string | null = null
 
-export const bot = new Bot<BotContext>(process.env.TELEGRAM_BOT_TOKEN!)
+export function getBot(): Bot<BotContext> {
+  if (!_bot) {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    if (!token) {
+      throw new Error('TELEGRAM_BOT_TOKEN environment variable is required')
+    }
 
-// Session middleware
-bot.use(session({
-  initial: (): SessionData => ({})
-}))
+    _chatId = process.env.TELEGRAM_KIMMIE_CHAT_ID || ''
 
-// Security: Only respond to Kimmie
-bot.use(async (ctx, next) => {
-  if (ctx.chat?.id.toString() !== KIMMIE_CHAT_ID) {
-    console.log(`Unauthorized access attempt from chat ID: ${ctx.chat?.id}`)
-    return
+    _bot = new Bot<BotContext>(token)
+
+    // Session middleware
+    _bot.use(session({
+      initial: (): SessionData => ({})
+    }))
+
+    // Security: Only respond to Kimmie
+    _bot.use(async (ctx, next) => {
+      if (_chatId && ctx.chat?.id.toString() !== _chatId) {
+        console.log(`Unauthorized access attempt from chat ID: ${ctx.chat?.id}`)
+        return
+      }
+      await next()
+    })
   }
-  await next()
-})
+  return _bot
+}
 
-export { BotContext, KIMMIE_CHAT_ID }
+export function getKimmieChatId(): string {
+  if (!_chatId) {
+    _chatId = process.env.TELEGRAM_KIMMIE_CHAT_ID || ''
+  }
+  return _chatId
+}
+
+// For backwards compatibility - access via getter
+export const bot = {
+  get use() { return getBot().use.bind(getBot()) },
+  get command() { return getBot().command.bind(getBot()) },
+  get on() { return getBot().on.bind(getBot()) },
+  get catch() { return getBot().catch.bind(getBot()) },
+  get start() { return getBot().start.bind(getBot()) },
+  get stop() { return getBot().stop.bind(getBot()) },
+  get api() { return getBot().api },
+} as unknown as Bot<BotContext>
+
+export { BotContext }

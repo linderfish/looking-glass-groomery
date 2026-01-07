@@ -118,3 +118,22 @@ export async function linkConversationToClient(
     data: { clientId },
   })
 }
+
+/**
+ * Check if a client has had previous appointments
+ * Returns true if they're a returning customer
+ */
+export async function isReturningClient(clientId?: string | null): Promise<boolean> {
+  if (!clientId) return false
+
+  const priorAppointments = await prisma.appointment.count({
+    where: {
+      clientId,
+      status: {
+        in: ['COMPLETED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'],
+      },
+    },
+  })
+
+  return priorAppointments > 0
+}

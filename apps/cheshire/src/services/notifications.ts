@@ -78,7 +78,6 @@ Tap to manage this booking, queen! 👑`
 
 /**
  * Send a booking confirmation to client via their original channel
- * (This will be expanded to support Instagram/Facebook/SMS responses)
  */
 export async function notifyClientBookingConfirmed(
   channel: 'INSTAGRAM' | 'FACEBOOK' | 'WEBSITE',
@@ -87,10 +86,123 @@ export async function notifyClientBookingConfirmed(
     petName: string
     date: Date
     time: string
+    services?: string[]
   }
 ): Promise<boolean> {
-  // TODO: Implement per-channel client notification
-  // For now, the booking flow response handles this
-  console.log(`Would notify client via ${channel}:`, externalId, appointmentDetails)
-  return true
+  const formattedDate = appointmentDetails.date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  })
+
+  const servicesText = appointmentDetails.services?.length
+    ? `\n🛁 Services: ${appointmentDetails.services.join(', ')}`
+    : ''
+
+  const message = `✨ Your appointment is confirmed! ✨
+
+🐾 Pet: ${appointmentDetails.petName}
+📅 When: ${formattedDate} at ${appointmentDetails.time}${servicesText}
+
+📍 Through the Looking Glass Groomery
+22489 Ramona Avenue, Nuevo, CA 92567
+📞 951-532-4205
+
+We can't wait to see ${appointmentDetails.petName}! If you need to reschedule, just message us here.`
+
+  try {
+    switch (channel) {
+      case 'FACEBOOK':
+        return await sendFacebookMessage(externalId, message)
+      case 'INSTAGRAM':
+        return await sendInstagramMessage(externalId, message)
+      case 'WEBSITE':
+        // Website bookings don't have a message channel - they see confirmation on screen
+        console.log('Website booking confirmed (no message channel)')
+        return true
+      default:
+        console.warn(`Unknown channel: ${channel}`)
+        return false
+    }
+  } catch (error) {
+    console.error(`Failed to notify client via ${channel}:`, error)
+    return false
+  }
+}
+
+/**
+ * Send message via Facebook Messenger API
+ */
+async function sendFacebookMessage(recipientId: string, message: string): Promise<boolean> {
+  const accessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+
+  if (!accessToken) {
+    console.error('FACEBOOK_PAGE_ACCESS_TOKEN not configured - cannot send client notification')
+    return false
+  }
+
+  const url = `https://graph.facebook.com/v18.0/me/messages?access_token=${accessToken}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text: message },
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Facebook API error:', error)
+      return false
+    }
+
+    console.log(`✅ Sent booking confirmation to Facebook user ${recipientId}`)
+    return true
+  } catch (error) {
+    console.error('Failed to send Facebook message:', error)
+    return false
+  }
+}
+
+/**
+ * Send message via Instagram Messaging API
+ */
+async function sendInstagramMessage(recipientId: string, message: string): Promise<boolean> {
+  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
+
+  if (!accessToken) {
+    console.error('INSTAGRAM_ACCESS_TOKEN not configured - cannot send client notification')
+    return false
+  }
+
+  const url = `https://graph.instagram.com/v18.0/me/messages`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text: message },
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Instagram API error:', error)
+      return false
+    }
+
+    console.log(`✅ Sent booking confirmation to Instagram user ${recipientId}`)
+    return true
+  } catch (error) {
+    console.error('Failed to send Instagram message:', error)
+    return false
+  }
 }

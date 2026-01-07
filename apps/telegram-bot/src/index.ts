@@ -1,10 +1,11 @@
 // apps/telegram-bot/src/index.ts
+// CRITICAL: Load dotenv FIRST before any other imports
 import { config } from 'dotenv'
+import { resolve } from 'path'
+config({ path: resolve(__dirname, '../../../.env') })
 
-// Load environment variables from local .env (apps/telegram-bot/.env)
-config()
-
-import { bot, KIMMIE_CHAT_ID } from './bot'
+// Now safe to import modules that use process.env
+import { bot } from './bot'
 import {
   bookingsHandler,
   remindersHandler,
@@ -92,7 +93,7 @@ bot.catch((err) => {
 // Start the bot
 async function start() {
   console.log('🐱 Cheshire Cat is waking up...')
-  console.log(`📱 Configured for chat ID: ${KIMMIE_CHAT_ID}`)
+  console.log(`📱 Configured for chat ID: ${process.env.TELEGRAM_KIMMIE_CHAT_ID}`)
 
   // Initialize scheduler (daily digest, reminders)
   initializeScheduler()
