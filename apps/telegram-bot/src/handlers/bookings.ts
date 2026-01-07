@@ -4,6 +4,7 @@ import { getKimmieMessage } from '../services/kimmie-persona'
 import { format, addDays, setHours, setMinutes, startOfDay } from 'date-fns'
 import { prisma } from '@looking-glass/db'
 import { createCalendarEvent, isCalendarConfigured } from '../services/calendar'
+import { sendBeforePhotoReminder, sendAfterPhotoReminder } from './reminders'
 
 type BotContext = import('../bot').BotContext
 
@@ -281,7 +282,6 @@ bookingsHandler.callbackQuery(/^checkin:(.+)$/, async (ctx) => {
 
     await ctx.reply(
       `📍 <b>${appointment.pet.name} has arrived!</b>\n\n` +
-      `Don't forget to take a BEFORE photo! 📸\n\n` +
       `Tap when you start grooming:`,
       {
         parse_mode: 'HTML',
@@ -294,6 +294,13 @@ bookingsHandler.callbackQuery(/^checkin:(.+)$/, async (ctx) => {
         },
       }
     )
+
+    // Send before photo reminder
+    await sendBeforePhotoReminder(ctx, {
+      petName: appointment.pet.name,
+      appointmentId: appointment.id,
+      type: 'before',
+    })
   } catch (error) {
     console.error('Failed to check in:', error)
     await ctx.answerCallbackQuery({ text: 'Error checking in 😿' })
@@ -361,12 +368,17 @@ bookingsHandler.callbackQuery(/^complete:(.+)$/, async (ctx) => {
 
     await ctx.reply(
       `🎉 <b>${appointment.pet.name} is all done!</b>\n\n` +
-      `Time for that AFTER photo! 📸\n\n` +
       `${appointment.pet.name} is looking fabulous, I just know it! ✨`,
       { parse_mode: 'HTML' }
     )
 
-    // TODO: In Sprint 3, trigger photo reminder here
+    // Send after photo reminder
+    await sendAfterPhotoReminder(ctx, {
+      petName: appointment.pet.name,
+      appointmentId: appointment.id,
+      type: 'after',
+    })
+
     // TODO: In Sprint 4, update stats and check achievements here
   } catch (error) {
     console.error('Failed to complete appointment:', error)
