@@ -17,6 +17,7 @@ import {
   getEasterEggResponse,
   getRandomEasterEgg,
 } from './services/kimmie-persona'
+import { initializeScheduler } from './services/scheduler'
 
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
@@ -92,6 +93,9 @@ bot.catch((err) => {
 async function start() {
   console.log('🐱 Cheshire Cat is waking up...')
   console.log(`📱 Configured for chat ID: ${KIMMIE_CHAT_ID}`)
+
+  // Initialize scheduler (daily digest, reminders)
+  initializeScheduler()
 
   // Start polling
   await bot.start({
