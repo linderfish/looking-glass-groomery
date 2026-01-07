@@ -1,112 +1,17 @@
 // apps/telegram-bot/src/handlers/achievements.ts
 import { Composer } from 'grammy'
 import { getRandomEasterEgg, checkForEasterEggTrigger, getEasterEggResponse } from '../services/kimmie-persona'
+import { getStats } from '../services/stats'
+import { prisma } from '@looking-glass/db'
+import {
+  ACHIEVEMENT_DEFINITIONS,
+  getUnlockedAchievements,
+  unlockAchievement,
+} from '../services/achievements'
 
 type BotContext = import('../bot').BotContext
 
 export const achievementsHandler = new Composer<BotContext>()
-
-interface Achievement {
-  id: string
-  name: string
-  description: string
-  emoji: string
-  xpReward: number
-}
-
-const ACHIEVEMENTS: Achievement[] = [
-  {
-    id: 'first_booking',
-    name: 'Down the Rabbit Hole',
-    description: 'Complete your first booking through Looking Glass',
-    emoji: '🐰',
-    xpReward: 100,
-  },
-  {
-    id: 'photo_streak_3',
-    name: 'Shutterbug',
-    description: 'Maintain a 3-day before/after photo streak',
-    emoji: '📸',
-    xpReward: 150,
-  },
-  {
-    id: 'photo_streak_7',
-    name: 'Paparazzi Pro',
-    description: 'Maintain a 7-day before/after photo streak',
-    emoji: '🌟',
-    xpReward: 300,
-  },
-  {
-    id: 'photo_streak_30',
-    name: 'Documentary Director',
-    description: 'Maintain a 30-day before/after photo streak',
-    emoji: '🎬',
-    xpReward: 1000,
-  },
-  {
-    id: 'content_posted_10',
-    name: 'Influencer Rising',
-    description: 'Post 10 pieces of content',
-    emoji: '📱',
-    xpReward: 250,
-  },
-  {
-    id: 'content_posted_50',
-    name: 'Content Queen',
-    description: 'Post 50 pieces of content',
-    emoji: '👑',
-    xpReward: 750,
-  },
-  {
-    id: 'shelter_angel_1',
-    name: 'Shelter Angel',
-    description: 'Complete your first shelter pet grooming',
-    emoji: '😇',
-    xpReward: 200,
-  },
-  {
-    id: 'shelter_angel_10',
-    name: 'Guardian Angel',
-    description: 'Complete 10 shelter pet groomings',
-    emoji: '👼',
-    xpReward: 500,
-  },
-  {
-    id: 'pokemon_fan',
-    name: 'Gotta Groom Em All',
-    description: 'Trigger the Pokemon easter egg',
-    emoji: '🎮',
-    xpReward: 50,
-  },
-  {
-    id: 'greys_fan',
-    name: "McDreamy's Groomer",
-    description: "Trigger the Grey's Anatomy easter egg",
-    emoji: '🏥',
-    xpReward: 50,
-  },
-  {
-    id: 'dino_fan',
-    name: 'Jurassic Groomer',
-    description: 'Trigger the dinosaur easter egg',
-    emoji: '🦕',
-    xpReward: 50,
-  },
-  {
-    id: 'lizard_fan',
-    name: 'Serotonin Seeker',
-    description: 'Trigger the lizard button easter egg',
-    emoji: '🦎',
-    xpReward: 50,
-  },
-  {
-    id: 'mormon_fan',
-    name: 'Reality TV Royalty',
-    description: 'Trigger the Mormon Wives easter egg',
-    emoji: '📺',
-    xpReward: 50,
-  },
-]
 
 /**
  * Send achievement unlocked notification
@@ -115,7 +20,7 @@ export async function notifyAchievementUnlocked(
   ctx: BotContext,
   achievementId: string
 ): Promise<void> {
-  const achievement = ACHIEVEMENTS.find((a) => a.id === achievementId)
+  const achievement = ACHIEVEMENT_DEFINITIONS.find((a) => a.id === achievementId)
   if (!achievement) return
 
   const message = `
@@ -181,14 +86,13 @@ achievementsHandler.on('message:text', async (ctx, next) => {
     const response = getEasterEggResponse(easterEggCategory)
     await ctx.reply(response)
 
-    // Check if this is a new easter egg discovery
-    // TODO: Check database for existing achievement
-    // const existing = await prisma.kimmieAchievement.findFirst({
-    //   where: { achievementId: `${easterEggCategory.toLowerCase()}_fan` }
-    // })
-    // if (!existing) {
-    //   await notifyAchievementUnlocked(ctx, `${easterEggCategory.toLowerCase()}_fan`)
-    // }
+    // Check if this triggers a new achievement
+    const achievementId = `${easterEggCategory.toLowerCase()}_fan`
+    const isNew = await unlockAchievement(achievementId)
+
+    if (isNew) {
+      await notifyAchievementUnlocked(ctx, achievementId)
+    }
   }
 
   await next()
@@ -196,62 +100,65 @@ achievementsHandler.on('message:text', async (ctx, next) => {
 
 // Command to view achievements
 achievementsHandler.command('achievements', async (ctx) => {
-  // TODO: Fetch from database
-  const unlockedCount = 3 // Placeholder
-  const totalXP = 450 // Placeholder
-  const level = 2 // Placeholder
+  try {
+    const [stats, unlockedIds] = await Promise.all([
+      getStats(),
+      getUnlockedAchievements(),
+    ])
 
-  const message = `
+    const unlockedSet = new Set(unlockedIds)
+
+    // Separate unlocked and locked achievements
+    const unlocked = ACHIEVEMENT_DEFINITIONS.filter((a) => unlockedSet.has(a.id))
+    const locked = ACHIEVEMENT_DEFINITIONS.filter((a) => !unlockedSet.has(a.id))
+
+    const message = `
 👑 <b>Kimmie's Achievement Gallery</b> 👑
 
-🎮 Level ${level} | ${totalXP.toLocaleString()} XP
-🏆 Achievements: ${unlockedCount}/${ACHIEVEMENTS.length}
+🎮 Level ${stats.level}: <b>${stats.levelTitle}</b>
+✨ ${stats.xp.toLocaleString()} XP
+🏆 Achievements: ${unlocked.length}/${ACHIEVEMENT_DEFINITIONS.length}
 
 <b>Unlocked:</b>
-${ACHIEVEMENTS.slice(0, unlockedCount)
-  .map((a) => `${a.emoji} ${a.name}`)
-  .join('\n')}
+${unlocked.length > 0 ? unlocked.map((a) => `${a.emoji} ${a.name}`).join('\n') : '(None yet - keep going!)'}
 
 <b>Locked:</b>
-${ACHIEVEMENTS.slice(unlockedCount)
-  .map((a) => `🔒 ${a.name}`)
-  .join('\n')}
+${locked.map((a) => `🔒 ${a.name}`).join('\n')}
 
 Keep grinding, queen! ✨
 `
 
-  await ctx.reply(message, { parse_mode: 'HTML' })
+    await ctx.reply(message, { parse_mode: 'HTML' })
+  } catch (error) {
+    console.error('Failed to get achievements:', error)
+    await ctx.reply('Oops! Had trouble fetching your achievements 😿 Try again!')
+  }
 })
 
 // Command to view stats
 achievementsHandler.command('stats', async (ctx) => {
-  // TODO: Fetch from database
-  const stats = {
-    totalBookings: 127,
-    thisWeek: 12,
-    photoStreak: 5,
-    contentStreak: 3,
-    shelterPets: 8,
-    level: 2,
-    xp: 450,
-    nextLevelXP: 500,
-  }
+  try {
+    const stats = await getStats()
 
-  const progressBar = createProgressBar(stats.xp, stats.nextLevelXP)
+    const progressBar = createProgressBar(stats.xp, stats.nextLevelXP)
 
-  const message = `
+    const message = `
 📊 <b>Your Stats, Queen</b> 📊
 
-👑 Level ${stats.level}
+👑 Level ${stats.level}: <b>${stats.levelTitle}</b>
 ${progressBar} ${stats.xp}/${stats.nextLevelXP} XP
 
 📅 <b>Bookings</b>
 Total: ${stats.totalBookings}
+Completed: ${stats.totalCompleted}
 This week: ${stats.thisWeek}
 
 📸 <b>Streaks</b>
-Photo streak: ${stats.photoStreak} days 🔥
-Content streak: ${stats.contentStreak} days 📱
+Photo streak: ${stats.photoStreak} days ${stats.photoStreak > 0 ? '🔥' : ''}
+Content streak: ${stats.contentStreak} days ${stats.contentStreak > 0 ? '📱' : ''}
+
+📷 <b>Photos</b>
+Total uploaded: ${stats.totalPhotos}
 
 😇 <b>Shelter Angels</b>
 Pets helped: ${stats.shelterPets}
@@ -259,7 +166,11 @@ Pets helped: ${stats.shelterPets}
 You're doing AMAZING! ✨
 `
 
-  await ctx.reply(message, { parse_mode: 'HTML' })
+    await ctx.reply(message, { parse_mode: 'HTML' })
+  } catch (error) {
+    console.error('Failed to get stats:', error)
+    await ctx.reply('Oops! Had trouble fetching your stats 😿 Try again in a moment!')
+  }
 })
 
 function createProgressBar(current: number, max: number): string {

@@ -5,6 +5,9 @@ import { format, addDays, setHours, setMinutes, startOfDay } from 'date-fns'
 import { prisma } from '@looking-glass/db'
 import { createCalendarEvent, isCalendarConfigured } from '../services/calendar'
 import { sendBeforePhotoReminder, sendAfterPhotoReminder } from './reminders'
+import { notifyAchievementUnlocked } from './achievements'
+import { getStats, incrementCompletionStats } from '../services/stats'
+import { checkAndUnlockAchievements } from '../services/achievements'
 
 type BotContext = import('../bot').BotContext
 
@@ -379,7 +382,20 @@ bookingsHandler.callbackQuery(/^complete:(.+)$/, async (ctx) => {
       type: 'after',
     })
 
-    // TODO: In Sprint 4, update stats and check achievements here
+    // Update stats and check for new achievements
+    try {
+      await incrementCompletionStats()
+      const stats = await getStats()
+      const newAchievements = await checkAndUnlockAchievements(stats)
+
+      // Notify for each new achievement
+      for (const achievementId of newAchievements) {
+        await notifyAchievementUnlocked(ctx, achievementId)
+      }
+    } catch (statsError) {
+      console.error('Failed to update stats/achievements:', statsError)
+      // Don't fail the completion if stats update fails
+    }
   } catch (error) {
     console.error('Failed to complete appointment:', error)
     await ctx.answerCallbackQuery({ text: 'Error completing appointment 😿' })
