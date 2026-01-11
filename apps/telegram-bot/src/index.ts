@@ -18,7 +18,7 @@ import {
   getEasterEggResponse,
   getRandomEasterEgg,
 } from './services/kimmie-persona'
-import { initializeScheduler } from './services/scheduler'
+import { initializeScheduler, recoverPendingReminders } from './services/scheduler'
 
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
@@ -90,21 +90,37 @@ bot.catch((err) => {
   console.error('Bot error:', err)
 })
 
-// Start the bot
-async function start() {
+// Start the bot with retry logic for 409 conflicts
+async function start(attempt = 1, maxAttempts = 5) {
   console.log('🐱 Cheshire Cat is waking up...')
   console.log(`📱 Configured for chat ID: ${process.env.TELEGRAM_KIMMIE_CHAT_ID}`)
 
   // Initialize scheduler (daily digest, reminders)
   initializeScheduler()
 
-  // Start polling
-  await bot.start({
-    onStart: (botInfo) => {
-      console.log(`✨ @${botInfo.username} is now online!`)
-      console.log('Ready to serve the queen~ 👑')
-    },
-  })
+  // Recover any pending appointment reminders from before restart
+  await recoverPendingReminders()
+
+  try {
+    // Start polling with drop pending updates to clear any stale state
+    await bot.start({
+      drop_pending_updates: true,
+      onStart: (botInfo) => {
+        console.log(`✨ @${botInfo.username} is now online!`)
+        console.log('Ready to serve the queen~ 👑')
+      },
+    })
+  } catch (err: unknown) {
+    const error = err as { error_code?: number; message?: string }
+    // Handle 409 conflict (another instance running)
+    if (error.error_code === 409 && attempt < maxAttempts) {
+      const delay = Math.min(5000 * attempt, 30000) // 5s, 10s, 15s, 20s, 25s
+      console.log(`⏳ Bot conflict detected. Waiting ${delay/1000}s before retry (attempt ${attempt}/${maxAttempts})...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return start(attempt + 1, maxAttempts)
+    }
+    throw err
+  }
 }
 
 // Graceful shutdown
