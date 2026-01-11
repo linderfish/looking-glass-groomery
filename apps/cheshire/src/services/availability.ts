@@ -3,7 +3,10 @@
 
 import { prisma } from '@looking-glass/db'
 import { addDays, addMinutes, format, startOfDay, setHours, setMinutes, isBefore, isAfter, areIntervalsOverlapping } from 'date-fns'
-import { isCalendarConfigured, getCalendarBusyTimes } from './calendar'
+import { hasRefreshToken, getCalendarBusyTimes } from './calendar-oauth'
+
+// Use OAuth calendar instead of service account
+const isCalendarConfigured = hasRefreshToken
 
 // Buffer time between appointments (minutes)
 const APPOINTMENT_BUFFER = 15

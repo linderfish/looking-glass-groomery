@@ -5,7 +5,7 @@ import { DetectedIntent, extractBookingData } from './intent'
 import { formatHistoryForLLM, isReturningClient } from './conversation'
 import { cheshireChat, CHESHIRE_SYSTEM_PROMPT } from '@looking-glass/ai'
 import { notifyKimmieNewBooking } from './notifications'
-import { getAvailableSlots as getCalendarSlots, createCalendarEvent } from './calendar'
+import { createCalendarEvent } from './calendar-oauth'
 import { canBookSlot, getAvailableSlots as getAvailabilitySlots } from './availability'
 import { addDays, format, startOfDay, setHours, setMinutes } from 'date-fns'
 
