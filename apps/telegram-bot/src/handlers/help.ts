@@ -1,26 +1,28 @@
 // apps/telegram-bot/src/handlers/help.ts
 import { Composer } from 'grammy'
 import { assistantChat, getHelpWelcome } from '../services/assistant'
-import { updateSettings, parseTimeString, getSettings } from '../services/settings'
+import {
+  updateSettings,
+  parseTimeString,
+  getSettings,
+  getSessionMode,
+  setSessionMode,
+  getConversationHistory,
+  saveConversationHistory,
+  clearSession
+} from '../services/settings'
 
 type BotContext = import('../bot').BotContext
 
 export const helpHandler = new Composer<BotContext>()
 
-// Store conversation history per session (in-memory, resets on bot restart)
-const conversationHistory = new Map<string, Array<{ role: 'user' | 'assistant'; content: string }>>()
-
 /**
  * Enter help mode
  */
 helpHandler.command('help', async (ctx) => {
-  const chatId = ctx.chat.id.toString()
-
-  // Clear previous conversation history
-  conversationHistory.set(chatId, [])
-
-  // Set help mode
-  ctx.session.awaitingAction = 'help_mode'
+  // Clear previous conversation and set help mode (persisted to DB)
+  await clearSession()
+  await setSessionMode('help_mode')
 
   // Get welcome message
   const welcome = await getHelpWelcome()
@@ -29,9 +31,9 @@ helpHandler.command('help', async (ctx) => {
 
 // Also respond to "help", "?", or "/ help" (with space) in messages
 helpHandler.hears(/^(help|\?|\/\s*help)$/i, async (ctx) => {
-  const chatId = ctx.chat.id.toString()
-  conversationHistory.set(chatId, [])
-  ctx.session.awaitingAction = 'help_mode'
+  // Clear previous conversation and set help mode (persisted to DB)
+  await clearSession()
+  await setSessionMode('help_mode')
 
   const welcome = await getHelpWelcome()
   await ctx.reply(welcome)
@@ -41,39 +43,32 @@ helpHandler.hears(/^(help|\?|\/\s*help)$/i, async (ctx) => {
  * Handle messages while in help mode
  */
 helpHandler.on('message:text', async (ctx, next) => {
-  // Only process if in help mode
-  if (ctx.session.awaitingAction !== 'help_mode') {
+  // Check if in help mode (from persistent database storage)
+  const sessionMode = await getSessionMode()
+  if (sessionMode !== 'help_mode') {
     return next()
   }
 
-  const chatId = ctx.chat.id.toString()
   const userMessage = ctx.message.text.toLowerCase().trim()
 
   // Exit keywords
   if (['exit', 'bye', 'thanks', 'done', 'quit', 'nevermind'].includes(userMessage)) {
-    ctx.session.awaitingAction = undefined
-    conversationHistory.delete(chatId)
+    await clearSession()
     await ctx.reply("Anytime, queen! I'm just a /help away if you need me~ ✨")
     return
   }
 
   // If user types another command, exit help mode and let it through
   if (userMessage.startsWith('/')) {
-    ctx.session.awaitingAction = undefined
-    conversationHistory.delete(chatId)
+    await clearSession()
     return next()
   }
 
-  // Get or create conversation history
-  const history = conversationHistory.get(chatId) || []
+  // Get conversation history from database
+  const history = await getConversationHistory()
 
   // Add user message to history
   history.push({ role: 'user', content: ctx.message.text })
-
-  // Keep only last 10 messages for context window
-  if (history.length > 10) {
-    history.splice(0, history.length - 10)
-  }
 
   try {
     // Get assistant response
@@ -86,7 +81,9 @@ helpHandler.on('message:text', async (ctx, next) => {
 
     // Add assistant response to history
     history.push({ role: 'assistant', content: response.content })
-    conversationHistory.set(chatId, history)
+
+    // Save updated history to database
+    await saveConversationHistory(history)
 
     // Send response
     await ctx.reply(response.content)
@@ -100,8 +97,7 @@ helpHandler.on('message:text', async (ctx, next) => {
         "You're all set up! You can type /help anytime to chat with me, or just start using the other commands.\n\n" +
         "Pro tip: Try /stats to see your progress, or /hype when you need a boost!"
       )
-      ctx.session.awaitingAction = undefined
-      conversationHistory.delete(chatId)
+      await clearSession()
     }
   } catch (error) {
     console.error('Assistant error:', error)

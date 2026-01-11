@@ -127,3 +127,50 @@ export async function getSettingsSummary(): Promise<string> {
 
   return lines.join('\n')
 }
+
+// ============== SESSION PERSISTENCE ==============
+
+type ConversationMessage = { role: 'user' | 'assistant'; content: string }
+
+/**
+ * Get the current session mode (survives bot restarts)
+ */
+export async function getSessionMode(): Promise<string | null> {
+  const settings = await getSettings()
+  return settings.currentSessionMode
+}
+
+/**
+ * Set the current session mode
+ */
+export async function setSessionMode(mode: string | null): Promise<void> {
+  await updateSettings({ currentSessionMode: mode })
+}
+
+/**
+ * Get conversation history from database
+ */
+export async function getConversationHistory(): Promise<ConversationMessage[]> {
+  const settings = await getSettings()
+  if (!settings.conversationHistory) return []
+  return settings.conversationHistory as ConversationMessage[]
+}
+
+/**
+ * Save conversation history to database
+ */
+export async function saveConversationHistory(history: ConversationMessage[]): Promise<void> {
+  // Keep only last 10 messages
+  const trimmed = history.slice(-10)
+  await updateSettings({ conversationHistory: trimmed })
+}
+
+/**
+ * Clear session (mode and conversation history)
+ */
+export async function clearSession(): Promise<void> {
+  await updateSettings({
+    currentSessionMode: null,
+    conversationHistory: null
+  })
+}

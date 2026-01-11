@@ -474,6 +474,10 @@ model KimmieSettings {
   // Scheduler state (for crash recovery)
   lastDigestDate        String?  // "YYYY-MM-DD" format, null if never sent
 
+  // Session persistence (survives bot restarts)
+  currentSessionMode    String?  // "help_mode", etc. - null means no active mode
+  conversationHistory   Json?    // Array of {role, content} for help conversations
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }
