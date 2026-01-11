@@ -465,10 +465,14 @@ model KimmieSettings {
   // Personalization
   preferredName         String   @default("queen")
   hypeFrequency         String   @default("normal") // low/normal/high
+  timezone              String   @default("America/Los_Angeles") // IANA timezone
 
   // Onboarding
   onboardingComplete    Boolean  @default(false)
   onboardingStep        Int      @default(0)
+
+  // Scheduler state (for crash recovery)
+  lastDigestDate        String?  // "YYYY-MM-DD" format, null if never sent
 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

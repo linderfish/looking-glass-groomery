@@ -151,6 +151,7 @@ Valid settings:
 - weekendMode (true/false)
 - preferredName (any string)
 - hypeFrequency (low/normal/high)
+- timezone (IANA timezone like "America/Los_Angeles", "America/New_York")
 
 Example: If she says "Change my daily summary to 8am", respond with something like:
 "Got it! I'll send your daily summary at 8:00 AM now~

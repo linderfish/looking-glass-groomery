@@ -6,6 +6,7 @@ import { healthRoutes } from './routes/health'
 import { chatRoutes } from './routes/chat'
 import { webhookRoutes } from './routes/webhook'
 import { waiver } from './routes/waiver'
+import oauth from './routes/oauth'
 
 const app = new Hono()
 
@@ -25,6 +26,7 @@ app.route('/health', healthRoutes)
 app.route('/chat', chatRoutes)
 app.route('/webhook', webhookRoutes)
 app.route('/waiver', waiver)
+app.route('/oauth', oauth)
 
 // Root
 app.get('/', (c) => c.json({

@@ -3,6 +3,7 @@ import { Composer } from 'grammy'
 import { getKimmieMessage, getRandomEasterEgg } from '../services/kimmie-persona'
 import { prisma } from '@looking-glass/db'
 import { bot } from '../bot'
+import { uploadPhotoFromTelegram, isStorageConfigured } from '../services/storage'
 
 type BotContext = import('../bot').BotContext
 
@@ -171,20 +172,33 @@ remindersHandler.on('message:photo', async (ctx, next) => {
     const fileId = photo.file_id
 
     try {
-      // Get the file URL and save to database
-      const originalUrl = await getTelegramFileUrl(fileId)
+      let originalUrl: string
+      const metadata: { fileId: string; width: number; height: number; fileSize?: number; r2Key?: string; storage: string } = {
+        fileId,
+        width: photo.width,
+        height: photo.height,
+        fileSize: photo.file_size,
+        storage: 'telegram',
+      }
+
+      // Upload to permanent R2 storage if configured
+      if (isStorageConfigured()) {
+        const result = await uploadPhotoFromTelegram(fileId, pendingBookingId, 'before')
+        originalUrl = result.url
+        metadata.r2Key = result.key
+        metadata.storage = 'r2'
+      } else {
+        // Fallback to Telegram URL (will expire in ~1 hour!)
+        originalUrl = await getTelegramFileUrl(fileId)
+        console.warn('R2 not configured - photo will expire in ~1 hour!')
+      }
 
       await prisma.appointmentPhoto.create({
         data: {
           appointmentId: pendingBookingId,
           type: 'BEFORE',
           originalUrl,
-          metadata: {
-            fileId,
-            width: photo.width,
-            height: photo.height,
-            fileSize: photo.file_size,
-          },
+          metadata: metadata as object,
         },
       })
 
@@ -210,20 +224,33 @@ remindersHandler.on('message:photo', async (ctx, next) => {
     const fileId = photo.file_id
 
     try {
-      // Get the file URL and save to database
-      const originalUrl = await getTelegramFileUrl(fileId)
+      let originalUrl: string
+      const metadata: { fileId: string; width: number; height: number; fileSize?: number; r2Key?: string; storage: string } = {
+        fileId,
+        width: photo.width,
+        height: photo.height,
+        fileSize: photo.file_size,
+        storage: 'telegram',
+      }
+
+      // Upload to permanent R2 storage if configured
+      if (isStorageConfigured()) {
+        const result = await uploadPhotoFromTelegram(fileId, pendingBookingId, 'after')
+        originalUrl = result.url
+        metadata.r2Key = result.key
+        metadata.storage = 'r2'
+      } else {
+        // Fallback to Telegram URL (will expire in ~1 hour!)
+        originalUrl = await getTelegramFileUrl(fileId)
+        console.warn('R2 not configured - photo will expire in ~1 hour!')
+      }
 
       await prisma.appointmentPhoto.create({
         data: {
           appointmentId: pendingBookingId,
           type: 'AFTER',
           originalUrl,
-          metadata: {
-            fileId,
-            width: photo.width,
-            height: photo.height,
-            fileSize: photo.file_size,
-          },
+          metadata: metadata as object,
         },
       })
 

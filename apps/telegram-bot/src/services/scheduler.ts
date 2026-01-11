@@ -1,11 +1,12 @@
 // apps/telegram-bot/src/services/scheduler.ts
 import * as cron from 'node-cron'
-import { getSettings } from './settings'
+import { getSettings, updateSettings } from './settings'
 import { sendDailyDigest } from './daily-digest'
 import { bot } from '../bot'
+import { prisma } from '@looking-glass/db'
 
-// Track if daily digest was already sent today (prevent duplicates)
-let lastDigestDate: string | null = null
+// NOTE: lastDigestDate is now stored in database (KimmieSettings.lastDigestDate)
+// This ensures state survives bot restarts
 
 /**
  * Initialize the scheduler with cron jobs
@@ -27,40 +28,60 @@ export function initializeScheduler(): void {
 
 /**
  * Check if it's time to send the daily digest
+ * Uses database-backed state to survive restarts
+ * Now timezone-aware using Kimmie's configured timezone
  */
 async function checkDailyDigest(): Promise<void> {
   const settings = await getSettings()
   const now = new Date()
+  const timezone = settings.timezone || 'America/Los_Angeles'
 
-  // Get current time in HH:MM format
-  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-  const todayDate = now.toDateString()
+  // Get current time in Kimmie's timezone (HH:MM format)
+  const kimmieTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(now)
 
-  // Skip if already sent today
-  if (lastDigestDate === todayDate) {
+  // Get today's date in Kimmie's timezone (YYYY-MM-DD format)
+  const kimmieDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+
+  // Skip if already sent today (check database, not memory)
+  if (settings.lastDigestDate === kimmieDate) {
     return
   }
 
   // Check if current time matches the configured dailySummaryTime
-  if (currentTime !== settings.dailySummaryTime) {
+  if (kimmieTime !== settings.dailySummaryTime) {
     return
   }
 
-  // Check weekend mode
-  const dayOfWeek = now.getDay()
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  // Check weekend mode - get day of week in Kimmie's timezone
+  const kimmieWeekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+  }).format(now)
+  const isWeekend = kimmieWeekday === 'Sat' || kimmieWeekday === 'Sun'
 
   // If weekendMode is enabled, skip on weekends
   if (settings.weekendMode && isWeekend) {
     console.log('Skipping daily digest - weekend mode enabled')
-    lastDigestDate = todayDate // Mark as "sent" to prevent repeated checks
+    // Mark as "sent" in database to prevent repeated checks
+    await updateSettings({ lastDigestDate: kimmieDate })
     return
   }
 
   // Send the daily digest
-  console.log(`Sending daily digest at ${currentTime}...`)
+  console.log(`Sending daily digest at ${kimmieTime} (${timezone})...`)
   await sendDailyDigest()
-  lastDigestDate = todayDate
+  // Persist to database (survives restarts)
+  await updateSettings({ lastDigestDate: kimmieDate })
 }
 
 /**
@@ -129,4 +150,40 @@ export function schedulePhotoReminder(
  */
 export async function triggerDailyDigest(): Promise<void> {
   await sendDailyDigest()
+}
+
+/**
+ * Recover pending appointment reminders after a restart
+ * Call this on startup to reschedule any reminders that were lost
+ */
+export async function recoverPendingReminders(): Promise<void> {
+  const now = new Date()
+  const settings = await getSettings()
+
+  // Skip if reminders are disabled
+  if (!settings.appointmentReminder || settings.appointmentReminder <= 0) {
+    console.log('Appointment reminders disabled - skipping recovery')
+    return
+  }
+
+  // Find future confirmed appointments
+  const pendingAppointments = await prisma.appointment.findMany({
+    where: {
+      scheduledAt: { gte: now },
+      status: 'CONFIRMED'
+    }
+  })
+
+  let scheduledCount = 0
+  for (const apt of pendingAppointments) {
+    const reminderTime = new Date(apt.scheduledAt.getTime() - settings.appointmentReminder * 60 * 1000)
+
+    // Only schedule if reminder time is still in the future
+    if (reminderTime > now) {
+      scheduleAppointmentReminder(apt.id, apt.scheduledAt, settings.appointmentReminder)
+      scheduledCount++
+    }
+  }
+
+  console.log(`Recovered ${scheduledCount}/${pendingAppointments.length} appointment reminders`)
 }

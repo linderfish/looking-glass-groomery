@@ -122,6 +122,7 @@ export async function getSettingsSummary(): Promise<string> {
     `🔄 Auto-confirm returning: ${settings.autoConfirmReturning ? 'Yes' : 'No'}`,
     `🌙 Weekend mode: ${settings.weekendMode ? 'On' : 'Off'}`,
     `👑 Name: ${settings.preferredName}`,
+    `🌍 Timezone: ${settings.timezone || 'America/Los_Angeles'}`,
   ]
 
   return lines.join('\n')

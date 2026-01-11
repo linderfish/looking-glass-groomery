@@ -173,6 +173,16 @@ async function processSettingUpdate(key: string, value: string): Promise<void> {
       }
       break
     }
+    case 'timezone': {
+      // Validate timezone string using Intl
+      try {
+        Intl.DateTimeFormat('en-US', { timeZone: value })
+        await updateSettings({ timezone: value })
+      } catch {
+        console.warn(`Invalid timezone: ${value}`)
+      }
+      break
+    }
     default:
       console.warn(`Unknown setting update: ${key}=${value}`)
   }
