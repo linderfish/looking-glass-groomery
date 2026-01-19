@@ -92,8 +92,8 @@ async function getGoogleCalendarBusyBlocks(startDate: Date, endDate: Date): Prom
     console.log(`[Availability] Got ${busyTimes.length} busy times from Google Calendar`)
 
     return busyTimes.map(busy => ({
-      start: busy.start,
-      end: busy.end,
+      start: new Date(busy.start),
+      end: new Date(busy.end),
       source: 'google_calendar' as const,
     }))
   } catch (error) {

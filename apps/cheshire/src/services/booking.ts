@@ -161,20 +161,44 @@ First, tell me about your precious pet - what's their name and what kind of magi
 
     case 'COLLECTING_DATE':
       if (extracted.preferredDate || extracted.preferredTime) {
-        state.preferredTime = extracted.preferredTime
+        // Parse the requested time
+        const requestedTime = parsePreferredTime(extracted.preferredTime || extracted.preferredDate)
+        const estimatedDuration = 60 // Default 60 min, will be refined when services are selected
+
+        // CRITICAL: Check availability IMMEDIATELY when user requests a time
+        console.log(`[Booking] Checking availability for: ${requestedTime.toISOString()}`)
+        const availabilityCheck = await canBookSlot(requestedTime, estimatedDuration)
+
+        if (!availabilityCheck.available) {
+          // Time is NOT available - show alternatives
+          console.log(`[Booking] ❌ Time not available: ${availabilityCheck.conflictReason}`)
+          const alternatives = await getAvailableSlots()
+
+          return personality.mode === 'EFFICIENT'
+            ? `Sorry, that time isn't available - ${availabilityCheck.conflictReason || 'already booked'}.\n\nHere's what's open:\n${alternatives.map(s => `• ${s}`).join('\n')}\n\nWhich works for you?`
+            : `Oh no! ${availabilityCheck.conflictReason || 'That time is already booked'} 😿
+
+Let me show you what IS available:
+${alternatives.map(s => `✨ ${s}`).join('\n')}
+
+Which of these works better for you?`
+        }
+
+        // Time IS available - proceed
+        console.log(`[Booking] ✅ Time is available!`)
+        state.preferredTime = extracted.preferredTime || extracted.preferredDate
         state.step = 'COLLECTING_SERVICE'
 
-        // Generate available slots based on preference
-        const slots = await getAvailableSlots(extracted.preferredDate)
-
         return personality.mode === 'EFFICIENT'
-          ? `Here's what's available:\n${slots.map(s => `• ${s}`).join('\n')}\n\nWhich works for you?`
-          : `Let me peek through the Looking Glass at our schedule... 🪞
+          ? `Great, ${format(requestedTime, "EEEE 'at' h:mm a")} works! What services do you need?`
+          : `Perfect! ${format(requestedTime, "EEEE 'at' h:mm a")} is available! ✨
 
-Here's what I see available:
-${slots.map(s => `✨ ${s}`).join('\n')}
+Now, what magic shall we work on ${state.petName || 'your pet'}?
 
-Which slot calls to you?`
+🛁 **Bath & Tidy** - Fresh and fluffy
+✂️ **Full Groom** - The whole spa experience
+🎨 **Creative Color** - Let's get WILD
+💅 **Nails Only** - Quick pampering`
       }
 
       return `When would you like to bring ${state.petName || 'your pet'} in?
