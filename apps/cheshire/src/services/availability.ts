@@ -82,11 +82,14 @@ async function getDatabaseBusyBlocks(startDate: Date, endDate: Date): Promise<Bu
  */
 async function getGoogleCalendarBusyBlocks(startDate: Date, endDate: Date): Promise<BusyBlock[]> {
   if (!isCalendarConfigured()) {
+    console.log('[Availability] ⚠️ Google Calendar not configured - skipping calendar check')
     return []
   }
 
   try {
+    console.log(`[Availability] Fetching Google Calendar busy times: ${startDate.toISOString()} - ${endDate.toISOString()}`)
     const busyTimes = await getCalendarBusyTimes(startDate, endDate)
+    console.log(`[Availability] Got ${busyTimes.length} busy times from Google Calendar`)
 
     return busyTimes.map(busy => ({
       start: busy.start,
@@ -94,7 +97,7 @@ async function getGoogleCalendarBusyBlocks(startDate: Date, endDate: Date): Prom
       source: 'google_calendar' as const,
     }))
   } catch (error) {
-    console.error('Failed to get Google Calendar busy blocks:', error)
+    console.error('[Availability] ❌ Failed to get Google Calendar busy blocks:', error)
     return []
   }
 }
@@ -175,14 +178,23 @@ export async function canBookSlot(
   const dayStartBuffer = addMinutes(startTime, -APPOINTMENT_BUFFER)
   const dayEndBuffer = addMinutes(endTime, APPOINTMENT_BUFFER)
 
+  console.log(`[Availability] Checking slot: ${startTime.toISOString()} - ${endTime.toISOString()}`)
+
   const dbBlocks = await getDatabaseBusyBlocks(dayStartBuffer, dayEndBuffer)
+  console.log(`[Availability] DB busy blocks (${dbBlocks.length}):`, dbBlocks.map(b => `${b.start.toISOString()} - ${b.end.toISOString()}`))
+
   const googleBlocks = await getGoogleCalendarBusyBlocks(dayStartBuffer, dayEndBuffer)
+  console.log(`[Availability] Google Calendar busy blocks (${googleBlocks.length}):`, googleBlocks.map(b => `${b.start.toISOString()} - ${b.end.toISOString()}`))
+
   const allBlocks = mergeBusyBlocks([...dbBlocks, ...googleBlocks])
+  console.log(`[Availability] Merged busy blocks (${allBlocks.length}):`, allBlocks.map(b => `${b.start.toISOString()} - ${b.end.toISOString()}`))
 
   if (!isSlotAvailable(startTime, endTime, allBlocks)) {
+    console.log(`[Availability] ❌ Slot NOT available - conflicts found`)
     return { available: false, conflictReason: 'This time slot is already booked' }
   }
 
+  console.log(`[Availability] ✅ Slot is available`)
   return { available: true }
 }
 

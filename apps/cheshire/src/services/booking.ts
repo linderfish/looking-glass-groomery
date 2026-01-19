@@ -215,6 +215,19 @@ Or tell me your vision and I'll make it happen!`
         const result = await createBookingInDatabase(state, context)
 
         if (!result.success) {
+          // Check if it's an availability conflict vs other error
+          if (result.error?.includes('booked') || result.error?.includes('closed') || result.error?.includes('open') || result.error?.includes('conflict') || result.error?.includes('not available')) {
+            // Get alternative slots to suggest
+            const alternatives = await getAvailableSlots()
+            const altSuggestion = alternatives.length > 0
+              ? `\n\nHere are some times that ARE available:\n${alternatives.slice(0, 3).map(s => `✨ ${s}`).join('\n')}`
+              : ''
+
+            return `Oh no! ${result.error} 😿${altSuggestion}
+
+Would you like one of these times instead?`
+          }
+
           return `I'm so sorry, something went wrong while saving your booking! 😿
 
 Don't worry though - just DM us or call and we'll get you sorted right away!
@@ -504,32 +517,64 @@ export async function createBookingInDatabase(
     const duration = serviceResult.totalDuration
     const endTime = new Date(scheduledAt.getTime() + duration * 60000)
 
-    // Check availability before creating appointment (prevent double-booking)
-    const availability = await canBookSlot(scheduledAt, duration)
-    if (!availability.available) {
-      return {
-        success: false,
-        error: availability.conflictReason || 'This time slot is no longer available',
-      }
-    }
+    // Use transaction with Serializable isolation to prevent double-booking race condition
+    // This ensures the availability check and create happen atomically
+    const appointment = await prisma.$transaction(async (tx) => {
+      // Check for conflicting appointments WITHIN the transaction
+      const conflicting = await tx.appointment.findFirst({
+        where: {
+          status: { notIn: ['CANCELLED'] },
+          OR: [
+            // New appointment overlaps with start of existing
+            {
+              scheduledAt: { lte: scheduledAt },
+              endTime: { gt: scheduledAt },
+            },
+            // New appointment overlaps with end of existing
+            {
+              scheduledAt: { lt: endTime },
+              endTime: { gte: endTime },
+            },
+            // Existing appointment is fully contained within new
+            {
+              scheduledAt: { gte: scheduledAt },
+              endTime: { lte: endTime },
+            },
+          ],
+        },
+      })
 
-    // Create the appointment with linked services
-    const appointment = await prisma.appointment.create({
-      data: {
-        scheduledAt,
-        duration,
-        endTime,
-        clientId: client.id,
-        petId: pet.id,
-        status: 'PENDING',
-        bookedVia: mapChannelToSource(context.channel),
-        clientNotes: state.services?.join(', ') || 'Full Groom',
-        estimatedPrice: serviceResult.totalPrice,
-        // Connect actual Service records
-        services: serviceResult.services.length > 0
-          ? { connect: serviceResult.services.map((s) => ({ id: s.id })) }
-          : undefined,
-      },
+      if (conflicting) {
+        throw new Error(`This time slot conflicts with an existing appointment at ${format(conflicting.scheduledAt, 'h:mm a')}`)
+      }
+
+      // Also check Google Calendar availability (outside transaction since it's external)
+      const availability = await canBookSlot(scheduledAt, duration)
+      if (!availability.available) {
+        throw new Error(availability.conflictReason || 'This time slot is not available')
+      }
+
+      // Create the appointment WITHIN the transaction
+      return tx.appointment.create({
+        data: {
+          scheduledAt,
+          duration,
+          endTime,
+          clientId: client.id,
+          petId: pet.id,
+          status: 'PENDING',
+          bookedVia: mapChannelToSource(context.channel),
+          clientNotes: state.services?.join(', ') || 'Full Groom',
+          estimatedPrice: serviceResult.totalPrice,
+          // Connect actual Service records
+          services: serviceResult.services.length > 0
+            ? { connect: serviceResult.services.map((s) => ({ id: s.id })) }
+            : undefined,
+        },
+      })
+    }, {
+      isolationLevel: 'Serializable', // Prevents phantom reads - strongest isolation
+      timeout: 10000, // 10 second timeout
     })
 
     // Link conversation to client if not already linked
@@ -548,6 +593,22 @@ export async function createBookingInDatabase(
       services: state.services || ['Full Groom'],
       source: context.channel,
     })
+
+    // Create Google Calendar event
+    try {
+      const clientName = `${client.firstName} ${client.lastName}`.trim()
+      const serviceList = state.services || ['Full Groom']
+      const calendarEventId = await createCalendarEvent({
+        summary: `🐾 ${pet.name} - ${serviceList.join(', ')}`,
+        description: `Client: ${clientName}\nPet: ${pet.name} (${state.petType || 'Dog'})\nServices: ${serviceList.join(', ')}\nBooked via: ${context.channel}\nAppointment ID: ${appointment.id}`,
+        start: scheduledAt,
+        end: endTime,
+      })
+      console.log(`[Booking] ✅ Created calendar event: ${calendarEventId}`)
+    } catch (err) {
+      console.error('[Booking] ❌ Failed to create calendar event:', err)
+      // Don't fail the booking if calendar creation fails - appointment is in DB
+    }
 
     return { success: true, appointmentId: appointment.id }
   } catch (error) {
