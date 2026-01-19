@@ -3,59 +3,87 @@ import { Composer } from 'grammy'
 import { getKimmieMessage } from '../services/kimmie-persona'
 import { format, addDays, setHours, setMinutes, startOfDay } from 'date-fns'
 import { prisma } from '@looking-glass/db'
-import { createCalendarEvent, isCalendarConfigured } from '../services/calendar'
+import { createCalendarEvent, isCalendarConfigured, listCalendarEvents } from '../services/calendar'
 import { sendBeforePhotoReminder, sendAfterPhotoReminder } from './reminders'
 import { notifyAchievementUnlocked } from './achievements'
 import { getStats, incrementCompletionStats } from '../services/stats'
 import { checkAndUnlockAchievements } from '../services/achievements'
 import { createWaiverRequest, checkWaiverStatus } from '../services/waiver'
+import { scheduleAppointmentReminder } from '../services/scheduler'
+import { getSettings } from '../services/settings'
 
 type BotContext = import('../bot').BotContext
 
 export const bookingsHandler = new Composer<BotContext>()
 
 // /today command - show today's appointments with actions
+// Now fetches from Google Calendar (primary) with Prisma for interactive buttons
 bookingsHandler.command('today', async (ctx) => {
   const today = new Date()
+  const dayStart = startOfDay(today)
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
 
+  let message = `📅 <b>Today's Appointments</b>\n\n`
+  let hasAppointments = false
+
+  // Try Google Calendar first (primary source of truth)
+  if (isCalendarConfigured()) {
+    try {
+      const calendarEvents = await listCalendarEvents(dayStart, dayEnd)
+
+      if (calendarEvents.length > 0) {
+        hasAppointments = true
+
+        for (const event of calendarEvents) {
+          const time = format(event.start, 'h:mm a')
+          message += `🐾 <b>${time}</b> - ${event.summary}\n`
+          if (event.description) {
+            const firstLine = event.description.split('\n')[0]
+            if (firstLine) message += `   ${firstLine}\n`
+          }
+          message += '\n'
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch Google Calendar events:', error)
+    }
+  }
+
+  // Get Prisma appointments for interactive buttons
   const appointments = await prisma.appointment.findMany({
     where: {
-      scheduledAt: {
-        gte: startOfDay(today),
-        lte: new Date(startOfDay(today).getTime() + 24 * 60 * 60 * 1000),
-      },
+      scheduledAt: { gte: dayStart, lte: dayEnd },
       status: { notIn: ['CANCELLED', 'NO_SHOW'] },
     },
-    include: {
-      pet: true,
-      client: true,
-      services: true,
-    },
+    include: { pet: true, client: true, services: true },
     orderBy: { scheduledAt: 'asc' },
   })
 
-  if (appointments.length === 0) {
+  // If no calendar events, show Prisma appointments
+  if (!hasAppointments && appointments.length > 0) {
+    hasAppointments = true
+
+    for (const apt of appointments) {
+      const time = format(apt.scheduledAt, 'h:mm a')
+      const statusEmoji: Record<string, string> = {
+        PENDING: '⏳',
+        CONFIRMED: '✅',
+        CHECKED_IN: '📍',
+        IN_PROGRESS: '✂️',
+        COMPLETED: '🎉',
+      }
+
+      message += `${statusEmoji[apt.status] || '❓'} <b>${time}</b> - ${apt.pet.name}\n`
+      message += `   ${apt.client.firstName} | ${apt.status.replace('_', ' ')}\n\n`
+    }
+  }
+
+  if (!hasAppointments) {
     await ctx.reply('📅 No appointments today - enjoy your day off! 💅')
     return
   }
 
-  let message = `📅 <b>Today's Appointments</b>\n\n`
-
-  for (const apt of appointments) {
-    const time = format(apt.scheduledAt, 'h:mm a')
-    const statusEmoji: Record<string, string> = {
-      PENDING: '⏳',
-      CONFIRMED: '✅',
-      CHECKED_IN: '📍',
-      IN_PROGRESS: '✂️',
-      COMPLETED: '🎉',
-    }
-
-    message += `${statusEmoji[apt.status] || '❓'} <b>${time}</b> - ${apt.pet.name}\n`
-    message += `   ${apt.client.firstName} | ${apt.status.replace('_', ' ')}\n\n`
-  }
-
-  // Build inline keyboard for actionable appointments
+  // Build inline keyboard for actionable Prisma appointments
   const buttons: Array<Array<{ text: string; callback_data: string }>> = []
   for (const apt of appointments) {
     if (apt.status === 'CONFIRMED') {
@@ -224,6 +252,19 @@ bookingsHandler.callbackQuery(/^confirm_booking:(.+)$/, async (ctx) => {
         `Send this to the client before their appointment! `,
         { parse_mode: 'HTML' }
       )
+    }
+
+    // Schedule appointment reminder
+    const settings = await getSettings()
+    if (settings.appointmentReminder && settings.appointmentReminder > 0) {
+      const timeout = scheduleAppointmentReminder(
+        appointment.id,
+        appointment.scheduledAt,
+        settings.appointmentReminder
+      )
+      if (timeout) {
+        console.log(`Scheduled reminder for ${appointment.pet.name} (${appointment.id})`)
+      }
     }
   } catch (error) {
     console.error('Failed to confirm booking:', error)

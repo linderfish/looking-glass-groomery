@@ -1,5 +1,5 @@
 // apps/telegram-bot/src/services/calendar.ts
-// Simple Google Calendar event creation for confirmed bookings
+// Google Calendar integration supporting both OAuth and Service Account auth
 
 interface CalendarEvent {
   summary: string
@@ -8,15 +8,183 @@ interface CalendarEvent {
   end: Date
 }
 
+// Token cache for OAuth
+let oauthTokenCache: { token: string; expiresAt: number } | null = null
+
 /**
- * Check if calendar is configured
+ * Check if OAuth is configured (preferred method - works with user's own calendar)
  */
-export function isCalendarConfigured(): boolean {
+function isOAuthConfigured(): boolean {
+  return !!(
+    process.env.GOOGLE_OAUTH_CLIENT_ID &&
+    process.env.GOOGLE_OAUTH_CLIENT_SECRET &&
+    process.env.GOOGLE_OAUTH_REFRESH_TOKEN
+  )
+}
+
+/**
+ * Check if service account is configured (fallback method - requires calendar sharing)
+ */
+function isServiceAccountConfigured(): boolean {
   return !!(
     process.env.GOOGLE_CALENDAR_ID &&
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
     process.env.GOOGLE_PRIVATE_KEY
   )
+}
+
+/**
+ * Check if calendar is configured (either OAuth or service account)
+ */
+export function isCalendarConfigured(): boolean {
+  return isOAuthConfigured() || isServiceAccountConfigured()
+}
+
+/**
+ * Get OAuth access token by refreshing the stored refresh token
+ */
+async function getOAuthAccessToken(): Promise<string> {
+  // Check cache
+  if (oauthTokenCache && Date.now() < oauthTokenCache.expiresAt - 60000) {
+    return oauthTokenCache.token
+  }
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_OAUTH_CLIENT_ID!,
+      client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET!,
+      refresh_token: process.env.GOOGLE_OAUTH_REFRESH_TOKEN!,
+      grant_type: 'refresh_token',
+    }),
+  })
+
+  const data = await response.json() as { access_token?: string; expires_in?: number; error?: string }
+
+  if (data.error || !data.access_token) {
+    throw new Error(`OAuth token refresh failed: ${data.error || 'No access token returned'}`)
+  }
+
+  // Cache the token
+  oauthTokenCache = {
+    token: data.access_token,
+    expiresAt: Date.now() + ((data.expires_in || 3600) * 1000),
+  }
+
+  return data.access_token
+}
+
+/**
+ * List calendar events within a time range
+ * Tries OAuth first (user's calendar), falls back to service account
+ */
+export async function listCalendarEvents(
+  timeMin: Date,
+  timeMax: Date
+): Promise<Array<{ id: string; summary: string; start: Date; end: Date; description?: string }>> {
+  // Try OAuth first (preferred - accesses user's own calendar)
+  if (isOAuthConfigured()) {
+    try {
+      const accessToken = await getOAuthAccessToken()
+      const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary'
+
+      const params = new URLSearchParams({
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '50',
+      })
+
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      )
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Calendar API error: ${response.status} - ${error}`)
+      }
+
+      const data = await response.json() as {
+        items?: Array<{
+          id: string
+          summary?: string
+          description?: string
+          start?: { dateTime?: string; date?: string }
+          end?: { dateTime?: string; date?: string }
+        }>
+      }
+
+      console.log(`[OAuth] Found ${data.items?.length || 0} calendar events`)
+
+      return (data.items || []).map((event) => ({
+        id: event.id,
+        summary: event.summary || '(No title)',
+        start: new Date(event.start?.dateTime || event.start?.date || ''),
+        end: new Date(event.end?.dateTime || event.end?.date || ''),
+        description: event.description,
+      }))
+    } catch (error) {
+      console.error('OAuth calendar fetch failed:', error)
+      // Fall through to service account
+    }
+  }
+
+  // Fall back to service account
+  if (isServiceAccountConfigured()) {
+    try {
+      const calendarId = process.env.GOOGLE_CALENDAR_ID!
+      const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!
+      const privateKey = process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n')
+
+      const accessToken = await getServiceAccountAccessToken(serviceAccountEmail, privateKey)
+
+      const params = new URLSearchParams({
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '50',
+      })
+
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      )
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Calendar API error: ${response.status} - ${error}`)
+      }
+
+      const data = await response.json() as {
+        items?: Array<{
+          id: string
+          summary?: string
+          description?: string
+          start?: { dateTime?: string; date?: string }
+          end?: { dateTime?: string; date?: string }
+        }>
+      }
+
+      console.log(`[ServiceAccount] Found ${data.items?.length || 0} calendar events`)
+
+      return (data.items || []).map((event) => ({
+        id: event.id,
+        summary: event.summary || '(No title)',
+        start: new Date(event.start?.dateTime || event.start?.date || ''),
+        end: new Date(event.end?.dateTime || event.end?.date || ''),
+        description: event.description,
+      }))
+    } catch (error) {
+      console.error('Service account calendar fetch failed:', error)
+    }
+  }
+
+  console.log('Google Calendar not configured - no events returned')
+  return []
 }
 
 /**
@@ -33,7 +201,7 @@ export async function createCalendarEvent(event: CalendarEvent): Promise<string 
   const privateKey = process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n')
 
   try {
-    const accessToken = await getAccessToken(serviceAccountEmail, privateKey)
+    const accessToken = await getServiceAccountAccessToken(serviceAccountEmail, privateKey)
 
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
@@ -72,9 +240,9 @@ export async function createCalendarEvent(event: CalendarEvent): Promise<string 
 }
 
 /**
- * Get OAuth access token for service account
+ * Get access token for service account using JWT
  */
-async function getAccessToken(email: string, privateKey: string): Promise<string> {
+async function getServiceAccountAccessToken(email: string, privateKey: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const expiry = now + 3600
 
