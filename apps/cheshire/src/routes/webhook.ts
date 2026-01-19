@@ -1,5 +1,6 @@
 // apps/cheshire/src/routes/webhook.ts
 import { Hono } from 'hono'
+import { appendFileSync } from 'fs'
 import {
   getOrCreateConversation,
   addMessage,
@@ -10,6 +11,13 @@ import { detectIntent } from '../services/intent'
 import { generateResponse } from '../services/response'
 import { handleBookingFlow } from '../services/booking'
 import { ConversationChannel } from '@looking-glass/db'
+
+// DEBUG: File-based logging since PM2+Bun doesn't capture console.log
+const debugLog = (msg: string) => {
+  const line = `[${new Date().toISOString()}] ${msg}\n`
+  console.log(line)
+  try { appendFileSync('/tmp/cheshire-debug.log', line) } catch {}
+}
 
 export const webhookRoutes = new Hono()
 
@@ -138,13 +146,13 @@ webhookRoutes.get('/facebook', async (c) => {
 // Facebook Messenger incoming messages
 webhookRoutes.post('/facebook', async (c) => {
   // Log IMMEDIATELY before any async
-  console.log('🚨 WEBHOOK HIT AT:', new Date().toISOString())
+  debugLog('🚨 WEBHOOK HIT - Facebook POST received')
 
   try {
     const body = await c.req.json()
 
     // Log ALL incoming webhook payloads for debugging
-    console.log('📥 Facebook webhook received:', JSON.stringify(body, null, 2))
+    debugLog(`📥 Facebook webhook body: ${JSON.stringify(body)}`)
 
     // Handle Messenger messages
     if (body.object === 'page') {
