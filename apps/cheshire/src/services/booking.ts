@@ -126,8 +126,15 @@ export async function handleBookingFlow(
   intent: DetectedIntent,
   context: BookingContext
 ): Promise<string> {
+  console.log(`[Booking] ========== NEW MESSAGE ==========`)
+  console.log(`[Booking] Channel: ${context.channel}`)
+  console.log(`[Booking] User message: "${message}"`)
+  console.log(`[Booking] Conversation has ${conversation.messages.length} messages`)
+
   const history = formatHistoryForLLM(conversation.messages)
   const extracted = extractBookingData(message)
+
+  console.log(`[Booking] Extracted data:`, JSON.stringify(extracted))
 
   // Check if this is a returning client for personalized greetings
   const returning = await isReturningClient(conversation.client?.id)
@@ -135,6 +142,7 @@ export async function handleBookingFlow(
 
   // Try to determine current flow state from conversation history
   const state = determineBookingState(history, extracted)
+  console.log(`[Booking] Entering switch with step: ${state.step}`)
 
   switch (state.step) {
     case 'INITIAL':
@@ -285,6 +293,7 @@ See you soon, gorgeous~ 😸👑`
 
 /**
  * Determine current booking flow state from conversation
+ * CRITICAL: Look at what the assistant LAST ASKED to know what step we're in
  */
 function determineBookingState(
   history: Array<{ role: 'user' | 'assistant'; content: string }>,
@@ -292,7 +301,7 @@ function determineBookingState(
 ): BookingFlowState {
   const state: BookingFlowState = { step: 'INITIAL' }
 
-  // Look through history to determine state
+  // First, extract all data from user messages
   for (const msg of history) {
     if (msg.role === 'user') {
       const data = extractBookingData(msg.content)
@@ -300,20 +309,51 @@ function determineBookingState(
       if (data.petType) state.petType = data.petType
       if (data.preferredDate) state.preferredTime = data.preferredDate
       if (data.preferredTime) state.preferredTime = data.preferredTime
-      if (data.services) state.services = data.services
+      // FIX: Only overwrite services if we actually found some (not empty array)
+      if (data.services && data.services.length > 0) {
+        state.services = data.services
+      }
     }
   }
 
-  // Determine step based on what we have
-  if (state.services && state.services.length > 0) {
-    state.step = 'CONFIRMING'
-  } else if (state.preferredTime) {
-    state.step = 'COLLECTING_SERVICE'
-  } else if (state.petName || state.petType) {
-    state.step = 'COLLECTING_DATE'
-  } else {
-    state.step = 'COLLECTING_PET'
+  // Also check the current message's extracted data
+  if (extracted.petName) state.petName = extracted.petName
+  if (extracted.petType) state.petType = extracted.petType
+  if (extracted.preferredTime) state.preferredTime = extracted.preferredTime
+  if (extracted.preferredDate && !state.preferredTime) state.preferredTime = extracted.preferredDate
+  if (extracted.services && extracted.services.length > 0) {
+    state.services = extracted.services
   }
+
+  // CRITICAL: Look at the LAST assistant message to determine what step we're in
+  // This prevents the flow from jumping around randomly
+  const lastAssistantMsg = history
+    .filter(m => m.role === 'assistant')
+    .pop()?.content?.toLowerCase() || ''
+
+  // Determine step based on what assistant last asked
+  if (lastAssistantMsg.includes('confirm') || lastAssistantMsg.includes('purr-fect') || lastAssistantMsg.includes('lock it in')) {
+    state.step = 'CONFIRMING'
+  } else if (lastAssistantMsg.includes('what magic') || lastAssistantMsg.includes('what service') || lastAssistantMsg.includes('bath & tidy') || lastAssistantMsg.includes('full groom')) {
+    state.step = 'COLLECTING_SERVICE'
+  } else if (lastAssistantMsg.includes('when would you') || lastAssistantMsg.includes('what time') || lastAssistantMsg.includes('available') || lastAssistantMsg.includes('schedule')) {
+    state.step = 'COLLECTING_DATE'
+  } else if (lastAssistantMsg.includes('pet') || lastAssistantMsg.includes('name') || lastAssistantMsg.includes('creature')) {
+    state.step = 'COLLECTING_PET'
+  } else {
+    // Fallback: determine from collected data
+    if (state.services && state.services.length > 0) {
+      state.step = 'CONFIRMING'
+    } else if (state.preferredTime) {
+      state.step = 'COLLECTING_SERVICE'
+    } else if (state.petName || state.petType) {
+      state.step = 'COLLECTING_DATE'
+    } else {
+      state.step = 'COLLECTING_PET'
+    }
+  }
+
+  console.log(`[Booking] State determined: step=${state.step}, petName=${state.petName}, petType=${state.petType}, time=${state.preferredTime}, services=${state.services?.join(',')}`)
 
   return state
 }
