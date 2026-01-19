@@ -1,4 +1,9 @@
 // apps/cheshire/src/index.ts
+// CRITICAL: Load dotenv FIRST before any other imports that use process.env
+import { config } from 'dotenv'
+import { resolve } from 'path'
+config({ path: resolve(__dirname, '../../../.env') })
+
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'

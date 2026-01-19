@@ -8,12 +8,13 @@
     "build": "bun build src/index.ts --outdir=dist --target=bun"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.4.0",
     "@looking-glass/ai": "*",
     "@looking-glass/db": "*",
     "@looking-glass/shared": "*",
-    "@hono/zod-validator": "^0.4.0",
-    "hono": "^4.6.0",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "hono": "^4.6.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
