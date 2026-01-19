@@ -2,6 +2,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
+import { prisma } from '@looking-glass/db'
 import {
   getOrCreateConversation,
   addMessage,
@@ -154,7 +155,7 @@ chatRoutes.post('/end/:sessionId', async (c) => {
   try {
     const conversation = await getOrCreateConversation('WEBSITE', sessionId)
 
-    await c.env.prisma.conversation.update({
+    await prisma.conversation.update({
       where: { id: conversation.id },
       data: { status: 'RESOLVED' },
     })
