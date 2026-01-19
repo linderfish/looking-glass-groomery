@@ -162,7 +162,15 @@ export async function getConversationHistory(): Promise<ConversationMessage[]> {
 export async function saveConversationHistory(history: ConversationMessage[]): Promise<void> {
   // Keep only last 10 messages
   const trimmed = history.slice(-10)
-  await updateSettings({ conversationHistory: trimmed })
+  console.log(`[Settings] Saving ${trimmed.length} messages to conversationHistory`)
+  try {
+    // Prisma Json field accepts arrays directly
+    await updateSettings({ conversationHistory: trimmed })
+    console.log('[Settings] ✅ Conversation history saved successfully')
+  } catch (err) {
+    console.error('[Settings] ❌ FAILED to save conversation history:', err)
+    throw err
+  }
 }
 
 /**

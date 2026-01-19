@@ -20,7 +20,13 @@ export const helpHandler = new Composer<BotContext>()
  * Enter help mode
  */
 helpHandler.command('help', async (ctx) => {
-  // Clear previous conversation and set help mode (persisted to DB)
+  console.log(`[HELP] >>> command('help') MATCHED`)
+
+  // Set help mode in Grammy session (synchronous, fast - no race condition)
+  ctx.session.inHelpMode = true
+  ctx.session.helpHistory = []
+
+  // Also persist to DB for recovery across bot restarts
   await clearSession()
   await setSessionMode('help_mode')
 
@@ -31,7 +37,13 @@ helpHandler.command('help', async (ctx) => {
 
 // Also respond to "help", "?", or "/ help" (with space) in messages
 helpHandler.hears(/^(help|\?|\/\s*help)$/i, async (ctx) => {
-  // Clear previous conversation and set help mode (persisted to DB)
+  console.log(`[HELP] >>> hears() MATCHED for: "${ctx.message?.text}"`)
+
+  // Set help mode in Grammy session (synchronous, fast - no race condition)
+  ctx.session.inHelpMode = true
+  ctx.session.helpHistory = []
+
+  // Also persist to DB for recovery across bot restarts
   await clearSession()
   await setSessionMode('help_mode')
 
@@ -43,16 +55,33 @@ helpHandler.hears(/^(help|\?|\/\s*help)$/i, async (ctx) => {
  * Handle messages while in help mode
  */
 helpHandler.on('message:text', async (ctx, next) => {
-  // Check if in help mode (from persistent database storage)
-  const sessionMode = await getSessionMode()
-  if (sessionMode !== 'help_mode') {
-    return next()
+  // Log IMMEDIATELY when this handler is entered (before any async)
+  console.log(`[HELP] >>> on('message:text') ENTERED - message: "${ctx.message.text.substring(0, 50)}"`)
+
+  // Check if in help mode using Grammy session (SYNCHRONOUS - no race condition!)
+  console.log(`[HELP] Session check: inHelpMode=${ctx.session.inHelpMode}`)
+
+  // If session says not in help mode, check DB for recovery (bot might have restarted)
+  if (!ctx.session.inHelpMode) {
+    const dbSessionMode = await getSessionMode()
+    if (dbSessionMode === 'help_mode') {
+      // Recover session from database after bot restart
+      console.log('[HELP] Recovering session from database after restart')
+      ctx.session.inHelpMode = true
+      ctx.session.helpHistory = await getConversationHistory()
+    } else {
+      console.log('[HELP] Not in help mode, passing to next handler')
+      return next()
+    }
   }
 
+  console.log('[HELP] In help mode, processing message...')
   const userMessage = ctx.message.text.toLowerCase().trim()
 
   // Exit keywords
   if (['exit', 'bye', 'thanks', 'done', 'quit', 'nevermind'].includes(userMessage)) {
+    ctx.session.inHelpMode = false
+    ctx.session.helpHistory = []
     await clearSession()
     await ctx.reply("Anytime, queen! I'm just a /help away if you need me~ ✨")
     return
@@ -60,29 +89,45 @@ helpHandler.on('message:text', async (ctx, next) => {
 
   // If user types another command, exit help mode and let it through
   if (userMessage.startsWith('/')) {
+    ctx.session.inHelpMode = false
+    ctx.session.helpHistory = []
     await clearSession()
     return next()
   }
 
-  // Get conversation history from database
-  const history = await getConversationHistory()
+  // Get conversation history from session (fast) with DB fallback
+  let history = ctx.session.helpHistory || []
+  if (history.length === 0) {
+    // Try to recover from database (in case of mid-conversation restart)
+    history = await getConversationHistory()
+    ctx.session.helpHistory = history
+  }
+  console.log(`[HELP] Loaded history with ${history.length} messages`)
 
   // Add user message to history
   history.push({ role: 'user', content: ctx.message.text })
+  console.log(`[HELP] Added user message, calling AI assistant...`)
 
   try {
     // Get assistant response
     const response = await assistantChat(history)
+    console.log(`[HELP] Got AI response with ${response.settingUpdates.length} setting updates`)
 
     // Process any setting updates
     for (const update of response.settingUpdates) {
-      await processSettingUpdate(update.key, update.value)
+      try {
+        await processSettingUpdate(update.key, update.value)
+        console.log(`[Help] ✅ Saved setting: ${update.key}=${update.value}`)
+      } catch (err) {
+        console.error(`[Help] ❌ FAILED to save setting ${update.key}:`, err)
+      }
     }
 
     // Add assistant response to history
     history.push({ role: 'assistant', content: response.content })
 
-    // Save updated history to database
+    // Save to session (fast) and database (persistent)
+    ctx.session.helpHistory = history
     await saveConversationHistory(history)
 
     // Send response
@@ -97,6 +142,9 @@ helpHandler.on('message:text', async (ctx, next) => {
         "You're all set up! You can type /help anytime to chat with me, or just start using the other commands.\n\n" +
         "Pro tip: Try /stats to see your progress, or /hype when you need a boost!"
       )
+      // Clear both session and database
+      ctx.session.inHelpMode = false
+      ctx.session.helpHistory = []
       await clearSession()
     }
   } catch (error) {

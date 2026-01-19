@@ -19,6 +19,7 @@ import {
   getRandomEasterEgg,
 } from './services/kimmie-persona'
 import { initializeScheduler, recoverPendingReminders } from './services/scheduler'
+import { prisma } from '@looking-glass/db'
 
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
@@ -97,8 +98,16 @@ async function start(attempt = 1) {
   console.log('🐱 Cheshire Cat is waking up...')
   console.log(`📱 Configured for chat ID: ${process.env.TELEGRAM_KIMMIE_CHAT_ID}`)
 
-  // Initialize scheduler only on first attempt
+  // Verify database connection on first attempt
   if (attempt === 1) {
+    try {
+      await prisma.$queryRaw`SELECT 1`
+      console.log('✅ Database connection verified')
+    } catch (err) {
+      console.error('❌ Database connection FAILED:', err)
+      process.exit(1)
+    }
+
     initializeScheduler()
     await recoverPendingReminders()
   }
@@ -116,11 +125,16 @@ async function start(attempt = 1) {
     const error = err as { error_code?: number; message?: string }
     // Handle 409 conflict (another instance running) - retry indefinitely
     if (error.error_code === 409) {
+      // Stop the current bot instance before retrying
+      try {
+        bot.stop()
+      } catch { /* ignore stop errors */ }
+
       // Base delay of 30s + random jitter (0-30s) to avoid collision with other instance
       const baseDelay = 30000
       const jitter = Math.random() * 30000
       const delay = baseDelay + jitter
-      console.log(`⏳ Bot conflict detected. Retrying in ${Math.round(delay/1000)}s (attempt ${attempt})...`)
+      console.log(`⏳ Bot conflict detected (another instance may be running). Retrying in ${Math.round(delay/1000)}s (attempt ${attempt})...`)
       await new Promise(resolve => setTimeout(resolve, delay))
       return start(attempt + 1)
     }
