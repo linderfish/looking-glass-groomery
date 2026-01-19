@@ -59,6 +59,7 @@ Let's make magic happen, queen! 👑`,
 
 // Random response to unhandled messages
 bot.on('message:text', async (ctx) => {
+  console.log(`[GENERIC] >>> Catch-all handler reached for: "${ctx.message.text.substring(0, 50)}"`)
   const text = ctx.message.text
 
   // Check for easter eggs first
@@ -90,16 +91,17 @@ bot.catch((err) => {
   console.error('Bot error:', err)
 })
 
-// Start the bot with retry logic for 409 conflicts
-async function start(attempt = 1, maxAttempts = 5) {
+// Start the bot with infinite retry logic for 409 conflicts
+// This handles cases where another instance might be running (e.g., on production)
+async function start(attempt = 1) {
   console.log('🐱 Cheshire Cat is waking up...')
   console.log(`📱 Configured for chat ID: ${process.env.TELEGRAM_KIMMIE_CHAT_ID}`)
 
-  // Initialize scheduler (daily digest, reminders)
-  initializeScheduler()
-
-  // Recover any pending appointment reminders from before restart
-  await recoverPendingReminders()
+  // Initialize scheduler only on first attempt
+  if (attempt === 1) {
+    initializeScheduler()
+    await recoverPendingReminders()
+  }
 
   try {
     // Start polling with drop pending updates to clear any stale state
@@ -112,12 +114,15 @@ async function start(attempt = 1, maxAttempts = 5) {
     })
   } catch (err: unknown) {
     const error = err as { error_code?: number; message?: string }
-    // Handle 409 conflict (another instance running)
-    if (error.error_code === 409 && attempt < maxAttempts) {
-      const delay = Math.min(5000 * attempt, 30000) // 5s, 10s, 15s, 20s, 25s
-      console.log(`⏳ Bot conflict detected. Waiting ${delay/1000}s before retry (attempt ${attempt}/${maxAttempts})...`)
+    // Handle 409 conflict (another instance running) - retry indefinitely
+    if (error.error_code === 409) {
+      // Base delay of 30s + random jitter (0-30s) to avoid collision with other instance
+      const baseDelay = 30000
+      const jitter = Math.random() * 30000
+      const delay = baseDelay + jitter
+      console.log(`⏳ Bot conflict detected. Retrying in ${Math.round(delay/1000)}s (attempt ${attempt})...`)
       await new Promise(resolve => setTimeout(resolve, delay))
-      return start(attempt + 1, maxAttempts)
+      return start(attempt + 1)
     }
     throw err
   }
