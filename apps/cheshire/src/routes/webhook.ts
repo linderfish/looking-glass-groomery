@@ -13,6 +13,33 @@ import { ConversationChannel } from '@looking-glass/db'
 
 export const webhookRoutes = new Hono()
 
+// Telegram webhook - forward to telegram-bot's local webhook server
+webhookRoutes.post('/telegram', async (c) => {
+  console.log('📱 Telegram webhook received at:', new Date().toISOString())
+
+  try {
+    const body = await c.req.json()
+    console.log('📥 Telegram update:', JSON.stringify(body, null, 2).substring(0, 500))
+
+    // Forward to telegram-bot's webhook server running on port 3005
+    const response = await fetch('http://127.0.0.1:3005/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      console.error('Telegram-bot webhook error:', await response.text())
+    }
+
+    return c.text('OK')
+  } catch (error) {
+    console.error('Telegram webhook error:', error)
+    // Still return OK to Telegram to prevent retries
+    return c.text('OK')
+  }
+})
+
 // Instagram webhook verification
 webhookRoutes.get('/instagram', async (c) => {
   const mode = c.req.query('hub.mode')

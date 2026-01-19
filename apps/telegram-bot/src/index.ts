@@ -5,7 +5,7 @@ import { resolve } from 'path'
 config({ path: resolve(__dirname, '../../../.env') })
 
 // Now safe to import modules that use process.env
-import { bot } from './bot'
+import { bot, getBot } from './bot'
 import {
   bookingsHandler,
   remindersHandler,
@@ -20,6 +20,7 @@ import {
 } from './services/kimmie-persona'
 import { initializeScheduler, recoverPendingReminders } from './services/scheduler'
 import { prisma } from '@looking-glass/db'
+import { createServer, IncomingMessage, ServerResponse } from 'http'
 
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
@@ -92,28 +93,95 @@ bot.catch((err) => {
   console.error('Bot error:', err)
 })
 
-// Start the bot with infinite retry logic for 409 conflicts
-// This handles cases where another instance might be running (e.g., on production)
-async function start(attempt = 1) {
+// Webhook mode configuration
+const USE_WEBHOOK = process.env.TELEGRAM_USE_WEBHOOK === 'true'
+const WEBHOOK_PORT = parseInt(process.env.TELEGRAM_WEBHOOK_PORT || '3005')
+
+// Start the bot - uses webhook mode by default to avoid 409 conflicts
+async function start() {
   console.log('🐱 Cheshire Cat is waking up...')
   console.log(`📱 Configured for chat ID: ${process.env.TELEGRAM_KIMMIE_CHAT_ID}`)
+  console.log(`🔗 Mode: ${USE_WEBHOOK ? 'Webhook' : 'Polling'}`)
 
-  // Verify database connection on first attempt
-  if (attempt === 1) {
-    try {
-      await prisma.$queryRaw`SELECT 1`
-      console.log('✅ Database connection verified')
-    } catch (err) {
-      console.error('❌ Database connection FAILED:', err)
-      process.exit(1)
-    }
-
-    initializeScheduler()
-    await recoverPendingReminders()
+  // Verify database connection
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    console.log('✅ Database connection verified')
+  } catch (err) {
+    console.error('❌ Database connection FAILED:', err)
+    process.exit(1)
   }
 
+  initializeScheduler()
+  await recoverPendingReminders()
+
+  if (USE_WEBHOOK) {
+    // WEBHOOK MODE - Avoids 409 conflicts completely
+    await startWebhookServer()
+  } else {
+    // POLLING MODE - May conflict with other instances
+    await startPolling()
+  }
+}
+
+/**
+ * Start webhook server to receive updates from Telegram
+ */
+async function startWebhookServer() {
+  const actualBot = getBot()
+
+  // CRITICAL: Initialize bot before handling updates
+  // This fetches bot info (username, etc.) from Telegram API
+  await actualBot.init()
+  console.log(`🤖 Bot initialized: @${actualBot.botInfo.username}`)
+
+  // Register webhook URL with Telegram
+  // This must be done because another instance may be polling and clearing webhooks
+  const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || 'https://cheshire.lookingglassgroomery.com/webhook/telegram'
   try {
-    // Start polling with drop pending updates to clear any stale state
+    await actualBot.api.setWebhook(webhookUrl)
+    console.log(`🔗 Webhook registered: ${webhookUrl}`)
+  } catch (err) {
+    console.error('Failed to set webhook:', err)
+  }
+
+  // Create simple HTTP server to receive webhooks
+  const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+    if (req.method === 'POST' && req.url === '/webhook') {
+      let body = ''
+      req.on('data', chunk => { body += chunk })
+      req.on('end', async () => {
+        try {
+          const update = JSON.parse(body)
+          console.log(`📥 Webhook update received: ${update.update_id}`)
+          await actualBot.handleUpdate(update)
+          res.writeHead(200)
+          res.end('OK')
+        } catch (err) {
+          console.error('Webhook processing error:', err)
+          res.writeHead(500)
+          res.end('Error')
+        }
+      })
+    } else {
+      // Health check endpoint
+      res.writeHead(200)
+      res.end('Telegram Bot Webhook Server')
+    }
+  })
+
+  server.listen(WEBHOOK_PORT, () => {
+    console.log(`🔗 Webhook server listening on port ${WEBHOOK_PORT}`)
+    console.log(`✨ @Chechcatbot is now online (webhook mode)!`)
+    console.log('Ready to serve the queen~ 👑')
+  })
+}
+
+/**
+ * Start polling mode (may have 409 conflicts)
+ */
+async function startPolling(attempt = 1) {
+  try {
     await bot.start({
       drop_pending_updates: true,
       onStart: (botInfo) => {
@@ -123,20 +191,12 @@ async function start(attempt = 1) {
     })
   } catch (err: unknown) {
     const error = err as { error_code?: number; message?: string }
-    // Handle 409 conflict (another instance running) - retry indefinitely
     if (error.error_code === 409) {
-      // Stop the current bot instance before retrying
-      try {
-        bot.stop()
-      } catch { /* ignore stop errors */ }
-
-      // Base delay of 30s + random jitter (0-30s) to avoid collision with other instance
-      const baseDelay = 30000
-      const jitter = Math.random() * 30000
-      const delay = baseDelay + jitter
-      console.log(`⏳ Bot conflict detected (another instance may be running). Retrying in ${Math.round(delay/1000)}s (attempt ${attempt})...`)
+      try { bot.stop() } catch { /* ignore */ }
+      const delay = 30000 + Math.random() * 30000
+      console.log(`⏳ Bot conflict (409). Retrying in ${Math.round(delay/1000)}s (attempt ${attempt})...`)
       await new Promise(resolve => setTimeout(resolve, delay))
-      return start(attempt + 1)
+      return startPolling(attempt + 1)
     }
     throw err
   }
