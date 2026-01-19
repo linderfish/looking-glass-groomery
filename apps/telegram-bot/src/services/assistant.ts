@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@looking-glass/db'
 import { getSettings, getSettingsSummary, formatTimeForDisplay } from './settings'
 import { format, startOfDay, endOfDay } from 'date-fns'
+import { isCalendarConfigured, listCalendarEvents } from './calendar'
 
 // Lazy initialization
 let _anthropic: Anthropic | null = null
@@ -196,23 +197,54 @@ async function getAssistantContext(): Promise<AssistantContext> {
   const todayStart = startOfDay(today)
   const todayEnd = endOfDay(today)
 
-  // Get today's appointments
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      scheduledAt: {
-        gte: todayStart,
-        lte: todayEnd,
+  // Try Google Calendar first (primary source of truth, like daily digest)
+  let todayAppointments: AssistantContext['todayAppointments'] = []
+
+  if (isCalendarConfigured()) {
+    try {
+      const calendarEvents = await listCalendarEvents(todayStart, todayEnd)
+      console.log(`[Assistant] Found ${calendarEvents.length} Google Calendar events for today`)
+
+      todayAppointments = calendarEvents.map(event => ({
+        id: event.id,
+        petName: event.summary, // Calendar event title is usually the pet/client name
+        clientName: event.description?.split('\n')[0] || '', // First line of description
+        time: format(event.start, 'h:mm a'),
+        status: 'CONFIRMED', // Calendar events are assumed confirmed
+      }))
+    } catch (error) {
+      console.error('[Assistant] Failed to fetch Google Calendar events:', error)
+      // Fall through to Prisma fallback
+    }
+  }
+
+  // Fallback to Prisma database if no calendar events found
+  if (todayAppointments.length === 0) {
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        scheduledAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+        status: {
+          notIn: ['CANCELLED', 'NO_SHOW'],
+        },
       },
-      status: {
-        notIn: ['CANCELLED', 'NO_SHOW'],
+      include: {
+        pet: true,
+        client: true,
       },
-    },
-    include: {
-      pet: true,
-      client: true,
-    },
-    orderBy: { scheduledAt: 'asc' },
-  })
+      orderBy: { scheduledAt: 'asc' },
+    })
+
+    todayAppointments = appointments.map(a => ({
+      id: a.id,
+      petName: a.pet.name,
+      clientName: `${a.client.firstName} ${a.client.lastName}`,
+      time: format(a.scheduledAt, 'h:mm a'),
+      status: a.status,
+    }))
+  }
 
   // Get stats
   const latestStats = await prisma.kimmieStats.findFirst({
@@ -228,19 +260,13 @@ async function getAssistantContext(): Promise<AssistantContext> {
   return {
     settings,
     stats: {
-      todayBookings: appointments.length,
+      todayBookings: todayAppointments.length,
       totalCompleted,
       photoStreak: latestStats?.photoStreak ?? 0,
       contentStreak: latestStats?.contentStreak ?? 0,
       unlockedAchievements,
     },
-    todayAppointments: appointments.map(a => ({
-      id: a.id,
-      petName: a.pet.name,
-      clientName: `${a.client.firstName} ${a.client.lastName}`,
-      time: format(a.scheduledAt, 'h:mm a'),
-      status: a.status,
-    })),
+    todayAppointments,
   }
 }
 
