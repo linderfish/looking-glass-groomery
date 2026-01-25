@@ -50,6 +50,18 @@ looking-glass-groomery/
 2. **Booking Flow**: Chat → Intent Detection → Booking Draft → Telegram Notification → Kimmie Approval
 3. **Looking Glass**: Pet Photo Upload → Style Description → AI Preview Generation → Blueprint for Kimmie
 
+### Booking State Machine
+
+The conversational booking in `apps/cheshire/src/services/booking.ts` follows this state machine:
+
+```
+INITIAL → COLLECTING_PET → COLLECTING_DATE → COLLECTING_SERVICE → CONFIRMING → (create appointment)
+                                    ↓
+                           COLLECTING_PHONE (if phone missing)
+```
+
+Each state collects specific information before advancing. The `handleBookingFlow()` function manages state transitions based on detected intent and extracted data.
+
 ### Key Packages
 
 **@looking-glass/ai** - AI orchestration layer:
@@ -121,3 +133,31 @@ Required variables (see `.env.example`):
 - **DesignStatus**: DRAFT → PENDING_APPROVAL → APPROVED
 - **ConversationChannel**: WEBSITE, INSTAGRAM, FACEBOOK, TELEGRAM, SMS
 - **ServiceCategory**: FULL_GROOM, BATH_TIDY, A_LA_CARTE, CREATIVE, SPA, PACKAGE
+
+## Production Deployment
+
+**Infrastructure (on dev-server-v2):**
+- Website: `lookingglassgroomery.com` → Cloudflare tunnel → port 3002
+- Cheshire API: `cheshire.lookingglassgroomery.com` → port 3001 (also `cheshire-fb.server2.io`)
+- Database: PostgreSQL `looking_glass`
+- Process manager: PM2 with Bun runtime for Cheshire
+
+**Facebook/Instagram Webhooks:**
+- Webhook URL: `https://cheshire.lookingglassgroomery.com/webhook/facebook`
+- App ID: 1923940378500045 (Cheshire app)
+- Requires `FACEBOOK_PAGE_ACCESS_TOKEN` and `FACEBOOK_VERIFY_TOKEN` in environment
+
+**Google Calendar Integration:**
+- OAuth credentials via `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
+- Calendar events created on booking confirmation via `createCalendarEvent()`
+- Availability checked via `canBookSlot()` which queries both Google Calendar and database
+
+## Project Management (BMAD)
+
+This project uses BMAD Method v6 for structured development:
+- Config: `bmad/config.yaml`
+- Workflow status: `docs/bmm-workflow-status.yaml`
+- Sprint status: `docs/sprint-status.yaml`
+- Sprint plan: `docs/sprint-plan-looking-glass-*.md`
+
+Run `/workflow-status` to check current development phase.

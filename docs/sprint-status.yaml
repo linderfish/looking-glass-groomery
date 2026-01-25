@@ -1,0 +1,141 @@
+version: "6.0.0"
+project_name: "Through the Looking Glass Groomery"
+project_level: 2
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-looking-glass-2026-01-20.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-01-20"
+    end_date: "2026-01-27"
+    capacity_points: 15
+    committed_points: 16
+    completed_points: 0
+    status: "not_started"
+    goal: "Complete SMS reminders and start booking widget"
+    stories:
+      - story_id: "STORY-301"
+        title: "Twilio Account Setup and Integration"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-302"
+        title: "Appointment Reminder Service"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-303"
+        title: "SMS Templates and Confirmation Messages"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-401"
+        title: "Booking Widget UI Components"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 2
+    start_date: "2026-01-27"
+    end_date: "2026-02-03"
+    capacity_points: 15
+    committed_points: 15
+    completed_points: 0
+    status: "not_started"
+    goal: "Complete native booking widget"
+    stories:
+      - story_id: "STORY-402"
+        title: "Booking Widget API Endpoints"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-403"
+        title: "Availability Calendar Component"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-404"
+        title: "Widget Integration and Calendly Replacement"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 3
+    start_date: "2026-02-03"
+    end_date: "2026-02-10"
+    capacity_points: 15
+    committed_points: 14
+    completed_points: 0
+    status: "not_started"
+    goal: "Add Stripe deposits - CANCEL MOGO after this sprint"
+    stories:
+      - story_id: "STORY-405"
+        title: "Booking Widget Testing and Polish"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-501"
+        title: "Stripe Account Setup and Integration"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-502"
+        title: "Deposit Collection Flow"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-503"
+        title: "Payment Receipts and Refunds"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 4
+    start_date: "2026-02-10"
+    end_date: "2026-02-17"
+    capacity_points: 15
+    committed_points: 16
+    completed_points: 0
+    status: "not_started"
+    goal: "Reserve with Google integration"
+    stories:
+      - story_id: "STORY-601"
+        title: "Google Business Profile API Setup"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-602"
+        title: "Reserve with Google API Endpoints"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-603"
+        title: "Booking Sync Between Systems"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-604"
+        title: "Reserve with Google Testing and Certification"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  sprint_3: null
+  sprint_4: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 1
+  capacity_per_sprint: 15
+
+milestones:
+  - name: "MoGo Cancellation"
+    target_sprint: 3
+    criteria: "SMS, Widget, and Deposits all functional"
+  - name: "Reserve with Google Live"
+    target_sprint: 4
+    criteria: "Google certification passed"

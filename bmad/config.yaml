@@ -1,0 +1,36 @@
+# BMAD Method v6 - Project Configuration
+# Through the Looking Glass Groomery
+
+project_name: "Through the Looking Glass Groomery"
+project_type: "web-app"  # Web application with AI chatbot
+project_level: 2  # Medium feature set (5-15 stories remaining)
+
+# Output folder (relative to project root)
+output_folder: "docs"
+
+# Module-specific settings
+bmm:
+  workflow_status_file: "docs/bmm-workflow-status.yaml"
+  sprint_status_file: "docs/sprint-status.yaml"
+
+# Path configuration
+paths:
+  docs: "docs"
+  stories: "docs/stories"
+  tests: "tests"
+
+# Project-specific notes
+notes:
+  focus: "brownfield-enhancement"
+  existing_components:
+    - "Website with GEO optimization (LIVE)"
+    - "Cheshire AI chatbot (LIVE on Facebook Messenger)"
+    - "Telegram bot for Kimmie notifications (LIVE)"
+    - "PostgreSQL database with full schema"
+    - "Booking system phases 1-2 complete"
+  remaining_work:
+    - "Phase 3: SMS Reminders (Twilio)"
+    - "Phase 4: Native Booking Widget"
+    - "Phase 5: Stripe Deposits"
+    - "Phase 6: Reserve with Google"
+    - "Google Business Profile setup"

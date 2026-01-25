@@ -2,6 +2,7 @@
 import { cheshireChat, CHESHIRE_SYSTEM_PROMPT } from '@looking-glass/ai'
 import { detectUserStyle, getPersonalityModifier, adjustResponse } from '../personality/adaptive'
 import { DetectedIntent } from './intent'
+import { format } from 'date-fns'
 
 export interface ResponseContext {
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
@@ -23,6 +24,10 @@ export async function generateResponse(
   const personalityModifier = getPersonalityModifier(personality)
 
   const systemPrompt = `${CHESHIRE_SYSTEM_PROMPT}
+
+## Important: Today's Date
+Today is ${format(new Date(), 'EEEE, MMMM do, yyyy')}.
+When suggesting dates, ONLY offer dates from today onwards. Never offer past dates.
 
 ## Current Conversation Context
 ${context.clientName ? `Client Name: ${context.clientName}` : 'New visitor'}
