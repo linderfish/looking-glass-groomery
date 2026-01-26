@@ -14,3 +14,4 @@ export {
 } from './achievements'
 export { helpHandler } from './help'
 export { lookupHandler } from './lookup'
+export { voiceHandler } from './voice'
