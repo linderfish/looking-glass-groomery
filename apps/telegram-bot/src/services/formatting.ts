@@ -1,4 +1,5 @@
-import type { Client, Pet, MembershipTier, PetPassport } from '@looking-glass/db';
+import type { Client, Pet, MembershipTier, PetPassport, Appointment, Service } from '@looking-glass/db';
+import { format } from 'date-fns';
 
 /**
  * Format a client profile for Telegram display
@@ -183,6 +184,44 @@ export function formatPetProfile(
     sections.push('\n<b>Behavior Notes:</b>');
     sections.push(pet.behaviorNotes);
   }
+
+  return sections.join('\n');
+}
+
+/**
+ * Format visit history for a client or pet
+ * @param appointments - Array of completed appointments with pet and services
+ * @returns HTML formatted visit history
+ */
+export function formatVisitHistory(
+  appointments: (Appointment & { pet: Pet; services: Service[] })[]
+): string {
+  if (appointments.length === 0) {
+    return '<b>Visit History</b>\n\nNo visit history found.';
+  }
+
+  const sections: string[] = ['<b>Visit History</b>\n'];
+
+  appointments.forEach((appointment, index) => {
+    const date = appointment.completedAt
+      ? format(appointment.completedAt, 'MMM d, yyyy')
+      : 'Unknown date';
+    const petIcon = getSpeciesIcon(appointment.pet.species);
+    const petName = appointment.pet.name;
+
+    // Format services list
+    const serviceNames = appointment.services.map(s => s.name).join(', ');
+
+    sections.push(`${index + 1}. <b>${date}</b> - ${petIcon} ${petName}`);
+    sections.push(`   ${serviceNames}`);
+
+    // Add notes if any
+    if (appointment.groomingNotes) {
+      sections.push(`   📝 ${appointment.groomingNotes}`);
+    }
+
+    sections.push(''); // Blank line between visits
+  });
 
   return sections.join('\n');
 }

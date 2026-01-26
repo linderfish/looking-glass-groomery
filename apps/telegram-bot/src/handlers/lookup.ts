@@ -4,7 +4,7 @@ import {
   searchClientByPhone,
   searchClientsByName,
 } from '../services/search';
-import { formatClientProfile, formatClientList, formatPetProfile } from '../services/formatting';
+import { formatClientProfile, formatClientList, formatPetProfile, formatVisitHistory } from '../services/formatting';
 import { prisma } from '@looking-glass/db';
 
 export const lookupHandler = new Composer<BotContext>();
@@ -169,6 +169,69 @@ lookupHandler.callbackQuery(/^pet:(.+)$/, async (ctx) => {
       reply_markup: { inline_keyboard: buttons },
     });
   }
+});
+
+// Callback handler for client visit history
+lookupHandler.callbackQuery(/^history:(.+)$/, async (ctx) => {
+  const clientId = ctx.match[1];
+  await ctx.answerCallbackQuery();
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      clientId,
+      status: 'COMPLETED',
+    },
+    include: {
+      pet: true,
+      services: true,
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 5,
+  });
+
+  const message = formatVisitHistory(appointments);
+
+  await ctx.reply(message, {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '◀ Back to Client', callback_data: `client:${clientId}` }],
+      ],
+    },
+  });
+});
+
+// Callback handler for pet visit history
+lookupHandler.callbackQuery(/^pethistory:(.+)$/, async (ctx) => {
+  const petId = ctx.match[1];
+  await ctx.answerCallbackQuery();
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      petId,
+      status: 'COMPLETED',
+    },
+    include: {
+      pet: true,
+      services: true,
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 5,
+  });
+
+  const pet = await prisma.pet.findUnique({ where: { id: petId } });
+
+  const message = formatVisitHistory(appointments);
+
+  await ctx.reply(message, {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🐾 Back to Pet', callback_data: `pet:${petId}` }],
+        [{ text: '◀ Back to Client', callback_data: `client:${pet?.clientId}` }],
+      ],
+    },
+  });
 });
 
 /**
