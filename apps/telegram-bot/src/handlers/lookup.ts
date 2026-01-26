@@ -45,13 +45,7 @@ lookupHandler.command('lookup', async (ctx) => {
     }
 
     // Show single client profile
-    const profile = formatClientProfile(client);
-    const keyboard = createClientProfileKeyboard(client);
-
-    await ctx.reply(profile, {
-      parse_mode: 'HTML',
-      reply_markup: keyboard,
-    });
+    await showClientProfile(ctx, client);
   } else {
     // Name search
     const clients = await searchClientsByName(query);
@@ -66,23 +60,10 @@ lookupHandler.command('lookup', async (ctx) => {
 
     if (clients.length === 1) {
       // Show single client profile
-      const client = clients[0];
-      const profile = formatClientProfile(client);
-      const keyboard = createClientProfileKeyboard(client);
-
-      await ctx.reply(profile, {
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      });
+      await showClientProfile(ctx, clients[0]);
     } else {
       // Show list of clients to select from
-      const list = formatClientList(clients);
-      const keyboard = createClientListKeyboard(clients);
-
-      await ctx.reply(list, {
-        parse_mode: 'HTML',
-        reply_markup: keyboard,
-      });
+      await showClientList(ctx, clients);
     }
   }
 });
@@ -233,6 +214,122 @@ lookupHandler.callbackQuery(/^pethistory:(.+)$/, async (ctx) => {
     },
   });
 });
+
+// Natural language lookup - must be AFTER command handlers, calls next() for non-matches
+lookupHandler.on('message:text', async (ctx, next) => {
+  const text = ctx.message.text;
+
+  // Skip commands - let other handlers process them
+  if (text.startsWith('/')) {
+    return next();
+  }
+
+  // Phone number detection - digits with optional separators
+  const phoneMatch = text.match(/\b(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\b/);
+  if (phoneMatch) {
+    const client = await searchClientByPhone(phoneMatch[1]);
+    if (client) {
+      return showClientProfile(ctx, client);
+    }
+    await ctx.reply(`No client found with phone ${phoneMatch[1]}`);
+    return;
+  }
+
+  // Natural language search patterns
+  const patterns = [
+    /who(?:'s|'s|\s+is)\s+(?:the\s+)?(.+?)(?:\s+with\s+(?:the\s+)?(.+))?$/i,  // "who's Sarah" or "who's the lady with the corgi"
+    /find\s+(.+)/i,                                    // "find Sarah"
+    /show\s+(?:me\s+)?(.+)/i,                         // "show me Sarah"
+    /lookup\s+(.+)/i,                                  // "lookup Sarah"
+    /(?:do\s+we\s+have|is\s+there)\s+(?:a\s+)?(.+)/i, // "do we have a Sarah"
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const searchTerm = match[1].trim();
+      const petHint = match[2]?.trim();  // "the corgi" from "who's the lady with the corgi"
+
+      // Search clients
+      let clients = await searchClientsByName(searchTerm);
+
+      // If pet hint provided and multiple results, filter by pet species/breed
+      if (petHint && clients.length > 1) {
+        const petLower = petHint.toLowerCase();
+        const filtered = clients.filter(client =>
+          client.pets.some(pet =>
+            pet.name.toLowerCase().includes(petLower) ||
+            pet.breed?.toLowerCase().includes(petLower) ||
+            pet.species.toLowerCase().includes(petLower)
+          )
+        );
+        if (filtered.length > 0) {
+          clients = filtered;
+        }
+      }
+
+      if (clients.length === 0) {
+        // Try searching by pet name/breed directly
+        const petResults = await prisma.client.findMany({
+          where: {
+            pets: {
+              some: {
+                OR: [
+                  { name: { contains: searchTerm, mode: 'insensitive' } },
+                  { breed: { contains: searchTerm, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+          include: { pets: true },
+          take: 5,
+        });
+
+        if (petResults.length > 0) {
+          return showClientList(ctx, petResults);
+        }
+
+        await ctx.reply(`No matches found for "${searchTerm}"`);
+        return;
+      }
+
+      if (clients.length === 1) {
+        return showClientProfile(ctx, clients[0]);
+      }
+
+      return showClientList(ctx, clients);
+    }
+  }
+
+  // Not a lookup query - pass to next handler
+  await next();
+});
+
+/**
+ * Show client profile with pet buttons
+ */
+async function showClientProfile(ctx: BotContext, client: any) {
+  const profile = formatClientProfile(client);
+  const keyboard = createClientProfileKeyboard(client);
+
+  await ctx.reply(profile, {
+    parse_mode: 'HTML',
+    reply_markup: keyboard,
+  });
+}
+
+/**
+ * Show list of clients with selection buttons
+ */
+async function showClientList(ctx: BotContext, clients: any[]) {
+  const list = formatClientList(clients);
+  const keyboard = createClientListKeyboard(clients);
+
+  await ctx.reply(list, {
+    parse_mode: 'HTML',
+    reply_markup: keyboard,
+  });
+}
 
 /**
  * Create keyboard for client profile with pet buttons
