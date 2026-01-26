@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling
 - [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
-- [ ] **Phase 3: Voice Commands** - Hands-free queries while grooming
+- [x] **Phase 3: Voice Commands** - Hands-free queries while grooming
 - [ ] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
 - [ ] **Phase 5: Revenue Dashboard** - Business health visibility
 
@@ -62,8 +62,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md - Voice infrastructure and natural language extraction
-- [ ] 03-02-PLAN.md - Voice handler with transcription and query processing
+- [x] 03-01-PLAN.md - Voice infrastructure and natural language extraction
+- [x] 03-02-PLAN.md - Voice handler with transcription and query processing
 
 ### Phase 4: Photo Reminders + Dashboard
 **Goal**: Kimmie never forgets to post groom photos and has a quick view of today's schedule
@@ -105,7 +105,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Calendar Sync | 2/2 | Complete | 2026-01-26 |
 | 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
-| 3. Voice Commands | 0/2 | In Progress | - |
+| 3. Voice Commands | 2/2 | Complete | 2026-01-26 |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 

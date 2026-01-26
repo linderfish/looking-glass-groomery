@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Kimmie can look up any client or pet by name/phone and see everything about them - instantly, accurately, without touching a computer.
-**Current focus:** Phase 3 - Voice Commands
+**Current focus:** Phase 4 - Photo Reminders + Dashboard
 
 ## Current Position
 
-Phase: 3 of 5 (Voice Commands)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-26 - Completed 03-02-PLAN.md
+Phase: 4 of 5 (Photo Reminders + Dashboard)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-01-26 - Phase 3 complete (Voice Commands verified)
 
 Progress: [######----] 60%
 
@@ -90,16 +90,18 @@ Last session: 2026-01-26
 Stopped at: Completed 03-02-PLAN.md (Phase 3 complete)
 Resume file: None
 
-### Phase 3 Overview
+### Phase 4 Overview
 
-**Goal:** Kimmie can speak queries into Telegram while her hands are dirty and get text responses
+**Goal:** Kimmie never forgets to post groom photos and has a quick view of today's schedule
 
 **Requirements:**
-- VOICE-01: Voice messages transcribed via Whisper API
-- VOICE-02: Transcribed text processed through Cheshire brain
-- VOICE-03: Response sent back as text message
+- PHOTO-01, PHOTO-02, PHOTO-03, PHOTO-04: Photo saving and reminders
+- DASH-01, DASH-02, DASH-03: Daily schedule dashboard
 
 **Success Criteria:**
-1. Kimmie sends a voice message and it gets transcribed accurately
-2. The transcribed text is understood by Cheshire (lookups, questions all work)
-3. Kimmie receives a text response she can glance at while grooming
+1. Kimmie sends a photo to Telegram and it saves to the current appointment
+2. Kimmie can mark photos as Before or After
+3. At end of day, Kimmie gets a reminder if no photos were posted that day
+4. Kimmie can see her photo streak (consecutive days with photos)
+5. Kimmie can view today's schedule at a glance from Telegram or a simple web page
+6. Morning briefing arrives via Telegram with today's appointments
