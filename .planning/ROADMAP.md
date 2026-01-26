@@ -28,10 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. When a booking is confirmed, Kimmie sees the appointment appear in Google Calendar within seconds
   2. When Kimmie reschedules an appointment, the Google Calendar event moves to the new time
   3. When an appointment is cancelled, the Google Calendar event disappears
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md - Add calendarEventId field and Calendar API update/delete methods
+- [ ] 01-02-PLAN.md - Wire calendar sync on creation, add reschedule/cancel handlers
 
 ### Phase 2: Client/Pet Lookup
 **Goal**: Kimmie can look up any client or pet and see their complete profile instantly from Telegram
@@ -100,7 +101,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Calendar Sync | 0/? | Not started | - |
+| 1. Calendar Sync | 0/2 | Planned | - |
 | 2. Client/Pet Lookup | 0/? | Not started | - |
 | 3. Voice Commands | 0/? | Not started | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
@@ -108,4 +109,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-25*
+*Last updated: 2026-01-26*
