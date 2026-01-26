@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 3 of 5 (Voice Commands)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-01-26 - Phase 2 complete (Client/Pet Lookup verified)
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-01-26 - Completed 03-01-PLAN.md
 
-Progress: [####------] 40%
+Progress: [#####-----] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: ~8 min per plan
-- Total execution time: ~42 minutes
+- Total execution time: ~47 minutes
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [####------] 40%
 |-------|-------|-------|----------|
 | 1 - Calendar Sync | 2 | ~30 min | ~15 min |
 | 2 - Client/Pet Lookup | 3 | ~12 min | ~4 min |
+| 3 - Voice Commands | 1 | ~5 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 ✅, 02-01 ✅, 02-02 ✅, 02-03 ✅
-- Trend: Consistently fast execution (4min average for Phase 2)
+- Last 5 plans: 02-01 ✅, 02-02 ✅, 02-03 ✅, 03-01 ✅
+- Trend: Consistently fast execution (avg 4-5 min for Phase 2-3)
 
 *Updated after each plan completion*
 
@@ -52,6 +53,9 @@ Recent decisions affecting current work:
 - Separate search/formatting services for clean separation of concerns (02-01)
 - date-fns format() for readable date display in visit history (02-03)
 - Natural language handler registered after commands, calls next() for non-matches (02-03)
+- @grammyjs/files for Telegram file handling (Grammy ecosystem plugin) (03-01)
+- Extract NL query logic into reusable service for voice/text parity (03-01)
+- OpenAI Whisper API for voice transcription (OGG format from Telegram) (03-01)
 
 ### Completed Phases
 
@@ -63,6 +67,9 @@ Recent decisions affecting current work:
 - 02-01: Client search infrastructure (libphonenumber-js, pg_trgm, /lookup command) ✅
 - 02-02: Pet profile display (spicy meter, age calculation, passport data) ✅
 - 02-03: Visit history and natural language queries ✅
+
+**Phase 3: Voice Commands** (in progress)
+- 03-01: Voice infrastructure setup (Whisper transcription, NL service extraction) ✅
 
 ### Pending Todos
 
@@ -76,7 +83,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Phase 2 complete, ready for Phase 3 planning
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
 
 ### Phase 3 Overview
