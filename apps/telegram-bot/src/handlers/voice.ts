@@ -3,7 +3,7 @@ import type { BotContext } from '../bot';
 import { transcribeAudio } from '../services/transcription';
 import { processNaturalLanguageQuery } from '../services/natural-language';
 import { formatClientProfile, formatClientList } from '../services/formatting';
-import fs from 'fs/promises';
+import { unlink } from 'fs/promises';
 
 export const voiceHandler = new Composer<BotContext>();
 
@@ -22,7 +22,7 @@ voiceHandler.on('message:voice', async (ctx) => {
     const transcription = await transcribeAudio(filePath);
 
     // Clean up temp file immediately after transcription
-    await fs.unlink(filePath).catch(() => {});
+    await unlink(filePath).catch(() => {});
     filePath = undefined;
 
     // Check for empty transcription
@@ -52,7 +52,7 @@ voiceHandler.on('message:voice', async (ctx) => {
   } catch (error) {
     // Clean up temp file on error
     if (filePath) {
-      await fs.unlink(filePath).catch(() => {});
+      await unlink(filePath).catch(() => {});
     }
     console.error('Voice transcription error:', error);
     await ctx.reply("Couldn't understand that - try again or type your question");
