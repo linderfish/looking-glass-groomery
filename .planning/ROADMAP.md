@@ -13,7 +13,7 @@ Transform the existing Telegram bot from a notification receiver into a full AI 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling ✅
-- [ ] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
+- [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything ✅
 - [ ] **Phase 3: Voice Commands** - Hands-free queries while grooming
 - [ ] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
 - [ ] **Phase 5: Revenue Dashboard** - Business health visibility
@@ -47,9 +47,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - Core search infrastructure (search service, phone normalization, /lookup command)
-- [ ] 02-02-PLAN.md - Pet profile display with spicy meter, demographics, and passport details
-- [ ] 02-03-PLAN.md - Visit history and natural language query support
+- [x] 02-01-PLAN.md - Core search infrastructure (search service, phone normalization, /lookup command) ✅
+- [x] 02-02-PLAN.md - Pet profile display with spicy meter, demographics, and passport details ✅
+- [x] 02-03-PLAN.md - Visit history and natural language query support ✅
 
 ### Phase 3: Voice Commands
 **Goal**: Kimmie can speak queries into Telegram while her hands are dirty and get text responses
@@ -103,8 +103,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Calendar Sync | 2/2 | ✅ Complete | 2026-01-26 |
-| 2. Client/Pet Lookup | 0/3 | Ready | - |
-| 3. Voice Commands | 0/? | Not started | - |
+| 2. Client/Pet Lookup | 3/3 | ✅ Complete | 2026-01-26 |
+| 3. Voice Commands | 0/? | Ready | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Kimmie can look up any client or pet by name/phone and see everything about them - instantly, accurately, without touching a computer.
-**Current focus:** Phase 2 - Client/Pet Lookup
+**Current focus:** Phase 3 - Voice Commands
 
 ## Current Position
 
-Phase: 2 of 5 (Client/Pet Lookup)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-26 - Completed 02-03-PLAN.md (Visit history and natural language queries)
+Phase: 3 of 5 (Voice Commands)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-01-26 - Phase 2 complete (Client/Pet Lookup verified)
 
-Progress: [#####-----] 50%
+Progress: [####------] 40%
 
 ## Performance Metrics
 
@@ -75,14 +75,20 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-26 21:47:53 UTC
-Stopped at: Completed 02-03-PLAN.md (Visit history and natural language queries) - Phase 2 complete
+Last session: 2026-01-26
+Stopped at: Phase 2 complete, ready for Phase 3 planning
 Resume file: None
 
-### Phase 2 Plans Summary
+### Phase 3 Overview
 
-| Plan | Wave | Requirements | Description |
-|------|------|--------------|-------------|
-| 02-01 | 1 | LOOKUP-01, -02, -03 | Core search infrastructure (libphonenumber-js, pg_trgm, /lookup command) |
-| 02-02 | 2 | LOOKUP-04, -05, -06 | Pet profile display with spicy meter and passport details |
-| 02-03 | 3 | LOOKUP-07, -08 | Visit history and natural language queries |
+**Goal:** Kimmie can speak queries into Telegram while her hands are dirty and get text responses
+
+**Requirements:**
+- VOICE-01: Voice messages transcribed via Whisper API
+- VOICE-02: Transcribed text processed through Cheshire brain
+- VOICE-03: Response sent back as text message
+
+**Success Criteria:**
+1. Kimmie sends a voice message and it gets transcribed accurately
+2. The transcribed text is understood by Cheshire (lookups, questions all work)
+3. Kimmie receives a text response she can glance at while grooming

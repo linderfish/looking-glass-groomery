@@ -9,20 +9,20 @@ Requirements for MoGo replacement milestone. Each maps to roadmap phases.
 
 ### Calendar Sync
 
-- [ ] **CAL-01**: Calendar event ID stored when appointment created
-- [ ] **CAL-02**: Calendar event updated when appointment rescheduled
-- [ ] **CAL-03**: Calendar event deleted when appointment cancelled
+- [x] **CAL-01**: Calendar event ID stored when appointment created
+- [x] **CAL-02**: Calendar event updated when appointment rescheduled
+- [x] **CAL-03**: Calendar event deleted when appointment cancelled
 
 ### Client/Pet Lookup
 
-- [ ] **LOOKUP-01**: Search clients by name returns matching profiles
-- [ ] **LOOKUP-02**: Search clients by phone returns matching profiles
-- [ ] **LOOKUP-03**: Client profile shows all pets with summary
-- [ ] **LOOKUP-04**: Pet profile shows photo, age, breed, spayed status
-- [ ] **LOOKUP-05**: Pet profile shows spicy meter (1-3 peppers)
-- [ ] **LOOKUP-06**: Pet profile shows grooming preferences and allergies
-- [ ] **LOOKUP-07**: Visit history shows last 5 appointments with services
-- [ ] **LOOKUP-08**: Natural language queries work ("who's the lady with the corgi")
+- [x] **LOOKUP-01**: Search clients by name returns matching profiles
+- [x] **LOOKUP-02**: Search clients by phone returns matching profiles
+- [x] **LOOKUP-03**: Client profile shows all pets with summary
+- [x] **LOOKUP-04**: Pet profile shows photo, age, breed, spayed status
+- [x] **LOOKUP-05**: Pet profile shows spicy meter (1-3 peppers)
+- [x] **LOOKUP-06**: Pet profile shows grooming preferences and allergies
+- [x] **LOOKUP-07**: Visit history shows last 5 appointments with services
+- [x] **LOOKUP-08**: Natural language queries work ("who's the lady with the corgi")
 
 ### Voice Commands
 
@@ -90,17 +90,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | Phase 1 | Pending |
-| CAL-02 | Phase 1 | Pending |
-| CAL-03 | Phase 1 | Pending |
-| LOOKUP-01 | Phase 2 | Pending |
-| LOOKUP-02 | Phase 2 | Pending |
-| LOOKUP-03 | Phase 2 | Pending |
-| LOOKUP-04 | Phase 2 | Pending |
-| LOOKUP-05 | Phase 2 | Pending |
-| LOOKUP-06 | Phase 2 | Pending |
-| LOOKUP-07 | Phase 2 | Pending |
-| LOOKUP-08 | Phase 2 | Pending |
+| CAL-01 | Phase 1 | Complete |
+| CAL-02 | Phase 1 | Complete |
+| CAL-03 | Phase 1 | Complete |
+| LOOKUP-01 | Phase 2 | Complete |
+| LOOKUP-02 | Phase 2 | Complete |
+| LOOKUP-03 | Phase 2 | Complete |
+| LOOKUP-04 | Phase 2 | Complete |
+| LOOKUP-05 | Phase 2 | Complete |
+| LOOKUP-06 | Phase 2 | Complete |
+| LOOKUP-07 | Phase 2 | Complete |
+| LOOKUP-08 | Phase 2 | Complete |
 | VOICE-01 | Phase 3 | Pending |
 | VOICE-02 | Phase 3 | Pending |
 | VOICE-03 | Phase 3 | Pending |
@@ -123,4 +123,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-26 - Phase 2 requirements marked complete*
