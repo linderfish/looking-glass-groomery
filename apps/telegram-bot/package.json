@@ -14,7 +14,8 @@
     "@looking-glass/shared": "*",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "grammy": "^1.30.0"
+    "grammy": "^1.30.0",
+    "libphonenumber-js": "^1.12.35"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
