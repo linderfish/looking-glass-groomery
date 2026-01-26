@@ -1,0 +1,169 @@
+import { Composer, InlineKeyboard } from 'grammy';
+import type { BotContext } from '../bot';
+import {
+  searchClientByPhone,
+  searchClientsByName,
+} from '../services/search';
+import { formatClientProfile, formatClientList } from '../services/formatting';
+import { prisma } from '@looking-glass/db';
+
+export const lookupHandler = new Composer<BotContext>();
+
+// /lookup command - Search for clients by name or phone
+lookupHandler.command('lookup', async (ctx) => {
+  const query = ctx.match?.trim();
+
+  // No query provided - show usage
+  if (!query) {
+    await ctx.reply(
+      '<b>Client Lookup</b>\n\n' +
+        'Search for clients by name or phone number.\n\n' +
+        '<b>Usage:</b>\n' +
+        '/lookup Sarah\n' +
+        '/lookup (555) 123-4567\n' +
+        '/lookup 5551234567',
+      { parse_mode: 'HTML' }
+    );
+    return;
+  }
+
+  await ctx.reply('🔍 Searching...', { parse_mode: 'HTML' });
+
+  // Check if query looks like a phone number (contains digits)
+  const isPhone = /\d{3,}/.test(query);
+
+  if (isPhone) {
+    // Phone search
+    const client = await searchClientByPhone(query);
+
+    if (!client) {
+      await ctx.reply(
+        `No client found with phone number: <code>${query}</code>`,
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+
+    // Show single client profile
+    const profile = formatClientProfile(client);
+    const keyboard = createClientProfileKeyboard(client);
+
+    await ctx.reply(profile, {
+      parse_mode: 'HTML',
+      reply_markup: keyboard,
+    });
+  } else {
+    // Name search
+    const clients = await searchClientsByName(query);
+
+    if (clients.length === 0) {
+      await ctx.reply(
+        `No clients found matching: <b>${query}</b>`,
+        { parse_mode: 'HTML' }
+      );
+      return;
+    }
+
+    if (clients.length === 1) {
+      // Show single client profile
+      const client = clients[0];
+      const profile = formatClientProfile(client);
+      const keyboard = createClientProfileKeyboard(client);
+
+      await ctx.reply(profile, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+    } else {
+      // Show list of clients to select from
+      const list = formatClientList(clients);
+      const keyboard = createClientListKeyboard(clients);
+
+      await ctx.reply(list, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+    }
+  }
+});
+
+// Callback handler for client selection from list
+lookupHandler.callbackQuery(/^client:(.+)$/, async (ctx) => {
+  const clientId = ctx.match[1];
+
+  // Load client with pets
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    include: { pets: true },
+  });
+
+  if (!client) {
+    await ctx.answerCallbackQuery({
+      text: 'Client not found',
+      show_alert: true,
+    });
+    return;
+  }
+
+  // Show client profile
+  const profile = formatClientProfile(client);
+  const keyboard = createClientProfileKeyboard(client);
+
+  await ctx.editMessageText(profile, {
+    parse_mode: 'HTML',
+    reply_markup: keyboard,
+  });
+
+  await ctx.answerCallbackQuery();
+});
+
+/**
+ * Create keyboard for client profile with pet buttons
+ */
+function createClientProfileKeyboard(
+  client: { id: string; pets: { id: string; name: string; species: string }[] }
+): InlineKeyboard {
+  const keyboard = new InlineKeyboard();
+
+  // Add button for each pet
+  client.pets.forEach((pet) => {
+    const petIcon = getSpeciesIcon(pet.species);
+    keyboard.text(`${petIcon} ${pet.name}`, `pet:${pet.id}`).row();
+  });
+
+  // Add visit history button
+  keyboard.text('📅 Visit History', `history:${client.id}`);
+
+  return keyboard;
+}
+
+/**
+ * Create keyboard for client list selection
+ */
+function createClientListKeyboard(
+  clients: { id: string; firstName: string; lastName: string }[]
+): InlineKeyboard {
+  const keyboard = new InlineKeyboard();
+
+  clients.forEach((client, index) => {
+    const fullName = `${client.firstName} ${client.lastName}`;
+    keyboard.text(`${index + 1}. ${fullName}`, `client:${client.id}`).row();
+  });
+
+  return keyboard;
+}
+
+/**
+ * Get emoji icon for pet species
+ */
+function getSpeciesIcon(species: string): string {
+  const iconMap: Record<string, string> = {
+    DOG: '🐕',
+    CAT: '🐈',
+    GOAT: '🐐',
+    PIG: '🐷',
+    GUINEA_PIG: '🐹',
+  };
+
+  return iconMap[species] || '🐾';
+}

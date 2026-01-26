@@ -13,3 +13,4 @@ export {
   notifyLevelUp,
 } from './achievements'
 export { helpHandler } from './help'
+export { lookupHandler } from './lookup'

@@ -11,6 +11,7 @@ import {
   remindersHandler,
   achievementsHandler,
   helpHandler,
+  lookupHandler,
   sendRandomHype,
 } from './handlers'
 import {
@@ -25,6 +26,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'http'
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
 bot.use(helpHandler)
+bot.use(lookupHandler)
 bot.use(bookingsHandler)
 bot.use(remindersHandler)
 bot.use(achievementsHandler)
