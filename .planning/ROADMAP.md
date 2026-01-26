@@ -12,8 +12,8 @@ Transform the existing Telegram bot from a notification receiver into a full AI 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling ✅
-- [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything ✅
+- [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling
+- [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
 - [ ] **Phase 3: Voice Commands** - Hands-free queries while grooming
 - [ ] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
 - [ ] **Phase 5: Revenue Dashboard** - Business health visibility
@@ -31,8 +31,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [x] 01-01-PLAN.md - Add calendarEventId field and Calendar API update/delete methods ✅
-- [x] 01-02-PLAN.md - Wire calendar sync on creation, add reschedule/cancel handlers ✅
+- [x] 01-01-PLAN.md - Add calendarEventId field and Calendar API update/delete methods
+- [x] 01-02-PLAN.md - Wire calendar sync on creation, add reschedule/cancel handlers
 
 ### Phase 2: Client/Pet Lookup
 **Goal**: Kimmie can look up any client or pet and see their complete profile instantly from Telegram
@@ -47,9 +47,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [x] 02-01-PLAN.md - Core search infrastructure (search service, phone normalization, /lookup command) ✅
-- [x] 02-02-PLAN.md - Pet profile display with spicy meter, demographics, and passport details ✅
-- [x] 02-03-PLAN.md - Visit history and natural language query support ✅
+- [x] 02-01-PLAN.md - Core search infrastructure (search service, phone normalization, /lookup command)
+- [x] 02-02-PLAN.md - Pet profile display with spicy meter, demographics, and passport details
+- [x] 02-03-PLAN.md - Visit history and natural language query support
 
 ### Phase 3: Voice Commands
 **Goal**: Kimmie can speak queries into Telegram while her hands are dirty and get text responses
@@ -59,10 +59,11 @@ Plans:
   1. Kimmie sends a voice message and it gets transcribed accurately
   2. The transcribed text is understood by Cheshire (lookups, questions all work)
   3. Kimmie receives a text response she can glance at while grooming
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md - Voice transcription and natural language processing
+- [ ] 03-01-PLAN.md - Voice infrastructure and natural language extraction
+- [ ] 03-02-PLAN.md - Voice handler with transcription and query processing
 
 ### Phase 4: Photo Reminders + Dashboard
 **Goal**: Kimmie never forgets to post groom photos and has a quick view of today's schedule
@@ -102,9 +103,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Calendar Sync | 2/2 | ✅ Complete | 2026-01-26 |
-| 2. Client/Pet Lookup | 3/3 | ✅ Complete | 2026-01-26 |
-| 3. Voice Commands | 0/1 | In Progress | - |
+| 1. Calendar Sync | 2/2 | Complete | 2026-01-26 |
+| 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
+| 3. Voice Commands | 0/2 | In Progress | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 
