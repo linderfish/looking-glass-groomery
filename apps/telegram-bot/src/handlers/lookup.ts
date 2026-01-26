@@ -6,6 +6,7 @@ import {
 } from '../services/search';
 import { formatClientProfile, formatClientList, formatPetProfile, formatVisitHistory } from '../services/formatting';
 import { prisma } from '@looking-glass/db';
+import { processNaturalLanguageQuery } from '../services/natural-language';
 
 export const lookupHandler = new Composer<BotContext>();
 
@@ -224,85 +225,27 @@ lookupHandler.on('message:text', async (ctx, next) => {
     return next();
   }
 
-  // Phone number detection - digits with optional separators
-  const phoneMatch = text.match(/\b(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})\b/);
-  if (phoneMatch) {
-    const client = await searchClientByPhone(phoneMatch[1]);
-    if (client) {
-      return showClientProfile(ctx, client);
-    }
-    await ctx.reply(`No client found with phone ${phoneMatch[1]}`);
-    return;
-  }
+  // Process through natural language service
+  const result = await processNaturalLanguageQuery(text);
 
-  // Natural language search patterns
-  const patterns = [
-    /who(?:'s|'s|\s+is)\s+(?:the\s+)?(.+?)(?:\s+with\s+(?:the\s+)?(.+))?$/i,  // "who's Sarah" or "who's the lady with the corgi"
-    /find\s+(.+)/i,                                    // "find Sarah"
-    /show\s+(?:me\s+)?(.+)/i,                         // "show me Sarah"
-    /lookup\s+(.+)/i,                                  // "lookup Sarah"
-    /(?:do\s+we\s+have|is\s+there)\s+(?:a\s+)?(.+)/i, // "do we have a Sarah"
-  ];
+  switch (result.type) {
+    case 'client':
+      return showClientProfile(ctx, result.data);
 
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const searchTerm = match[1].trim();
-      const petHint = match[2]?.trim();  // "the corgi" from "who's the lady with the corgi"
+    case 'clients':
+      return showClientList(ctx, result.data);
 
-      // Search clients
-      let clients = await searchClientsByName(searchTerm);
-
-      // If pet hint provided and multiple results, filter by pet species/breed
-      if (petHint && clients.length > 1) {
-        const petLower = petHint.toLowerCase();
-        const filtered = clients.filter(client =>
-          client.pets.some(pet =>
-            pet.name.toLowerCase().includes(petLower) ||
-            pet.breed?.toLowerCase().includes(petLower) ||
-            pet.species.toLowerCase().includes(petLower)
-          )
-        );
-        if (filtered.length > 0) {
-          clients = filtered;
-        }
-      }
-
-      if (clients.length === 0) {
-        // Try searching by pet name/breed directly
-        const petResults = await prisma.client.findMany({
-          where: {
-            pets: {
-              some: {
-                OR: [
-                  { name: { contains: searchTerm, mode: 'insensitive' } },
-                  { breed: { contains: searchTerm, mode: 'insensitive' } },
-                ],
-              },
-            },
-          },
-          include: { pets: true },
-          take: 5,
-        });
-
-        if (petResults.length > 0) {
-          return showClientList(ctx, petResults);
-        }
-
-        await ctx.reply(`No matches found for "${searchTerm}"`);
+    case 'not_found':
+      // If no match found, check if it was a recognized query pattern
+      // by checking if message contains typical not-found phrases
+      if (result.message.includes('No matches') || result.message.includes('No client found')) {
+        await ctx.reply(result.message);
         return;
       }
-
-      if (clients.length === 1) {
-        return showClientProfile(ctx, clients[0]);
-      }
-
-      return showClientList(ctx, clients);
-    }
+      // Otherwise, it's not a lookup query - pass to next handler
+      await next();
+      break;
   }
-
-  // Not a lookup query - pass to next handler
-  await next();
 });
 
 /**
