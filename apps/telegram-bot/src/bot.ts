@@ -1,5 +1,6 @@
 // apps/telegram-bot/src/bot.ts
 import { Bot, Context, session, SessionFlavor } from 'grammy'
+import { hydrateFiles } from '@grammyjs/files'
 
 interface SessionData {
   awaitingAction?: string
@@ -25,6 +26,9 @@ export function getBot(): Bot<BotContext> {
     _chatId = process.env.TELEGRAM_KIMMIE_CHAT_ID || ''
 
     _bot = new Bot<BotContext>(token)
+
+    // File handling plugin
+    _bot.api.config.use(hydrateFiles(_bot.token))
 
     // Session middleware
     _bot.use(session({
