@@ -4,7 +4,7 @@ import {
   searchClientByPhone,
   searchClientsByName,
 } from '../services/search';
-import { formatClientProfile, formatClientList } from '../services/formatting';
+import { formatClientProfile, formatClientList, formatPetProfile } from '../services/formatting';
 import { prisma } from '@looking-glass/db';
 
 export const lookupHandler = new Composer<BotContext>();
@@ -115,6 +115,60 @@ lookupHandler.callbackQuery(/^client:(.+)$/, async (ctx) => {
   });
 
   await ctx.answerCallbackQuery();
+});
+
+// Callback handler for pet profile display
+lookupHandler.callbackQuery(/^pet:(.+)$/, async (ctx) => {
+  const petId = ctx.match[1];
+
+  // CRITICAL: Answer callback immediately (10 second limit)
+  await ctx.answerCallbackQuery();
+
+  const pet = await prisma.pet.findUnique({
+    where: { id: petId },
+    include: {
+      client: true,
+      passport: true,
+    },
+  });
+
+  if (!pet) {
+    await ctx.reply('Pet not found');
+    return;
+  }
+
+  const message = formatPetProfile(pet);
+
+  // Build buttons: back to client, visit history
+  const buttons = [
+    [{ text: '◀ Back to Client', callback_data: `client:${pet.clientId}` }],
+    [{ text: '📋 Visit History', callback_data: `pethistory:${pet.id}` }],
+  ];
+
+  // Remove old message reply_markup to prevent button confusion
+  await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
+
+  // If pet has photo, send as photo message; otherwise text
+  if (pet.photoUrl) {
+    try {
+      await ctx.replyWithPhoto(pet.photoUrl, {
+        caption: message,
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: buttons },
+      });
+    } catch {
+      // Photo URL might be broken - fall back to text
+      await ctx.reply(message, {
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: buttons },
+      });
+    }
+  } else {
+    await ctx.reply(message, {
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: buttons },
+    });
+  }
 });
 
 /**
