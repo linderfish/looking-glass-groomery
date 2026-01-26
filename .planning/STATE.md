@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 2 of 5 (Client/Pet Lookup)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-26 - Completed 02-01-PLAN.md (Client lookup infrastructure)
+Last activity: 2026-01-26 - Completed 02-02-PLAN.md (Pet profile display)
 
-Progress: [###-------] 30%
+Progress: [####------] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: ~12 min per plan
-- Total execution time: ~36 minutes
+- Total plans completed: 4
+- Average duration: ~10 min per plan
+- Total execution time: ~38 minutes
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 - Calendar Sync | 2 | ~30 min | ~15 min |
-| 2 - Client/Pet Lookup | 1 | ~6 min | ~6 min |
+| 2 - Client/Pet Lookup | 2 | ~8 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 ✅, 01-02 ✅, 02-01 ✅
-- Trend: Accelerating (6min completion)
+- Last 5 plans: 01-01 ✅, 01-02 ✅, 02-01 ✅, 02-02 ✅
+- Trend: Accelerating rapidly (2min completion on 02-02)
 
 *Updated after each plan completion*
 
@@ -57,8 +57,9 @@ Recent decisions affecting current work:
 - 01-01: Added calendarEventId field to Appointment + updateCalendarEvent/deleteCalendarEvent functions
 - 01-02: Wired calendarEventId storage on booking + reschedule/cancel endpoints
 
-**Phase 2: Client/Pet Lookup** (In progress - 1/3 complete)
+**Phase 2: Client/Pet Lookup** (In progress - 2/3 complete)
 - 02-01: Client search infrastructure (libphonenumber-js, pg_trgm, /lookup command) ✅
+- 02-02: Pet profile display (spicy meter, age calculation, passport data) ✅
 
 ### Pending Todos
 
@@ -71,8 +72,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-26 21:35:56 UTC
-Stopped at: Completed 02-01-PLAN.md (Client lookup infrastructure)
+Last session: 2026-01-26 21:41:05 UTC
+Stopped at: Completed 02-02-PLAN.md (Pet profile display)
 Resume file: None
 
 ### Phase 2 Plans Summary
