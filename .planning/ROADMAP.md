@@ -44,11 +44,12 @@ Plans:
   3. Kimmie taps on a pet name and sees photo, age, breed, spayed status, spicy meter, preferences, and allergies
   4. Kimmie asks for visit history and sees the last 5 appointments with services performed
   5. Kimmie asks natural language questions ("who's the lady with the corgi") and gets accurate results
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md - Core search infrastructure (search service, phone normalization, /lookup command)
+- [ ] 02-02-PLAN.md - Pet profile display with spicy meter, demographics, and passport details
+- [ ] 02-03-PLAN.md - Visit history and natural language query support
 
 ### Phase 3: Voice Commands
 **Goal**: Kimmie can speak queries into Telegram while her hands are dirty and get text responses
@@ -102,7 +103,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Calendar Sync | 2/2 | ✅ Complete | 2026-01-26 |
-| 2. Client/Pet Lookup | 0/? | Not started | - |
+| 2. Client/Pet Lookup | 0/3 | Ready | - |
 | 3. Voice Commands | 0/? | Not started | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
