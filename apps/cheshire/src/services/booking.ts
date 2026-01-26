@@ -658,7 +658,7 @@ export async function createBookingInDatabase(
       source: context.channel,
     })
 
-    // Create Google Calendar event
+    // Create Google Calendar event and store the event ID
     try {
       const clientName = `${client.firstName} ${client.lastName}`.trim()
       const serviceList = state.services || ['Full Groom']
@@ -668,10 +668,19 @@ export async function createBookingInDatabase(
         start: scheduledAt,
         end: endTime,
       })
-      console.log(`[Booking] ✅ Created calendar event: ${calendarEventId}`)
+
+      // Store the calendar event ID on the appointment for future updates/deletes
+      // This is the critical missing link - without this, no calendar sync is possible
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { calendarEventId },
+      })
+
+      console.log(`[Booking] ✅ Created and linked calendar event: ${calendarEventId}`)
     } catch (err) {
-      console.error('[Booking] ❌ Failed to create calendar event:', err)
-      // Don't fail the booking if calendar creation fails - appointment is in DB
+      console.error('[Booking] ❌ Failed to create/link calendar event:', err)
+      // Don't fail the booking if calendar sync fails - appointment exists in DB
+      // A retry mechanism should pick this up later (or manual sync)
     }
 
     return { success: true, appointmentId: appointment.id }

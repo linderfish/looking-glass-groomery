@@ -235,3 +235,82 @@ export async function createCalendarEvent(
   console.log('Created calendar event:', data.id)
   return data.id
 }
+
+/**
+ * Update an existing calendar event
+ * Uses PUT (full resource update) as Google Calendar API doesn't support PATCH
+ */
+export async function updateCalendarEvent(
+  eventId: string,
+  updates: {
+    summary: string
+    description?: string
+    start: Date
+    end: Date
+  },
+  calendarId: string = 'primary'
+): Promise<void> {
+  const token = await getAccessToken()
+
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        summary: updates.summary,
+        description: updates.description,
+        start: {
+          dateTime: updates.start.toISOString(),
+          timeZone: 'America/Los_Angeles',
+        },
+        end: {
+          dateTime: updates.end.toISOString(),
+          timeZone: 'America/Los_Angeles',
+        },
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({})) as any
+    throw new Error(`Calendar update failed: ${error.error?.message || response.statusText}`)
+  }
+
+  console.log(`Updated calendar event: ${eventId}`)
+}
+
+/**
+ * Delete a calendar event
+ * Accepts 404 as success (event already deleted)
+ */
+export async function deleteCalendarEvent(
+  eventId: string,
+  calendarId: string = 'primary',
+  sendUpdates: 'all' | 'externalOnly' | 'none' = 'none'
+): Promise<void> {
+  const token = await getAccessToken()
+
+  const params = new URLSearchParams({ sendUpdates })
+
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${eventId}?${params}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+
+  // 404 is acceptable - event was already deleted
+  if (!response.ok && response.status !== 404) {
+    const error = await response.json().catch(() => ({})) as any
+    throw new Error(`Calendar delete failed: ${error.error?.message || response.statusText}`)
+  }
+
+  console.log(`Deleted calendar event: ${eventId}`)
+}

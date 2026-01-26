@@ -12,7 +12,7 @@ Transform the existing Telegram bot from a notification receiver into a full AI 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling
+- [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling ✅
 - [ ] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
 - [ ] **Phase 3: Voice Commands** - Hands-free queries while grooming
 - [ ] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
@@ -31,8 +31,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md - Add calendarEventId field and Calendar API update/delete methods
-- [ ] 01-02-PLAN.md - Wire calendar sync on creation, add reschedule/cancel handlers
+- [x] 01-01-PLAN.md - Add calendarEventId field and Calendar API update/delete methods ✅
+- [x] 01-02-PLAN.md - Wire calendar sync on creation, add reschedule/cancel handlers ✅
 
 ### Phase 2: Client/Pet Lookup
 **Goal**: Kimmie can look up any client or pet and see their complete profile instantly from Telegram
@@ -101,7 +101,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Calendar Sync | 0/2 | Planned | - |
+| 1. Calendar Sync | 2/2 | ✅ Complete | 2026-01-26 |
 | 2. Client/Pet Lookup | 0/? | Not started | - |
 | 3. Voice Commands | 0/? | Not started | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |

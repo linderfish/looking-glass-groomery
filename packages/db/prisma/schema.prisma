@@ -231,6 +231,9 @@ model Appointment {
   bookedVia       BookingSource @default(WEBSITE)
   conversationId  String?
 
+  // Google Calendar sync
+  calendarEventId   String?   // Google Calendar event ID for sync operations
+
   // Shelter Angel specific
   isShelterAngel  Boolean   @default(false)
   shelterName     String?
