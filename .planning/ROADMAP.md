@@ -59,10 +59,10 @@ Plans:
   1. Kimmie sends a voice message and it gets transcribed accurately
   2. The transcribed text is understood by Cheshire (lookups, questions all work)
   3. Kimmie receives a text response she can glance at while grooming
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md - Voice transcription and natural language processing
 
 ### Phase 4: Photo Reminders + Dashboard
 **Goal**: Kimmie never forgets to post groom photos and has a quick view of today's schedule
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Calendar Sync | 2/2 | ✅ Complete | 2026-01-26 |
 | 2. Client/Pet Lookup | 3/3 | ✅ Complete | 2026-01-26 |
-| 3. Voice Commands | 0/? | Ready | - |
+| 3. Voice Commands | 0/1 | In Progress | - |
 | 4. Photo Reminders + Dashboard | 0/? | Not started | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 
