@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Calendar Sync** - Fix calendar event lifecycle for accurate scheduling
 - [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
 - [x] **Phase 3: Voice Commands** - Hands-free queries while grooming
-- [ ] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
+- [x] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
 - [ ] **Phase 5: Revenue Dashboard** - Business health visibility
 
 ## Phase Details
@@ -79,9 +79,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md - Photo upload to S3 with Before/After selection and streak update
-- [ ] 04-02-PLAN.md - Photo streak tracking and end-of-day reminders
-- [ ] 04-03-PLAN.md - Web dashboard with schedule view and client search
+- [x] 04-01-PLAN.md - Photo upload to S3 with Before/After selection and streak update
+- [x] 04-02-PLAN.md - Photo streak tracking and end-of-day reminders
+- [x] 04-03-PLAN.md - Web dashboard with schedule view and client search
 
 **Note on dashboard requirements:**
 - DASH-01 (/today command): Already exists in bookings.ts
@@ -112,9 +112,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Calendar Sync | 2/2 | Complete | 2026-01-26 |
 | 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
 | 3. Voice Commands | 2/2 | Complete | 2026-01-26 |
-| 4. Photo Reminders + Dashboard | 0/3 | In Progress | - |
+| 4. Photo Reminders + Dashboard | 3/3 | Complete | 2026-01-27 |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
-*Last updated: 2026-01-26*
+*Last updated: 2026-01-27*

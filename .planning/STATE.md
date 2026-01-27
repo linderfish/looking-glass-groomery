@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Kimmie can look up any client or pet by name/phone and see everything about them - instantly, accurately, without touching a computer.
-**Current focus:** Phase 4 - Photo Reminders + Dashboard
+**Current focus:** Phase 4 Complete - Ready for Phase 5
 
 ## Current Position
 
-Phase: 4 of 5 (Photo Reminders + Dashboard)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-27 - Completed 04-02-PLAN.md (Photo Streak & Reminders)
+Phase: 4 of 5 (Photo Reminders + Dashboard) - COMPLETE
+Plan: 3 of 3 in current phase
+Status: Complete
+Last activity: 2026-01-27 - Phase 4 complete (all 3 plans executed)
 
-Progress: [########--] 80%
+Progress: [##########] 80% (4 of 5 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: ~6 min per plan
-- Total execution time: ~66 minutes
+- Total execution time: ~82 minutes
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [########--] 80%
 | 1 - Calendar Sync | 2 | ~30 min | ~15 min |
 | 2 - Client/Pet Lookup | 3 | ~12 min | ~4 min |
 | 3 - Voice Commands | 2 | ~8 min | ~4 min |
-| 4 - Photo/Dashboard | 2 | ~11 min | ~5.5 min |
+| 4 - Photo/Dashboard | 3 | ~16 min | ~5.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 ✅, 03-02 ✅, 04-01 ✅, 04-02 ✅
+- Last 5 plans: 03-02 ✅, 04-01 ✅, 04-02 ✅, 04-03 ✅
 - Trend: Consistently fast execution (avg 4-7 min for Phase 3-4)
 
 *Updated after each plan completion*
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - calculatePhotoStreak works backwards from yesterday, skips non-work days (04-02)
 - Work day = day with COMPLETED or IN_PROGRESS appointments (04-02)
 - 6pm photo reminder is timezone-aware, only fires on work days with no photos (04-02)
+- express-basic-auth for simple dashboard password protection (04-03)
+- Dashboard at /dashboard/today and /dashboard/search, mobile-friendly (04-03)
 
 ### Completed Phases
 
@@ -82,9 +84,10 @@ Recent decisions affecting current work:
 - 03-01: Voice infrastructure setup (Whisper transcription, NL service extraction) ✅
 - 03-02: Voice message handler with full integration ✅
 
-**Phase 4: Photo Reminders + Dashboard** (In Progress)
+**Phase 4: Photo Reminders + Dashboard** ✅
 - 04-01: Photo upload to S3 with Before/After selection and streak tracking ✅
 - 04-02: Photo streak calculation and end-of-day reminders ✅
+- 04-03: Web dashboard with schedule view and client search ✅
 
 ### Pending Todos
 
@@ -98,21 +101,18 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-02-PLAN.md (Photo Streak & Reminders)
+Stopped at: Phase 4 complete
 Resume file: None
 
-### Phase 4 Overview
+### Phase 5 Overview (Next)
 
-**Goal:** Kimmie never forgets to post groom photos and has a quick view of today's schedule
+**Goal:** Kimmie can see her business revenue and progress toward monthly goals without checking Stripe directly
 
 **Requirements:**
-- PHOTO-01, PHOTO-02, PHOTO-03, PHOTO-04: Photo saving and reminders
-- DASH-01, DASH-02, DASH-03: Daily schedule dashboard
+- REV-01, REV-02, REV-03, REV-04: Revenue visibility
 
 **Success Criteria:**
-1. Kimmie sends a photo to Telegram and it saves to the current appointment
-2. Kimmie can mark photos as Before or After
-3. At end of day, Kimmie gets a reminder if no photos were posted that day
-4. Kimmie can see her photo streak (consecutive days with photos)
-5. Kimmie can view today's schedule at a glance from Telegram or a simple web page
-6. Morning briefing arrives via Telegram with today's appointments
+1. Kimmie asks "how much did I make today" and sees today's revenue from Stripe
+2. Kimmie asks for weekly revenue and sees accurate week-to-date numbers
+3. Kimmie sees monthly revenue with visual progress toward $8-10K goal
+4. Kimmie can check YTD revenue to understand annual business health
