@@ -2,8 +2,10 @@
 import * as cron from 'node-cron'
 import { getSettings, updateSettings } from './settings'
 import { sendDailyDigest } from './daily-digest'
+import { calculatePhotoStreak } from './streak'
 import { bot } from '../bot'
 import { prisma } from '@looking-glass/db'
+import { startOfDay, endOfDay } from 'date-fns'
 
 // NOTE: lastDigestDate is now stored in database (KimmieSettings.lastDigestDate)
 // This ensures state survives bot restarts
@@ -13,17 +15,92 @@ import { prisma } from '@looking-glass/db'
  * Call this after bot.start() in index.ts
  */
 export function initializeScheduler(): void {
-  // Check every minute if it's time for the daily digest
+  // Check every minute if it's time for scheduled tasks
   // This approach allows dynamic time changes from settings
   cron.schedule('* * * * *', async () => {
+    // Get timezone for checking times
+    const settings = await getSettings()
+    const timezone = settings.timezone || 'America/Los_Angeles'
+    const now = new Date()
+
+    // Get current time in Kimmie's timezone (HH:MM format)
+    const kimmieTime = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(now)
+
+    // Daily digest check
     try {
       await checkDailyDigest()
     } catch (error) {
       console.error('Scheduler error (daily digest):', error)
     }
+
+    // End-of-day photo reminder at 6pm
+    if (kimmieTime === '18:00') {
+      try {
+        await checkEndOfDayPhotoReminder()
+      } catch (error) {
+        console.error('Scheduler error (photo reminder):', error)
+      }
+    }
   })
 
-  console.log('Scheduler initialized - daily digest ready')
+  console.log('Scheduler initialized - daily digest and photo reminders ready')
+}
+
+/**
+ * Check if it's end of day and send photo reminder if no photos posted
+ * Only sends reminder if:
+ * - Today had appointments (COMPLETED or IN_PROGRESS)
+ * - No photos were uploaded today
+ */
+async function checkEndOfDayPhotoReminder(): Promise<void> {
+  const settings = await getSettings()
+  const now = new Date()
+  const dayStart = startOfDay(now)
+  const dayEnd = endOfDay(now)
+
+  // Count today's completed/in-progress appointments
+  const todayAppointments = await prisma.appointment.count({
+    where: {
+      scheduledAt: { gte: dayStart, lte: dayEnd },
+      status: { in: ['COMPLETED', 'IN_PROGRESS'] },
+    },
+  })
+
+  if (todayAppointments === 0) {
+    console.log('No appointments today - skipping photo reminder')
+    return
+  }
+
+  // Check if any photos posted today
+  const photosToday = await prisma.appointmentPhoto.count({
+    where: {
+      createdAt: { gte: dayStart, lte: dayEnd },
+    },
+  })
+
+  if (photosToday > 0) {
+    console.log(`Photos already posted today (${photosToday}) - skipping reminder`)
+    return
+  }
+
+  // Get current streak for context
+  const streak = await calculatePhotoStreak()
+
+  // Build the reminder message
+  let message: string
+  if (streak > 0) {
+    message = `Hey ${settings.preferredName}! You had ${todayAppointments} appointment${todayAppointments > 1 ? 's' : ''} today but no photos yet. Don't break that ${streak} day streak!`
+  } else {
+    message = `Hey ${settings.preferredName}! You had ${todayAppointments} appointment${todayAppointments > 1 ? 's' : ''} today but no photos. Time to start a new streak!`
+  }
+
+  await bot.api.sendMessage(process.env.TELEGRAM_KIMMIE_CHAT_ID!, message)
+  console.log('End-of-day photo reminder sent')
 }
 
 /**
