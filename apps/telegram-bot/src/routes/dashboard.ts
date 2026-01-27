@@ -48,9 +48,9 @@ dashboardRouter.get('/today', async (req, res) => {
 
     // Fetch photo streak
     const stats = await prisma.kimmieStats.findFirst({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { date: 'desc' },
     })
-    const streak = stats?.photoStreakDays || 0
+    const streak = stats?.photoStreak || 0
 
     // Build HTML
     const html = `
@@ -181,19 +181,19 @@ dashboardRouter.get('/today', async (req, res) => {
         ? '<div class="empty">No appointments scheduled for today 🎉</div>'
         : appointments
             .map((apt) => {
-              const statusEmoji = {
+              const statusEmoji = ({
                 CONFIRMED: '✅',
                 PENDING: '⏳',
                 CHECKED_IN: '🚪',
                 IN_PROGRESS: '✂️',
-              }[apt.status] || '📅'
+              } as Record<string, string>)[apt.status] || '📅'
 
-              const statusClass = {
+              const statusClass = ({
                 CONFIRMED: 'status-confirmed',
                 PENDING: 'status-pending',
                 CHECKED_IN: 'status-checked-in',
                 IN_PROGRESS: 'status-in-progress',
-              }[apt.status] || ''
+              } as Record<string, string>)[apt.status] || ''
 
               const serviceNames = apt.services.map(s => s.name).join(', ')
 
