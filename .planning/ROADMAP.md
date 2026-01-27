@@ -97,10 +97,12 @@ Plans:
   2. Kimmie asks for weekly revenue and sees accurate week-to-date numbers
   3. Kimmie sees monthly revenue with visual progress toward $8-10K goal
   4. Kimmie can check YTD revenue to understand annual business health
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md - Stripe service + revenue formatting (core infrastructure)
+- [ ] 05-02-PLAN.md - Natural language + voice handler integration (Telegram queries)
+- [ ] 05-03-PLAN.md - Dashboard revenue route (web visibility)
 
 ## Progress
 
@@ -113,7 +115,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
 | 3. Voice Commands | 2/2 | Complete | 2026-01-26 |
 | 4. Photo Reminders + Dashboard | 3/3 | Complete | 2026-01-27 |
-| 5. Revenue Dashboard | 0/? | Not started | - |
+| 5. Revenue Dashboard | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-25*
