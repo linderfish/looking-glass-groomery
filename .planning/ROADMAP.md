@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Client/Pet Lookup** - Core value: search anything, see everything
 - [x] **Phase 3: Voice Commands** - Hands-free queries while grooming
 - [x] **Phase 4: Photo Reminders + Dashboard** - Daily operations tracking
-- [ ] **Phase 5: Revenue Dashboard** - Business health visibility
+- [x] **Phase 5: Revenue Dashboard** - Business health visibility
 
 ## Phase Details
 
@@ -100,9 +100,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md - Stripe service + revenue formatting (core infrastructure)
-- [ ] 05-02-PLAN.md - Natural language + voice handler integration (Telegram queries)
-- [ ] 05-03-PLAN.md - Dashboard revenue route (web visibility)
+- [x] 05-01-PLAN.md - Stripe service + revenue formatting (core infrastructure)
+- [x] 05-02-PLAN.md - Natural language + voice handler integration (Telegram queries)
+- [x] 05-03-PLAN.md - Dashboard revenue route (web visibility)
 
 ## Progress
 
@@ -115,8 +115,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
 | 3. Voice Commands | 2/2 | Complete | 2026-01-26 |
 | 4. Photo Reminders + Dashboard | 3/3 | Complete | 2026-01-27 |
-| 5. Revenue Dashboard | 0/3 | Not started | - |
+| 5. Revenue Dashboard | 3/3 | Complete | 2026-01-27 |
 
 ---
 *Roadmap created: 2026-01-25*
 *Last updated: 2026-01-27*
+*Milestone complete: 2026-01-27*

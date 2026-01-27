@@ -26,29 +26,29 @@ Requirements for MoGo replacement milestone. Each maps to roadmap phases.
 
 ### Voice Commands
 
-- [ ] **VOICE-01**: Voice messages transcribed via Whisper API
-- [ ] **VOICE-02**: Transcribed text processed through Cheshire brain
-- [ ] **VOICE-03**: Response sent back as text message
+- [x] **VOICE-01**: Voice messages transcribed via Whisper API
+- [x] **VOICE-02**: Transcribed text processed through Cheshire brain
+- [x] **VOICE-03**: Response sent back as text message
 
 ### Photo Reminders
 
-- [ ] **PHOTO-01**: Photos uploaded via Telegram saved to appointment
-- [ ] **PHOTO-02**: Before/After photo type selection works
-- [ ] **PHOTO-03**: End-of-day reminder if no photos posted
-- [ ] **PHOTO-04**: Photo streak tracking displayed
+- [x] **PHOTO-01**: Photos uploaded via Telegram saved to appointment
+- [x] **PHOTO-02**: Before/After photo type selection works
+- [x] **PHOTO-03**: End-of-day reminder if no photos posted
+- [x] **PHOTO-04**: Photo streak tracking displayed
 
 ### Dashboard
 
-- [ ] **DASH-01**: Today's schedule visible at a glance
-- [ ] **DASH-02**: Quick client search from dashboard
-- [ ] **DASH-03**: Morning briefing sent via Telegram
+- [x] **DASH-01**: Today's schedule visible at a glance
+- [x] **DASH-02**: Quick client search from dashboard
+- [x] **DASH-03**: Morning briefing sent via Telegram
 
 ### Revenue
 
-- [ ] **REV-01**: Today's revenue from Stripe displayed
-- [ ] **REV-02**: Week's revenue calculated and displayed
-- [ ] **REV-03**: Month's revenue with progress toward $8-10K goal
-- [ ] **REV-04**: YTD revenue available
+- [x] **REV-01**: Today's revenue from Stripe displayed
+- [x] **REV-02**: Week's revenue calculated and displayed
+- [x] **REV-03**: Month's revenue with progress toward $8-10K goal
+- [x] **REV-04**: YTD revenue available
 
 ## v2 Requirements
 
@@ -101,20 +101,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOOKUP-06 | Phase 2 | Complete |
 | LOOKUP-07 | Phase 2 | Complete |
 | LOOKUP-08 | Phase 2 | Complete |
-| VOICE-01 | Phase 3 | Pending |
-| VOICE-02 | Phase 3 | Pending |
-| VOICE-03 | Phase 3 | Pending |
-| PHOTO-01 | Phase 4 | Pending |
-| PHOTO-02 | Phase 4 | Pending |
-| PHOTO-03 | Phase 4 | Pending |
-| PHOTO-04 | Phase 4 | Pending |
-| DASH-01 | Phase 4 | Pending |
-| DASH-02 | Phase 4 | Pending |
-| DASH-03 | Phase 4 | Pending |
-| REV-01 | Phase 5 | Pending |
-| REV-02 | Phase 5 | Pending |
-| REV-03 | Phase 5 | Pending |
-| REV-04 | Phase 5 | Pending |
+| VOICE-01 | Phase 3 | Complete |
+| VOICE-02 | Phase 3 | Complete |
+| VOICE-03 | Phase 3 | Complete |
+| PHOTO-01 | Phase 4 | Complete |
+| PHOTO-02 | Phase 4 | Complete |
+| PHOTO-03 | Phase 4 | Complete |
+| PHOTO-04 | Phase 4 | Complete |
+| DASH-01 | Phase 4 | Complete |
+| DASH-02 | Phase 4 | Complete |
+| DASH-03 | Phase 4 | Complete |
+| REV-01 | Phase 5 | Complete |
+| REV-02 | Phase 5 | Complete |
+| REV-03 | Phase 5 | Complete |
+| REV-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 25 total
@@ -123,4 +123,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-26 - Phase 2 requirements marked complete*
+*Last updated: 2026-01-27 - All v1 requirements complete*
