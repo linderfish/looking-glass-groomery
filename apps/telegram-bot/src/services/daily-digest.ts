@@ -3,6 +3,7 @@ import { prisma } from '@looking-glass/db'
 import { bot } from '../bot'
 import { getSettings } from './settings'
 import { listCalendarEvents, isCalendarConfigured } from './calendar'
+import { calculatePhotoStreak } from './streak'
 import { startOfDay, endOfDay, format } from 'date-fns'
 
 /**
@@ -78,14 +79,16 @@ export async function sendDailyDigest(): Promise<void> {
     message += `No appointments today - enjoy your day off! 💅`
   }
 
-  // Get photo streak if it exists
+  // Get photo streak (calculated fresh for accuracy)
   try {
-    const stats = await prisma.kimmieStats.findFirst()
-    if (stats && stats.photoStreak > 0) {
-      message += `\n📸 Photo streak: ${stats.photoStreak} days!`
+    const streak = await calculatePhotoStreak()
+    if (streak > 0) {
+      message += `\n\n📸 Photo streak: ${streak} days! Keep it going!`
+    } else if (hasAppointments) {
+      message += `\n\n📸 Start a photo streak today!`
     }
-  } catch {
-    // KimmieStats might not exist yet, that's fine
+  } catch (error) {
+    console.error('Failed to calculate photo streak:', error)
   }
 
   // Send the message with HTML formatting
@@ -173,6 +176,18 @@ export async function getDailyDigestPreview(): Promise<string> {
 
   if (!hasAppointments) {
     message += `No appointments - enjoy your day off! 💅`
+  }
+
+  // Get photo streak (calculated fresh for accuracy)
+  try {
+    const streak = await calculatePhotoStreak()
+    if (streak > 0) {
+      message += `\n\n📸 Photo streak: ${streak} days! Keep it going!`
+    } else if (hasAppointments) {
+      message += `\n\n📸 Start a photo streak today!`
+    }
+  } catch (error) {
+    console.error('Failed to calculate photo streak:', error)
   }
 
   return message
