@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 4 of 5 (Photo Reminders + Dashboard)
-Plan: 1 of 3 in current phase (04-03 complete)
+Plan: 1 of ? in current phase
 Status: In progress
-Last activity: 2026-01-27 - Completed 04-03-PLAN.md (Dashboard)
+Last activity: 2026-01-27 - Completed 04-01-PLAN.md (Photo Upload & Streak)
 
 Progress: [#######---] 70%
 
@@ -21,7 +21,7 @@ Progress: [#######---] 70%
 **Velocity:**
 - Total plans completed: 8
 - Average duration: ~6.5 min per plan
-- Total execution time: ~55 minutes
+- Total execution time: ~62 minutes
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [#######---] 70%
 | 1 - Calendar Sync | 2 | ~30 min | ~15 min |
 | 2 - Client/Pet Lookup | 3 | ~12 min | ~4 min |
 | 3 - Voice Commands | 2 | ~8 min | ~4 min |
-| 4 - Photo/Dashboard | 1 | ~5 min | ~5 min |
+| 4 - Photo/Dashboard | 1 | ~7 min | ~7 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 ✅, 03-01 ✅, 03-02 ✅, 04-03 ✅
-- Trend: Consistently fast execution (avg 3-5 min for Phase 2-4)
+- Last 5 plans: 03-01 ✅, 03-02 ✅, 04-01 ✅
+- Trend: Consistently fast execution (avg 4-7 min for Phase 3-4)
 
 *Updated after each plan completion*
 
@@ -60,9 +60,9 @@ Recent decisions affecting current work:
 - Echo transcription back to user for transparency and verification (03-02)
 - Cleanup temp audio files immediately after transcription to prevent disk bloat (03-02)
 - Use @ts-expect-error for hydrateFiles download() method (type definition limitation) (03-02)
-- Express integrated into Telegram webhook server for dual HTTP endpoints (04-03)
-- Basic auth with single password for dashboard simplicity (04-03)
-- Inline CSS with mobile-first responsive design (04-03)
+- Photo URLs stored in Map cache between upload and callback selection (04-01)
+- Priority-based current appointment detection: IN_PROGRESS > CHECKED_IN > CONFIRMED > COMPLETED (04-01)
+- Photo streak increments if yesterday had photos, resets to 1 if gap (04-01)
 
 ### Completed Phases
 
@@ -80,7 +80,7 @@ Recent decisions affecting current work:
 - 03-02: Voice message handler with full integration ✅
 
 **Phase 4: Photo Reminders + Dashboard** (In Progress)
-- 04-03: Dashboard with today's schedule and client search ✅
+- 04-01: Photo upload to S3 with Before/After selection and streak tracking ✅
 
 ### Pending Todos
 
@@ -94,7 +94,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-03-PLAN.md (Dashboard)
+Stopped at: Completed 04-01-PLAN.md (Photo Upload & Streak)
 Resume file: None
 
 ### Phase 4 Overview
