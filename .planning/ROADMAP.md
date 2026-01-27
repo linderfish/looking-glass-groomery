@@ -76,11 +76,17 @@ Plans:
   4. Kimmie can see her photo streak (consecutive days with photos)
   5. Kimmie can view today's schedule at a glance from Telegram or a simple web page
   6. Morning briefing arrives via Telegram with today's appointments
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md - Photo upload to S3 with Before/After selection
+- [ ] 04-01-PLAN.md - Photo upload to S3 with Before/After selection and streak update
 - [ ] 04-02-PLAN.md - Photo streak tracking and end-of-day reminders
+- [ ] 04-03-PLAN.md - Web dashboard with schedule view and client search
+
+**Note on dashboard requirements:**
+- DASH-01 (/today command): Already exists in bookings.ts
+- DASH-03 (morning briefing at 8:40am): Already exists via sendDailyDigest() in scheduler.ts
+- DASH-02 (web dashboard with client search): New in 04-03-PLAN.md
 
 ### Phase 5: Revenue Dashboard
 **Goal**: Kimmie can see her business revenue and progress toward monthly goals without checking Stripe directly
@@ -106,7 +112,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Calendar Sync | 2/2 | Complete | 2026-01-26 |
 | 2. Client/Pet Lookup | 3/3 | Complete | 2026-01-26 |
 | 3. Voice Commands | 2/2 | Complete | 2026-01-26 |
-| 4. Photo Reminders + Dashboard | 0/2 | In Progress | - |
+| 4. Photo Reminders + Dashboard | 0/3 | In Progress | - |
 | 5. Revenue Dashboard | 0/? | Not started | - |
 
 ---
