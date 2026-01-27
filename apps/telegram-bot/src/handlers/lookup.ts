@@ -235,6 +235,11 @@ lookupHandler.on('message:text', async (ctx, next) => {
     case 'clients':
       return showClientList(ctx, result.data);
 
+    case 'revenue':
+      // Revenue message is pre-formatted with emojis and progress bar
+      await ctx.reply(result.data);
+      return;
+
     case 'not_found':
       // If no match found, check if it was a recognized query pattern
       // by checking if message contains typical not-found phrases

@@ -105,7 +105,7 @@ helpHandler.on('message:text', async (ctx, next) => {
   console.log(`[HELP] Loaded history with ${history.length} messages`)
 
   // Add user message to history
-  history.push({ role: 'user', content: ctx.message.text })
+  history.push({ role: 'user' as const, content: ctx.message.text })
   console.log(`[HELP] Added user message, calling AI assistant...`)
 
   try {
@@ -124,7 +124,7 @@ helpHandler.on('message:text', async (ctx, next) => {
     }
 
     // Add assistant response to history
-    history.push({ role: 'assistant', content: response.content })
+    history.push({ role: 'assistant' as const, content: response.content })
 
     // Save to session (fast) and database (persistent)
     ctx.session.helpHistory = history

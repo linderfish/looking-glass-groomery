@@ -7,7 +7,7 @@ interface SessionData {
   pendingBookingId?: string
   lastInteraction?: Date
   inHelpMode?: boolean
-  helpHistory?: { role: string; content: string }[]
+  helpHistory?: { role: 'user' | 'assistant'; content: string }[]
 }
 
 type BotContext = Context & SessionFlavor<SessionData>

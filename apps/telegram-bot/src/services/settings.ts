@@ -28,7 +28,7 @@ export async function updateSettings(
 
   return prisma.kimmieSettings.update({
     where: { id: current.id },
-    data
+    data: data as Parameters<typeof prisma.kimmieSettings.update>[0]['data']
   })
 }
 
