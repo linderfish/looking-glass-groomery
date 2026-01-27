@@ -67,12 +67,12 @@ export async function findCurrentAppointment(): Promise<string | null> {
   const inProgress = await prisma.appointment.findFirst({
     where: {
       status: 'IN_PROGRESS',
-      date: {
+      scheduledAt: {
         gte: today.start,
         lte: today.end,
       },
     },
-    orderBy: { date: 'asc' },
+    orderBy: { scheduledAt: 'asc' },
   });
   if (inProgress) return inProgress.id;
 
@@ -80,12 +80,12 @@ export async function findCurrentAppointment(): Promise<string | null> {
   const checkedIn = await prisma.appointment.findFirst({
     where: {
       status: 'CHECKED_IN',
-      date: {
+      scheduledAt: {
         gte: today.start,
         lte: today.end,
       },
     },
-    orderBy: { date: 'asc' },
+    orderBy: { scheduledAt: 'asc' },
   });
   if (checkedIn) return checkedIn.id;
 
@@ -93,12 +93,12 @@ export async function findCurrentAppointment(): Promise<string | null> {
   const confirmed = await prisma.appointment.findFirst({
     where: {
       status: 'CONFIRMED',
-      date: {
+      scheduledAt: {
         gte: now,
         lte: today.end,
       },
     },
-    orderBy: { date: 'asc' },
+    orderBy: { scheduledAt: 'asc' },
   });
   if (confirmed) return confirmed.id;
 
@@ -106,12 +106,12 @@ export async function findCurrentAppointment(): Promise<string | null> {
   const completed = await prisma.appointment.findFirst({
     where: {
       status: 'COMPLETED',
-      date: {
+      scheduledAt: {
         gte: today.start,
         lte: today.end,
       },
     },
-    orderBy: { date: 'desc' },
+    orderBy: { scheduledAt: 'desc' },
   });
   if (completed) return completed.id;
 
