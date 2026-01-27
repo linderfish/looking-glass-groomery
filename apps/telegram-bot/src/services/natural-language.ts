@@ -1,6 +1,8 @@
 import { searchClientByPhone, searchClientsByName } from './search';
 import { prisma } from '@looking-glass/db';
 import type { Client, Pet } from '@looking-glass/db';
+import { getTodayRevenue, getWeekRevenue, getMonthRevenue, getYearRevenue } from './stripe';
+import { formatRevenueResponse } from './revenue';
 
 // Type definition matching search service return types
 type ClientWithPets = Client & {
@@ -19,6 +21,11 @@ export type NLQueryResult =
   | {
       type: 'clients';
       data: ClientWithPets[];
+      message: string;
+    }
+  | {
+      type: 'revenue';
+      data: string;  // Pre-formatted revenue message
       message: string;
     }
   | {
@@ -134,6 +141,61 @@ export async function processNaturalLanguageQuery(
         data: clients,
         message: `Found ${clients.length} clients`,
       };
+    }
+  }
+
+  // Revenue query detection (AFTER client patterns to avoid collisions)
+  const revenuePatterns = [
+    { regex: /how much (?:did|have) (?:I|we) (?:make|made|earn|earned) today/i, period: 'today' as const },
+    { regex: /(?:what's|whats|what is) (?:my|our|the) revenue (?:for )?today/i, period: 'today' as const },
+    { regex: /today'?s revenue/i, period: 'today' as const },
+    { regex: /how much (?:did|have) (?:I|we) (?:make|made|earn|earned) this week/i, period: 'week' as const },
+    { regex: /(?:what's|whats|what is) (?:my|our|the) (?:weekly|week'?s) revenue/i, period: 'week' as const },
+    { regex: /this week'?s revenue/i, period: 'week' as const },
+    { regex: /how much (?:did|have) (?:I|we) (?:make|made|earn|earned) this month/i, period: 'month' as const },
+    { regex: /(?:what's|whats|what is) (?:my|our|the) (?:monthly|month'?s) revenue/i, period: 'month' as const },
+    { regex: /this month'?s revenue/i, period: 'month' as const },
+    { regex: /(?:year to date|ytd|yearly) revenue/i, period: 'year' as const },
+    { regex: /how much (?:did|have) (?:I|we) (?:make|made|earn|earned) (?:this|the) year/i, period: 'year' as const },
+  ];
+
+  for (const pattern of revenuePatterns) {
+    if (pattern.regex.test(text)) {
+      try {
+        let revenue: number;
+        let goal: number | undefined;
+
+        switch (pattern.period) {
+          case 'today':
+            revenue = await getTodayRevenue();
+            break;
+          case 'week':
+            revenue = await getWeekRevenue();
+            break;
+          case 'month':
+            revenue = await getMonthRevenue();
+            goal = parseFloat(process.env.MONTHLY_REVENUE_GOAL || '9000');
+            break;
+          case 'year':
+            revenue = await getYearRevenue();
+            break;
+        }
+
+        const message = formatRevenueResponse(pattern.period, revenue, goal);
+
+        return {
+          type: 'revenue',
+          data: message,
+          message: 'Revenue calculated',
+        };
+      } catch (error) {
+        console.error('Revenue calculation error:', error);
+        return {
+          type: 'not_found',
+          data: null,
+          message: "Couldn't calculate revenue - check Stripe connection",
+        };
+      }
     }
   }
 

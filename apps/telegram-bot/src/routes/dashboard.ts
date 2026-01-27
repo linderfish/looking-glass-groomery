@@ -3,6 +3,8 @@ import { Router } from 'express'
 import basicAuth from 'express-basic-auth'
 import { prisma } from '@looking-glass/db'
 import { startOfDay, endOfDay, format } from 'date-fns'
+import { getTodayRevenue, getWeekRevenue, getMonthRevenue, getYearRevenue } from '../services/stripe'
+import { formatCurrency } from '../services/revenue'
 
 export const dashboardRouter = Router()
 
@@ -168,6 +170,8 @@ dashboardRouter.get('/today', async (req, res) => {
   <div class="container">
     <div class="nav">
       <a href="/dashboard/search">🔍 Search Clients</a>
+      <span style="color: #e2e8f0;">|</span>
+      <a href="/dashboard/revenue">💰 Revenue</a>
     </div>
 
     <div class="header">
@@ -362,6 +366,8 @@ dashboardRouter.get('/search', async (req, res) => {
   <div class="container">
     <div class="nav">
       <a href="/dashboard/today">📅 Today's Schedule</a>
+      <span style="color: #e2e8f0;">|</span>
+      <a href="/dashboard/revenue">💰 Revenue</a>
     </div>
 
     <div class="header">
@@ -405,4 +411,179 @@ dashboardRouter.get('/search', async (req, res) => {
   `
 
   res.send(html)
+})
+
+// GET /dashboard/revenue - View revenue metrics
+dashboardRouter.get('/revenue', async (req, res) => {
+  try {
+    // Fetch all revenue metrics in parallel
+    const [today, week, month, year] = await Promise.all([
+      getTodayRevenue(),
+      getWeekRevenue(),
+      getMonthRevenue(),
+      getYearRevenue(),
+    ])
+
+    const monthlyGoal = parseFloat(process.env.MONTHLY_REVENUE_GOAL || '9000')
+    const percentage = Math.min((month / monthlyGoal) * 100, 100)
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revenue Dashboard - Looking Glass</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #6d28d9;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 16px;
+    }
+    .metric {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .metric-label {
+      color: #64748b;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .metric-amount {
+      font-size: 36px;
+      font-weight: bold;
+      color: #10b981;
+    }
+    .progress-container {
+      margin-top: 16px;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #64748b;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 24px;
+      background: #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.3s ease;
+      border-radius: 12px;
+    }
+    .goal-message {
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      color: ${month >= monthlyGoal ? '#059669' : '#f59e0b'};
+    }
+    .nav {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    .nav a {
+      color: #6d28d9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <a href="/dashboard/today">📅 Today's Schedule</a>
+      <span style="color: #e2e8f0;">|</span>
+      <a href="/dashboard/search">🔍 Search Clients</a>
+    </div>
+
+    <div class="header">
+      <h1>💰 Revenue Dashboard</h1>
+      <div class="subtitle">Business performance at a glance</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">Today</div>
+      <div class="metric-amount">${formatCurrency(today)}</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">This Week</div>
+      <div class="metric-amount">${formatCurrency(week)}</div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">This Month</div>
+      <div class="metric-amount">${formatCurrency(month)}</div>
+      <div class="progress-container">
+        <div class="progress-label">
+          <span>Progress</span>
+          <span>${percentage.toFixed(1)}% of ${formatCurrency(monthlyGoal)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${percentage}%"></div>
+        </div>
+        <div class="goal-message">
+          ${month >= monthlyGoal
+            ? '🎉 Goal reached! Amazing work!'
+            : `💪 ${formatCurrency(monthlyGoal - month)} to go!`}
+        </div>
+      </div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-label">Year to Date</div>
+      <div class="metric-amount">${formatCurrency(year)}</div>
+    </div>
+  </div>
+</body>
+</html>
+    `
+
+    res.send(html)
+  } catch (error) {
+    console.error('Dashboard /revenue error:', error)
+    res.status(500).send('Error loading revenue data - check Stripe connection')
+  }
 })
