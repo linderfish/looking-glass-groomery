@@ -13,8 +13,11 @@
     "@looking-glass/ai": "*",
     "@looking-glass/db": "*",
     "@looking-glass/shared": "*",
+    "@types/express": "^5.0.6",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-basic-auth": "^1.2.1",
     "grammy": "^1.30.0",
     "libphonenumber-js": "^1.12.35"
   },
