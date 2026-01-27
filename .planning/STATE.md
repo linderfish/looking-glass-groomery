@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 4 of 5 (Photo Reminders + Dashboard)
-Plan: 1 of ? in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-27 - Completed 04-01-PLAN.md (Photo Upload & Streak)
+Last activity: 2026-01-27 - Completed 04-02-PLAN.md (Photo Streak & Reminders)
 
-Progress: [#######---] 70%
+Progress: [########--] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: ~6.5 min per plan
-- Total execution time: ~62 minutes
+- Total plans completed: 9
+- Average duration: ~6 min per plan
+- Total execution time: ~66 minutes
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [#######---] 70%
 | 1 - Calendar Sync | 2 | ~30 min | ~15 min |
 | 2 - Client/Pet Lookup | 3 | ~12 min | ~4 min |
 | 3 - Voice Commands | 2 | ~8 min | ~4 min |
-| 4 - Photo/Dashboard | 1 | ~7 min | ~7 min |
+| 4 - Photo/Dashboard | 2 | ~11 min | ~5.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 ✅, 03-02 ✅, 04-01 ✅
+- Last 5 plans: 03-01 ✅, 03-02 ✅, 04-01 ✅, 04-02 ✅
 - Trend: Consistently fast execution (avg 4-7 min for Phase 3-4)
 
 *Updated after each plan completion*
@@ -63,6 +63,9 @@ Recent decisions affecting current work:
 - Photo URLs stored in Map cache between upload and callback selection (04-01)
 - Priority-based current appointment detection: IN_PROGRESS > CHECKED_IN > CONFIRMED > COMPLETED (04-01)
 - Photo streak increments if yesterday had photos, resets to 1 if gap (04-01)
+- calculatePhotoStreak works backwards from yesterday, skips non-work days (04-02)
+- Work day = day with COMPLETED or IN_PROGRESS appointments (04-02)
+- 6pm photo reminder is timezone-aware, only fires on work days with no photos (04-02)
 
 ### Completed Phases
 
@@ -81,6 +84,7 @@ Recent decisions affecting current work:
 
 **Phase 4: Photo Reminders + Dashboard** (In Progress)
 - 04-01: Photo upload to S3 with Before/After selection and streak tracking ✅
+- 04-02: Photo streak calculation and end-of-day reminders ✅
 
 ### Pending Todos
 
@@ -94,7 +98,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-27
-Stopped at: Completed 04-01-PLAN.md (Photo Upload & Streak)
+Stopped at: Completed 04-02-PLAN.md (Photo Streak & Reminders)
 Resume file: None
 
 ### Phase 4 Overview
