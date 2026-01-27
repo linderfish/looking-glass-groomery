@@ -1,3 +1,13 @@
+# Requirements Archive: v1 MoGo Replacement
+
+**Archived:** 2026-01-27
+**Status:** SHIPPED
+
+This is the archived requirements specification for v1.
+For current requirements, see `.planning/PROJECT.md` (Validated section).
+
+---
+
 # Requirements: Cheshire AI Administrative Assistant
 
 **Defined:** 2026-01-25
@@ -50,43 +60,7 @@ Requirements for MoGo replacement milestone. Each maps to roadmap phases.
 - [x] **REV-03**: Month's revenue with progress toward $8-10K goal
 - [x] **REV-04**: YTD revenue available
 
-## v2 Requirements
-
-Deferred to future milestone. Tracked but not in current roadmap.
-
-### Social Posting
-
-- **SOCIAL-01**: Photo posted to Instagram with AI-generated caption
-- **SOCIAL-02**: Photo posted to Facebook with AI-generated caption
-- **SOCIAL-03**: Preview shown before posting for approval
-- **SOCIAL-04**: Wonderland-themed AI backgrounds available
-
-### Proactive Intelligence
-
-- **PROACT-01**: Alert for empty slots tomorrow
-- **PROACT-02**: Follow-up suggestions for inactive clients (60+ days)
-- **PROACT-03**: Celebration messages for achievements
-- **PROACT-04**: Photo streak risk warnings
-
-### Productivity Integrations
-
-- **PROD-01**: Gmail inbox accessible via Telegram
-- **PROD-02**: Email replies drafted and sent via Telegram
-- **PROD-03**: Weather in morning briefing
-
-## Out of Scope
-
-| Feature | Reason |
-|---------|--------|
-| AI answering phone calls | Kimmie wants personal touch, human connection |
-| Auto-posting without approval | Must show preview first, trust is critical |
-| Complex AI backgrounds for photos | v2 after basics work |
-| Web-based admin dashboard | Telegram-first, web dashboard is simple view only |
-| Client-facing mobile app | Web and Telegram sufficient for v1 |
-
 ## Traceability
-
-Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -116,11 +90,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REV-03 | Phase 5 | Complete |
 | REV-04 | Phase 5 | Complete |
 
-**Coverage:**
-- v1 requirements: 25 total
-- Mapped to phases: 25
-- Unmapped: 0
+---
+
+## Milestone Summary
+
+**Shipped:** 25 of 25 v1 requirements
+**Adjusted:** VOICE-01 requires OPENAI_API_KEY configuration (code complete)
+**Dropped:** None
 
 ---
-*Requirements defined: 2026-01-25*
-*Last updated: 2026-01-27 - All v1 requirements complete*
+*Archived: 2026-01-27 as part of v1 milestone completion*
