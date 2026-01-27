@@ -45,6 +45,10 @@ voiceHandler.on('message:voice', async (ctx) => {
       case 'clients':
         await ctx.reply(formatClientList(result.data), { parse_mode: 'HTML' });
         break;
+      case 'revenue':
+        // Revenue message is pre-formatted with emojis and progress bar
+        await ctx.reply(result.data);
+        break;
       case 'not_found':
         await ctx.reply(result.message);
         break;
