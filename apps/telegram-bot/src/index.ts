@@ -13,6 +13,7 @@ import {
   helpHandler,
   lookupHandler,
   voiceHandler,
+  photosHandler,
   sendRandomHype,
 } from './handlers'
 import {
@@ -22,13 +23,15 @@ import {
 } from './services/kimmie-persona'
 import { initializeScheduler, recoverPendingReminders } from './services/scheduler'
 import { prisma } from '@looking-glass/db'
-import { createServer, IncomingMessage, ServerResponse } from 'http'
+import express from 'express'
+import { dashboardRouter } from './routes/dashboard'
 
 // Register handlers - ORDER MATTERS!
 // helpHandler must come early to intercept messages in help mode
 bot.use(helpHandler)
 bot.use(lookupHandler)
 bot.use(voiceHandler)
+bot.use(photosHandler)
 bot.use(bookingsHandler)
 bot.use(remindersHandler)
 bot.use(achievementsHandler)
@@ -149,33 +152,34 @@ async function startWebhookServer() {
     console.error('Failed to set webhook:', err)
   }
 
-  // Create simple HTTP server to receive webhooks
-  const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    if (req.method === 'POST' && req.url === '/webhook') {
-      let body = ''
-      req.on('data', chunk => { body += chunk })
-      req.on('end', async () => {
-        try {
-          const update = JSON.parse(body)
-          console.log(`📥 Webhook update received: ${update.update_id}`)
-          await actualBot.handleUpdate(update)
-          res.writeHead(200)
-          res.end('OK')
-        } catch (err) {
-          console.error('Webhook processing error:', err)
-          res.writeHead(500)
-          res.end('Error')
-        }
-      })
-    } else {
-      // Health check endpoint
-      res.writeHead(200)
-      res.end('Telegram Bot Webhook Server')
+  // Create Express app
+  const app = express()
+  app.use(express.json())
+
+  // Mount dashboard routes
+  app.use('/dashboard', dashboardRouter)
+
+  // Telegram webhook endpoint
+  app.post('/webhook', async (req, res) => {
+    try {
+      const update = req.body
+      console.log(`📥 Webhook update received: ${update.update_id}`)
+      await actualBot.handleUpdate(update)
+      res.status(200).send('OK')
+    } catch (err) {
+      console.error('Webhook processing error:', err)
+      res.status(500).send('Error')
     }
   })
 
-  server.listen(WEBHOOK_PORT, () => {
+  // Health check endpoint
+  app.get('/', (req, res) => {
+    res.send('Telegram Bot Webhook Server')
+  })
+
+  app.listen(WEBHOOK_PORT, () => {
     console.log(`🔗 Webhook server listening on port ${WEBHOOK_PORT}`)
+    console.log(`🌐 Dashboard available at /dashboard/today and /dashboard/search`)
     console.log(`✨ @Chechcatbot is now online (webhook mode)!`)
     console.log('Ready to serve the queen~ 👑')
   })
