@@ -481,6 +481,9 @@ model KimmieSettings {
   currentSessionMode    String?  // "help_mode", etc. - null means no active mode
   conversationHistory   Json?    // Array of {role, content} for help conversations
 
+  // External service connections
+  stripeSecretKey       String?  // Stripe API key for revenue queries
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

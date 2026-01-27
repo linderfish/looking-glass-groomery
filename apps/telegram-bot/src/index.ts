@@ -14,6 +14,7 @@ import {
   lookupHandler,
   voiceHandler,
   photosHandler,
+  stripeConnectHandler,
   sendRandomHype,
 } from './handlers'
 import {
@@ -32,6 +33,7 @@ bot.use(helpHandler)
 bot.use(lookupHandler)
 bot.use(voiceHandler)
 bot.use(photosHandler)
+bot.use(stripeConnectHandler)
 bot.use(bookingsHandler)
 bot.use(remindersHandler)
 bot.use(achievementsHandler)

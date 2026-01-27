@@ -10,25 +10,86 @@ import {
   startOfYear,
   endOfYear,
 } from 'date-fns';
+import { getSettings } from './settings';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+// Lazy-initialized Stripe client
+let _stripe: Stripe | null = null;
+let _cachedKey: string | null = null;
+
+/**
+ * Get Stripe client, checking settings first then env var
+ */
+async function getStripeClient(): Promise<Stripe | null> {
+  const settings = await getSettings();
+  const key = settings.stripeSecretKey || process.env.STRIPE_SECRET_KEY;
+
+  if (!key) {
+    return null;
+  }
+
+  // Re-create client if key changed
+  if (_stripe && _cachedKey === key) {
+    return _stripe;
+  }
+
+  _stripe = new Stripe(key, {
+    apiVersion: '2025-12-15.clover',
+  });
+  _cachedKey = key;
+
+  return _stripe;
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-12-15.clover', // Current API version
-});
+/**
+ * Check if Stripe is configured (via settings or env)
+ */
+export async function isStripeConfigured(): Promise<boolean> {
+  const settings = await getSettings();
+  return !!(settings.stripeSecretKey || process.env.STRIPE_SECRET_KEY);
+}
+
+/**
+ * Test a Stripe connection with a given key
+ */
+export async function testStripeConnection(key: string): Promise<{
+  success: boolean;
+  accountName?: string;
+  error?: string;
+}> {
+  try {
+    const testClient = new Stripe(key, {
+      apiVersion: '2025-12-15.clover',
+    });
+
+    // Try to fetch account info
+    const account = await testClient.accounts.retrieve('self');
+
+    return {
+      success: true,
+      accountName: account.business_profile?.name || account.email || undefined,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      success: false,
+      error: message,
+    };
+  }
+}
 
 /**
  * Get all successful charges within a date range
- * @param startDate - Start of date range (inclusive)
- * @param endDate - End of date range (inclusive)
- * @returns Array of successful charges
  */
 export async function getSuccessfulCharges(
   startDate: Date,
   endDate: Date
 ): Promise<Stripe.Charge[]> {
+  const stripe = await getStripeClient();
+
+  if (!stripe) {
+    return [];
+  }
+
   const startTimestamp = Math.floor(startDate.getTime() / 1000);
   const endTimestamp = Math.floor(endDate.getTime() / 1000);
 
@@ -68,7 +129,6 @@ export async function getSuccessfulCharges(
  */
 function calculateRevenue(charges: Stripe.Charge[]): number {
   return charges.reduce((total, charge) => {
-    // Stripe amounts are in cents
     return total + charge.amount / 100;
   }, 0);
 }
@@ -88,7 +148,7 @@ export async function getTodayRevenue(): Promise<number> {
 export async function getWeekRevenue(): Promise<number> {
   const now = new Date();
   const charges = await getSuccessfulCharges(
-    startOfWeek(now, { weekStartsOn: 0 }), // Sunday = 0
+    startOfWeek(now, { weekStartsOn: 0 }),
     endOfWeek(now, { weekStartsOn: 0 })
   );
   return calculateRevenue(charges);

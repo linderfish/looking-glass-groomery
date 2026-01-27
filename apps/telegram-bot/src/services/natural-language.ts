@@ -1,7 +1,7 @@
 import { searchClientByPhone, searchClientsByName } from './search';
 import { prisma } from '@looking-glass/db';
 import type { Client, Pet } from '@looking-glass/db';
-import { getTodayRevenue, getWeekRevenue, getMonthRevenue, getYearRevenue } from './stripe';
+import { getTodayRevenue, getWeekRevenue, getMonthRevenue, getYearRevenue, isStripeConfigured } from './stripe';
 import { formatRevenueResponse } from './revenue';
 
 // Type definition matching search service return types
@@ -161,6 +161,15 @@ export async function processNaturalLanguageQuery(
 
   for (const pattern of revenuePatterns) {
     if (pattern.regex.test(text)) {
+      // Check if Stripe is configured
+      if (!(await isStripeConfigured())) {
+        return {
+          type: 'not_found',
+          data: null,
+          message: "Stripe isn't connected yet. Send /connect_stripe to set it up!",
+        };
+      }
+
       try {
         let revenue: number;
         let goal: number | undefined;
