@@ -19,7 +19,8 @@
     "express": "^5.2.1",
     "express-basic-auth": "^1.2.1",
     "grammy": "^1.30.0",
-    "libphonenumber-js": "^1.12.35"
+    "libphonenumber-js": "^1.12.35",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
