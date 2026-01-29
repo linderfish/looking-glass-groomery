@@ -5,6 +5,7 @@ import '@/styles/globals.css'
 // BackgroundPreloader removed - we now use pre-generated static backgrounds
 // to avoid fal.ai API calls on every visitor (see /public/backgrounds/)
 import { LocalBusinessSchema } from '@/components/schema'
+import { GoogleAnalytics, GoogleSiteVerification } from '@/components/analytics'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -51,9 +52,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${pacifico.variable}`}>
+      <head>
+        <GoogleSiteVerification />
+      </head>
       <body className="min-h-screen bg-wonderland-bg">
         {/* Structured data for SEO and AI search visibility */}
         <LocalBusinessSchema />
+        {/* Google Analytics 4 */}
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
