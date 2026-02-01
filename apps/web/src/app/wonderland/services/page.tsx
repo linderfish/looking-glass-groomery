@@ -15,7 +15,7 @@ const serviceFAQSchema = {
       "name": "How much does dog grooming cost in Nuevo, CA?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Dog grooming at Through the Looking Glass Groomery in Nuevo, CA costs $45-$85+ for a full groom depending on size. Small dogs (under 25 lbs) start at $45, medium dogs at $55, large dogs at $70, and extra large dogs at $85+. Bath and tidy services start at $25."
+        "text": "Dog grooming at Through the Looking Glass Groomery in Nuevo, CA costs $75-$130 for a full Magic Mirror Makeover depending on size. Small dogs start at $75, medium dogs at $85, large dogs at $95, and extra large dogs at $130. Bath and tidy services (Whimsical Wash & Tidy) start at $55."
       }
     },
     {
@@ -31,7 +31,7 @@ const serviceFAQSchema = {
       "name": "Do you offer creative color grooming for dogs?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes! Through the Looking Glass Groomery offers pet-safe creative color grooming using OPAWZ certified products. Options include accent color ($20-35), full creative color ($50-100+), stencil art ($25-50), and glitter application ($10-20)."
+        "text": "Yes! Through the Looking Glass Groomery offers pet-safe creative color grooming. Options include The Cheshire Pop Of Color ($15), MadHatter Highlights ($25), and Curiouser & Curiouser Full Body Creation ($100)."
       }
     },
     {
@@ -47,40 +47,43 @@ const serviceFAQSchema = {
 
 const services = [
   {
-    category: "The Queen's Full Groom",
-    icon: '👑',
-    description: 'The complete royal treatment for your furry nobility',
+    category: 'Grooming Services',
+    icon: '✨',
+    description: 'Step into Wonderland with our magical grooming experience',
     items: [
-      { name: 'Small Dogs (under 25 lbs)', price: '$45-55', time: '1.5-2 hrs' },
-      { name: 'Medium Dogs (25-50 lbs)', price: '$55-70', time: '2-2.5 hrs' },
-      { name: 'Large Dogs (50-80 lbs)', price: '$70-85', time: '2.5-3 hrs' },
-      { name: 'Extra Large Dogs (80+ lbs)', price: '$85+', time: '3+ hrs' },
+      { name: "Cheshire Cat's Glow Up", price: '$120', time: '2-3 hrs', description: 'A whimsical bathing experience for your feline companion' },
+      { name: 'Small Dog Magic Mirror Makeover', price: '$75', time: '1.5-2 hrs', description: 'Step into Wonderland with our Small Dog Magic Mirror Makeover' },
+      { name: 'Medium Dog Magic Mirror Makeover', price: '$85', time: '2-2.5 hrs', description: 'Step into Wonderland with our medium Dog Magic Mirror Makeover' },
+      { name: 'Large Dog Magic Mirror Makeover', price: '$95', time: '2.5-3 hrs', description: 'Step into Wonderland with our large Dog Magic Mirror Makeover' },
+      { name: 'Extra Large Dog Magic Mirror Makeover', price: '$130', time: '3+ hrs', description: 'Step into Wonderland with our extra large Dog Magic Mirror Makeover' },
     ],
     includes: ['Bath & blow dry', 'Haircut & styling', 'Nail trim & file', 'Ear cleaning', 'Sanitary trim', 'Bow or bandana'],
   },
   {
-    category: 'Bath & Tidy',
+    category: 'Bath Only',
     icon: '🛁',
-    description: 'A refreshing spa day without the full haircut',
+    description: 'Delight your pet with our Whimsical Wash & Tidy',
     items: [
-      { name: 'Small Dogs', price: '$25-35', time: '45 min-1 hr' },
-      { name: 'Medium Dogs', price: '$35-45', time: '1-1.5 hrs' },
-      { name: 'Large Dogs', price: '$45-60', time: '1.5-2 hrs' },
-      { name: 'Extra Large Dogs', price: '$60+', time: '2+ hrs' },
+      { name: "Cheshire Cat's Bath", price: '$80', time: '1-1.5 hrs', description: "A whimsical bathing experience for your feline companion" },
+      { name: 'Small Dog Whimsical Wash & Tidy', price: '$55', time: '45 min-1 hr', description: 'Delight your small dog with our Whimsical Wash & Tidy' },
+      { name: 'Medium Dog Whimsical Wash & Tidy', price: '$65', time: '1-1.5 hrs', description: 'Delight your medium dog with our Whimsical Wash & Tidy' },
+      { name: 'Large Dog Whimsical Wash & Tidy', price: '$85', time: '1.5-2 hrs', description: 'Delight your large dog with our Whimsical Wash & Tidy' },
+      { name: 'XL Dog Whimsical Wash & Tidy', price: '$115', time: '2+ hrs', description: 'Delight your XL dog with our Whimsical Wash & Tidy' },
     ],
     includes: ['Bath & blow dry', 'Brush out', 'Nail trim', 'Ear cleaning', 'Paw pad trim', 'Light face trim'],
   },
   {
-    category: 'A La Carte',
-    icon: '✨',
-    description: 'Pick and choose your pet\'s perfect pampering',
+    category: 'Add-ons',
+    icon: '🎨',
+    description: 'Enhance your pet\'s pampering with our magical add-ons',
     items: [
-      { name: 'Nail Trim', price: '$15', time: '15 min' },
-      { name: 'Nail Grind (smooth finish)', price: '$20', time: '20 min' },
-      { name: 'Teeth Brushing', price: '$10', time: '10 min' },
-      { name: 'De-shedding Treatment', price: '$15-30', time: '30+ min' },
-      { name: 'Flea Bath', price: '$15 add-on', time: 'included' },
-      { name: 'Medicated Bath', price: '$15 add-on', time: 'included' },
+      { name: 'Curiouser & Curiouser Full Body Creation', price: '$100', time: '1-2 hrs', description: 'A bespoke design that brings the most curious Wonderland ideas to life' },
+      { name: 'Customer Pick Up Service', price: '$15', time: '30 min', description: 'Customer Pick Up Service provides a delightful and personalized experience' },
+      { name: 'The Cheshire Pop Of Color', price: '$15', time: '30 min', description: 'Add a vibrant and playful pop of color to your pet' },
+      { name: 'MadHatter Highlights', price: '$25', time: '45 min', description: 'Add a playful twist to your pet\'s appearance' },
+      { name: "The Queen's Royal Claws", price: '$25', time: '30 min', description: 'Experience the ultimate pampering with a luxurious mini trim and polish' },
+      { name: 'Pretty Paws and Claws Nail Grinding and Trimming', price: '$20', time: '20 min', description: 'Treat your pet to a paw-some adventure with our nail grinding and trimming' },
+      { name: 'Extra Care', price: '$10', time: '15 min', description: 'Handling fee for super spicy furry friends' },
     ],
     includes: [],
   },
@@ -88,28 +91,25 @@ const services = [
 
 const creativeServices = [
   {
-    name: 'Pet-Safe Color',
+    name: 'Creative Color & Styling',
     icon: '🎨',
-    description: 'Temporary, pet-safe colors to make your pet stand out',
+    description: 'Whimsical designs and colors to make your pet stand out',
     options: [
-      { name: 'Accent Color (ears, tail, paws)', price: '$20-35' },
-      { name: 'Full Creative Color', price: '$50-100+' },
-      { name: 'Stencil Art', price: '$25-50' },
-      { name: 'Glitter Application', price: '$10-20' },
+      { name: 'Curiouser & Curiouser Full Body Creation', price: '$100' },
+      { name: 'The Cheshire Pop Of Color', price: '$15' },
+      { name: 'MadHatter Highlights', price: '$25' },
     ],
-    note: 'All colors are OPAWZ certified pet-safe and temporary',
+    note: 'All colors are pet-safe and temporary, inspired by the playful spirit of Wonderland',
   },
   {
-    name: 'Asian Fusion Styling',
-    icon: '🌸',
-    description: 'Trendy Japanese and Korean grooming styles',
+    name: 'Nail & Paw Care',
+    icon: '💅',
+    description: 'Pamper your pet\'s paws with royal treatment',
     options: [
-      { name: 'Teddy Bear Cut', price: 'Included in full groom' },
-      { name: 'Lamb Cut', price: 'Included in full groom' },
-      { name: 'Korean Round Face', price: 'Included in full groom' },
-      { name: 'Custom Asian Fusion', price: '+$10-20' },
+      { name: "The Queen's Royal Claws", price: '$25' },
+      { name: 'Pretty Paws and Claws Nail Grinding and Trimming', price: '$20' },
     ],
-    note: 'Perfect for Poodles, Bichons, Shih Tzus, and similar breeds',
+    note: 'Perfect for pets who deserve to feel like royalty',
   },
 ]
 
@@ -300,9 +300,9 @@ export default function ServicesPage() {
                 How much does dog grooming cost in Nuevo, CA?
               </h3>
               <p className="text-wonderland-muted">
-                Dog grooming at Through the Looking Glass Groomery costs $45-$85+ for a full groom
-                depending on size. Small dogs (under 25 lbs) start at $45, medium dogs at $55,
-                large dogs at $70, and extra large dogs at $85+. Bath and tidy services start at $25.
+                Dog grooming at Through the Looking Glass Groomery costs $75-$130 for a full Magic Mirror Makeover
+                depending on size. Small dogs start at $75, medium dogs at $85,
+                large dogs at $95, and extra large dogs at $130. Bath and tidy services (Whimsical Wash & Tidy) start at $55.
               </p>
             </div>
             <div>
@@ -320,9 +320,9 @@ export default function ServicesPage() {
                 Do you offer creative color grooming?
               </h3>
               <p className="text-wonderland-muted">
-                Yes! We offer pet-safe creative color using OPAWZ certified products. Options include
-                accent color ($20-35), full creative color ($50-100+), stencil art ($25-50), and
-                glitter application ($10-20).
+                Yes! We offer pet-safe creative color and styling. Options include
+                The Cheshire Pop Of Color ($15), MadHatter Highlights ($25), and
+                Curiouser & Curiouser Full Body Creation ($100).
               </p>
             </div>
             <div>
