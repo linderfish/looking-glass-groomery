@@ -116,13 +116,37 @@ FACEBOOK_VERIFY_TOKEN="..."
 
 ## 📦 Deployment
 
-### Vercel (Website)
-```bash
-vercel --prod
-```
+### Production Server (production-stable / 10.138.0.10)
 
-### Railway/Fly.io (Cheshire API & Telegram Bot)
-Services can be deployed independently to any platform supporting Node.js/Bun.
+**Website:**
+- Domain: `lookingglassgroomery.com`
+- Hosted via Cloudflare tunnel → port 3007
+- Process: PM2 process `looking-glass` (Next.js standalone)
+- Path: `/home/bitvise/projects/kimmie/apps/web`
+- Build: `npm run build` from web directory, then `pm2 restart looking-glass`
+
+**Cheshire API:**
+- Domains: `cheshire.lookingglassgroomery.com` / `cheshire-fb.server2.io`
+- Port: 3006
+- Process: PM2 process `cheshire-api`
+- Runtime: Bun
+
+**Database:**
+- PostgreSQL database: `looking_glass`
+- On production-stable server
+
+**Deployment Process:**
+```bash
+# Update code on server (no git - manual sync)
+scp <changed-files> production-stable:/home/bitvise/projects/kimmie/
+
+# Rebuild web if needed
+ssh production-stable "cd /home/bitvise/projects/kimmie/apps/web && npm run build"
+
+# Restart services
+ssh production-stable "pm2 restart looking-glass"
+ssh production-stable "pm2 restart cheshire-api"
+```
 
 ## 🤝 Contributing
 
